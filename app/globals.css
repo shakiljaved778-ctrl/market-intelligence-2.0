@@ -448,3 +448,69 @@ body {
     transition: none;
   }
 }
+
+/* ============================================================
+   Cinematic hero — full-bleed, bold display type, atmospheric
+   dark backdrop (a data visual, not stock photography).
+   ============================================================ */
+
+/* Prevent the full-bleed breakout from creating horizontal scroll. */
+body {
+  overflow-x: clip;
+}
+
+/* Full-width breakout from a centred container. */
+.bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+/* Bold display type for marketing headlines — confident and modern. */
+.display {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  font-size: clamp(2.75rem, 7vw, 5.25rem);
+}
+
+/* Uppercase tracked sub-line, kept restrained. */
+.kicker-caps {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  color: var(--text-mid);
+}
+
+/* Scrim so foreground text stays legible over the backdrop and blends
+   into the canvas at the bottom. */
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--canvas) 55%, transparent) 0%,
+      transparent 34%
+    ),
+    linear-gradient(180deg, transparent 55%, var(--canvas) 100%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--canvas) 62%, transparent),
+      transparent 60%
+    );
+  pointer-events: none;
+}
+
+/* Glass card — a frosted floating panel over the hero. */
+.glass {
+  background: color-mix(in srgb, var(--raised) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-lg);
+}

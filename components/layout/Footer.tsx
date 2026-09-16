@@ -9,10 +9,10 @@ export function Footer() {
   return (
     <footer className="border-line bg-surface mt-16 border-t">
       <div className="mx-auto max-w-[1280px] px-4 py-8">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <span className="mark" aria-hidden />
-          <span className="font-editorial text-text-hi text-[16px] leading-none">
-            miza<span className="ours">n</span>
+          <span className="text-text-hi text-[15px] leading-none font-bold tracking-[0.18em]">
+            MIZA<span className="ours">N</span>
           </span>
           <span className="eyebrow ml-1">mizan.com</span>
         </div>
