@@ -4,7 +4,6 @@ import { getDisplayCurrency } from "@/lib/currency/server";
 import { readMovers } from "@/lib/market/read";
 import { readWire } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
-import { formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 
 /**
@@ -56,91 +55,91 @@ export default async function BoardPage() {
       <section className="bleed relative isolate overflow-hidden">
         <HeroBackdrop />
         <div className="hero-scrim" />
-        <div className="relative mx-auto flex min-h-[78vh] max-w-[1280px] flex-col justify-center px-4 py-24 sm:py-28">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
-            <div className="lg:col-span-7">
-              <div
-                className="fade-up flex items-center gap-2"
-                style={{ "--d": "0ms" } as React.CSSProperties}
-              >
-                <span className="live-dot" aria-hidden />
-                <span className="kicker-caps">signal over noise · GCC + global</span>
-              </div>
-              <h1
-                className="display fade-up text-text-hi mt-6"
-                style={{ "--d": "70ms" } as React.CSSProperties}
-              >
-                The market, weighted by{" "}
-                <span className="ours-grad">what actually moves it.</span>
-              </h1>
-              <p
-                className="fade-up text-text-mid mt-7 max-w-[54ch] text-[17px] leading-relaxed"
-                style={{ "--d": "140ms" } as React.CSSProperties}
-              >
-                Mizan ranks which stories matter, binds them to the instruments they
-                move, and shows how markets responded — computed deterministically from
-                data we hold, in USD or QAR. Not a wire. Not AI-written analysis.
-              </p>
-              <div
-                className="fade-up mt-9 flex flex-wrap items-center gap-3"
-                style={{ "--d": "210ms" } as React.CSSProperties}
-              >
-                <Link href="/news" className="btn btn-primary">
-                  Explore the wire <span aria-hidden>→</span>
-                </Link>
-                <Link href="/markets" className="btn btn-ghost">
-                  Open markets
-                </Link>
-              </div>
-            </div>
+        <div className="relative mx-auto flex min-h-[82vh] max-w-[1180px] flex-col items-center justify-center px-4 py-24 text-center sm:py-28">
+          <div
+            className="hero-badge fade-up"
+            style={{ "--d": "0ms" } as React.CSSProperties}
+          >
+            <span className="live-dot" aria-hidden />
+            Algorithmically curated market intelligence
+          </div>
 
-            {/* Floating live lead cluster — glass card. */}
-            {lead ? (
-              <div
-                className="fade-up lg:col-span-5"
-                style={{ "--d": "300ms" } as React.CSSProperties}
-              >
-                <Link
-                  href={`/news/${lead.slug}`}
-                  className="glass card-hover block p-5"
+          <h1
+            className="display fade-up text-text-hi mt-6 max-w-[15ch]"
+            style={{ "--d": "70ms" } as React.CSSProperties}
+          >
+            The market, weighted by{" "}
+            <span className="ours-grad">what actually moves it.</span>
+          </h1>
+
+          <p
+            className="fade-up text-text-mid mx-auto mt-7 max-w-[58ch] text-[17px] leading-relaxed"
+            style={{ "--d": "140ms" } as React.CSSProperties}
+          >
+            Mizan ranks which stories matter, binds them to the instruments they move,
+            and shows how markets responded — computed deterministically from data we
+            hold, in USD or QAR. Not a wire. Not AI-written analysis.
+          </p>
+
+          <div
+            className="fade-up mt-9 flex flex-wrap items-center justify-center gap-3"
+            style={{ "--d": "210ms" } as React.CSSProperties}
+          >
+            <Link href="/news" className="btn btn-primary">
+              Explore the wire <span aria-hidden>→</span>
+            </Link>
+            <Link href="/methodology" className="btn btn-ghost">
+              How it works
+            </Link>
+          </div>
+
+          {/* Compact live session-lead strip — keeps a real data hook in the hero. */}
+          {lead ? (
+            <Link
+              href={`/news/${lead.slug}`}
+              className="glass card-hover fade-up mt-11 flex w-full max-w-[640px] items-center gap-3 px-4 py-3 text-left"
+              style={{ "--d": "300ms" } as React.CSSProperties}
+            >
+              <span className="ours tnum border-iris/30 bg-iris/10 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px]">
+                ◆ {lead.importanceScore}
+              </span>
+              <span className="text-text-low hidden shrink-0 text-[11px] tracking-wide uppercase sm:inline">
+                Session lead
+              </span>
+              <span className="text-text-hi truncate text-[14px]">{lead.title}</span>
+              {leadMover ? (
+                <span
+                  className={`tnum ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] ${
+                    directionOf(leadMover.change) === "gain"
+                      ? "dir-gain bg-gain/10"
+                      : directionOf(leadMover.change) === "loss"
+                        ? "dir-loss bg-loss/10"
+                        : "text-text-mid"
+                  }`}
                 >
-                  <div className="flex items-center gap-2 text-[12px]">
-                    <span className="ours tnum border-iris/30 bg-iris/10 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5">
-                      ◆ {lead.importanceScore}
-                    </span>
-                    <span className="ours tnum">{lead.sourceCount} sources</span>
-                    <span className="text-text-low ml-auto">session lead</span>
-                  </div>
-                  <h2 className="font-editorial text-text-hi mt-3 text-[22px] leading-snug">
-                    {lead.title}
-                  </h2>
-                  {leadMover ? (
-                    <div className="border-line-strong mt-5 flex items-center justify-between border-t pt-4">
-                      <span className="text-text-mid text-[12px]">
-                        {leadMover.name} · {leadMover.symbol}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="tnum text-text-hi text-[16px]">
-                          {formatMoney(leadMover.priceUsd, currency)}
-                        </span>
-                        <span
-                          className={`tnum flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] ${
-                            directionOf(leadMover.change) === "gain"
-                              ? "dir-gain bg-gain/10"
-                              : directionOf(leadMover.change) === "loss"
-                                ? "dir-loss bg-loss/10"
-                                : "text-text-mid"
-                          }`}
-                        >
-                          <span aria-hidden>{directionGlyph(leadMover.change)}</span>
-                          {formatPercent(leadMover.changePct)}
-                        </span>
-                      </span>
-                    </div>
-                  ) : null}
-                </Link>
-              </div>
-            ) : null}
+                  <span aria-hidden>{directionGlyph(leadMover.change)}</span>
+                  {formatPercent(leadMover.changePct)}
+                </span>
+              ) : null}
+              <span className="text-text-low shrink-0" aria-hidden>
+                →
+              </span>
+            </Link>
+          ) : null}
+
+          {/* Honest "powered by" strip (ref: Alula) — real providers only. */}
+          <div
+            className="fade-up mt-14 flex flex-col items-center gap-3"
+            style={{ "--d": "380ms" } as React.CSSProperties}
+          >
+            <span className="eyebrow">Market &amp; macro data from</span>
+            <div className="trust-strip justify-center">
+              {["FMP", "Polygon", "EODHD", "FRED", "World Bank"].map((p) => (
+                <span key={p} className="trust-logo">
+                  {p}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>

@@ -550,7 +550,12 @@ body {
   z-index: -1;
   background: radial-gradient(
       70% 140% at 0% 0%,
-      color-mix(in srgb, var(--iris) 9%, transparent),
+      color-mix(in srgb, var(--aurora-1) 12%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      60% 120% at 100% 0%,
+      color-mix(in srgb, var(--aurora-2) 9%, transparent),
       transparent 60%
     ),
     linear-gradient(180deg, var(--surface), transparent);
@@ -590,5 +595,134 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .row-spine {
     transition: none;
+  }
+}
+
+/* ============================================================
+   Atmosphere layer — an aurora field + wired circuit nodes for a
+   cinematic, fintech hero (ref: Alula). Decorative only: these
+   violet/cyan hues live in the backdrop, never on data. Data keeps
+   gain/loss + iris (§12). All GPU-friendly (transform/opacity) and
+   fully disabled under prefers-reduced-motion.
+   ============================================================ */
+
+:root {
+  /* Decorative aurora hues — hero chrome only, not data. */
+  --aurora-1: #6d70f5; /* iris */
+  --aurora-2: #8b5cf6; /* violet */
+  --aurora-3: #22d3ee; /* cyan */
+  --node-line: color-mix(in srgb, var(--iris) 45%, var(--line-strong));
+}
+:root[data-theme="light"] {
+  --aurora-1: #6366f1;
+  --aurora-2: #7c3aed;
+  --aurora-3: #0891b2;
+  --node-line: color-mix(in srgb, var(--iris) 30%, var(--line-strong));
+}
+
+/* The aurora field — layered radial washes that drift slowly. */
+.aurora {
+  position: absolute;
+  inset: -20% -10% -10% -10%;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(
+      42% 55% at 76% 8%,
+      color-mix(in srgb, var(--aurora-2) 42%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      46% 60% at 90% 42%,
+      color-mix(in srgb, var(--aurora-3) 30%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      40% 55% at 10% 22%,
+      color-mix(in srgb, var(--aurora-1) 34%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      50% 50% at 30% 88%,
+      color-mix(in srgb, var(--aurora-2) 20%, transparent),
+      transparent 65%
+    );
+  filter: blur(30px) saturate(1.15);
+  opacity: 0.9;
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+}
+:root[data-theme="light"] .aurora,
+:root:not([data-theme="dark"]) .aurora {
+  opacity: 0.55;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-1.5%, -1%, 0) scale(1.02);
+  }
+  100% {
+    transform: translate3d(2%, 1.5%, 0) scale(1.06);
+  }
+}
+
+/* Glass pill above the headline (ref: Alula's "RWA-ready …" badge). */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  color: var(--text-mid);
+  background: color-mix(in srgb, var(--raised) 60%, transparent);
+  border: 1px solid var(--line-strong);
+  backdrop-filter: blur(10px);
+}
+
+/* Floating labelled circuit node — a hex mark + a quiet label. */
+.hero-node {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-low);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.hero-node-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: var(--iris-strong);
+  background: color-mix(in srgb, var(--raised) 55%, transparent);
+  border: 1px solid var(--node-line);
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+  box-shadow: 0 0 24px -8px color-mix(in srgb, var(--iris) 60%, transparent);
+}
+
+/* Honest "powered by" strip along the hero base (ref: Alula's logo row). */
+.trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.5rem;
+}
+.trust-logo {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+  color: var(--text-mid);
+  opacity: 0.85;
+  transition: opacity 0.16s ease;
+}
+.trust-logo:hover {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora {
+    animation: none;
   }
 }
