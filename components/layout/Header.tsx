@@ -8,6 +8,7 @@ import { SymbolSearch } from "@/components/market/SymbolSearch";
 const NAV = [
   { href: "/markets", label: "Markets" },
   { href: "/news", label: "Wire" },
+  { href: "/sections", label: "Sections" },
   { href: "/economy", label: "Economy" },
   { href: "/methodology", label: "Methodology" },
 ];

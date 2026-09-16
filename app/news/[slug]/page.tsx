@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { readCluster } from "@/lib/news/read";
 import { relativeTime } from "@/lib/format/relative-time";
+import { CoverArt } from "@/components/news/CoverArt";
+import { SectionTag } from "@/components/news/SectionTag";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -22,7 +24,21 @@ export default async function ClusterPage({ params }: Params) {
 
   return (
     <div className="py-8">
+      {/* Cover hero. */}
+      <div className="border-line bg-surface mb-6 aspect-[16/6] w-full overflow-hidden rounded-[14px] border">
+        <CoverArt
+          section={cluster.section}
+          seed={cluster.slug}
+          imageUrl={cluster.imageUrl}
+          className="h-full w-full"
+        />
+      </div>
+
       <div className="flex items-center gap-3 text-[12px]">
+        <SectionTag
+          section={cluster.section}
+          href={`/news?section=${cluster.section}`}
+        />
         <span className="ours tnum" title="Importance score">
           ◆ {cluster.importanceScore}
         </span>

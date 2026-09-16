@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { HeroBackdrop } from "@/components/layout/HeroBackdrop";
+import { CoverArt } from "@/components/news/CoverArt";
+import { SectionTag } from "@/components/news/SectionTag";
 import { getDisplayCurrency } from "@/lib/currency/server";
+import { isFinancialSection } from "@/lib/curation/section";
 import { readMovers } from "@/lib/market/read";
 import { readWire } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
@@ -45,6 +48,7 @@ export default async function BoardPage() {
     readMovers(4),
   ]);
   const lead = clusters[0];
+  const beyond = clusters.filter((c) => !isFinancialSection(c.section)).slice(0, 3);
   const leadTicker = lead?.tickers[0];
   const leadMover = movers.find((m) => m.symbol === leadTicker) ?? movers[0];
   const sessionRecap = listRecaps(currency).find((r) => r.kind === "session_close");
@@ -212,6 +216,51 @@ export default async function BoardPage() {
             ))}
           </div>
         </section>
+
+        {/* Beyond the markets (§13) — the deliberate non-financial mix. */}
+        {beyond.length > 0 ? (
+          <section className="mt-16">
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="bg-line-strong h-px w-6" aria-hidden />
+                <p className="eyebrow">beyond the markets</p>
+              </div>
+              <Link href="/sections" className="ours text-[12px]">
+                All sections <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+              {beyond.map((c, i) => (
+                <Link
+                  key={c.slug}
+                  href={`/news/${c.slug}`}
+                  className="card card-hover fade-up flex flex-col overflow-hidden"
+                  style={{ "--d": `${i * 80}ms` } as React.CSSProperties}
+                >
+                  <div className="border-line bg-surface aspect-[16/8] w-full overflow-hidden border-b">
+                    <CoverArt
+                      section={c.section}
+                      seed={c.slug}
+                      imageUrl={c.imageUrl}
+                      className="h-full w-full"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="flex items-center gap-2 text-[12px]">
+                      <SectionTag section={c.section} />
+                      <span className="ours tnum ml-auto">
+                        {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
+                      </span>
+                    </div>
+                    <h3 className="font-editorial text-text-hi mt-3 text-[18px] leading-snug">
+                      {c.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </div>
   );

@@ -1,0 +1,204 @@
+# Mizan — content sections (§9, §13).
+#
+# Sections are the top-level editorial verticals of the site. Assignment is
+# DETERMINISTIC and keyword-driven (see lib/curation/section.ts) — no model,
+# consistent with the V1 "no LLM" invariant. A section is derived from the
+# cluster's title/dek/topics/tickers, exactly like topics and entities.
+#
+# Editorial mix (product rule): Mizan is a market-intelligence product, so
+# markets/economy dominate — but at least ~30% of the wire is deliberately
+# NON-FINANCIAL (technology, sports, health, entertainment, science) to keep a
+# broad audience engaged. `financial: false` marks those verticals; the ratio is
+# guarded by a test (lib/curation/section.test.ts).
+#
+# `hue` is an editorial SECTION tint used ONLY inside cover art and the section
+# tag — never on chrome and never on data. It is intentionally muted and avoids
+# gain-green / loss-red so it can never be confused with price direction (§12).
+
+sections:
+  - id: markets
+    label: Markets
+    blurb: Equities, rates, commodities and FX — the instruments and the moves.
+    financial: true
+    hue: "#7c8698"
+    glyph: bars
+    keywords:
+      [
+        stock,
+        shares,
+        equity,
+        equities,
+        bond,
+        yield,
+        treasury,
+        commodity,
+        crude,
+        oil,
+        gold,
+        currency,
+        forex,
+        index,
+        nasdaq,
+        s&p,
+        earnings,
+        ipo,
+        dividend,
+        merger,
+        acquisition,
+      ]
+
+  - id: economy
+    label: Economy
+    blurb: Growth, inflation, jobs and central banks — the macro backdrop.
+    financial: true
+    hue: "#4aa3b8"
+    glyph: wave
+    keywords:
+      [
+        inflation,
+        cpi,
+        gdp,
+        growth forecast,
+        unemployment,
+        jobs report,
+        payrolls,
+        interest rate,
+        rate decision,
+        monetary policy,
+        central bank,
+        recession,
+        trade deficit,
+        world bank,
+        imf,
+        oecd,
+      ]
+
+  - id: technology
+    label: Tech & AI
+    blurb: Artificial intelligence, chips, software and the platforms shaping them.
+    financial: false
+    hue: "#00b4d8"
+    glyph: circuit
+    keywords:
+      [
+        artificial intelligence,
+        ai model,
+        machine learning,
+        chatbot,
+        openai,
+        semiconductor,
+        chip,
+        quantum,
+        software,
+        app,
+        smartphone,
+        gadget,
+        startup,
+        cybersecurity,
+        data center,
+        robotics,
+        space launch,
+        satellite,
+      ]
+
+  - id: health
+    label: Health
+    blurb: Medicine, public health and the science of living longer, better.
+    financial: false
+    hue: "#4a90d9"
+    glyph: pulse
+    keywords:
+      [
+        health,
+        vaccine,
+        disease,
+        outbreak,
+        virus,
+        who,
+        clinical trial,
+        drug approval,
+        medicine,
+        mental health,
+        nutrition,
+        fitness,
+        cancer,
+        pandemic,
+        hospital,
+      ]
+
+  - id: sports
+    label: Sports
+    blurb: Leagues, tournaments and the moments that stop the clock.
+    financial: false
+    hue: "#e8863a"
+    glyph: trophy
+    keywords:
+      [
+        football,
+        soccer,
+        world cup,
+        fifa,
+        olympic,
+        tennis,
+        cricket,
+        basketball,
+        nba,
+        formula 1,
+        grand prix,
+        championship,
+        tournament,
+        match,
+        league,
+        athlete,
+      ]
+
+  - id: entertainment
+    label: Culture
+    blurb: Film, music, streaming and the stories the world is watching.
+    financial: false
+    hue: "#b45cd6"
+    glyph: play
+    keywords:
+      [
+        film,
+        movie,
+        box office,
+        streaming,
+        album,
+        music,
+        concert,
+        festival,
+        series,
+        television,
+        celebrity,
+        award,
+        oscars,
+        grammy,
+        gaming,
+        video game,
+      ]
+
+  - id: science
+    label: Science
+    blurb: Climate, energy, discovery and the frontier of what we know.
+    financial: false
+    hue: "#d6a92b"
+    glyph: atom
+    keywords:
+      [
+        research,
+        study,
+        climate,
+        renewable,
+        emissions,
+        discovery,
+        physics,
+        biology,
+        genome,
+        nasa,
+        telescope,
+        experiment,
+        breakthrough,
+        environment,
+        wildlife,
+      ]

@@ -134,6 +134,30 @@ factor (18h half-life, floored at 0.30 so covered news doesn't vanish).
 (`lib/curation/robots.ts`). Only sources in `content/sources.yaml` with a
 `license_note` are ingested.
 
+## Sections & editorial mix (§13)
+
+Every cluster gets a **section** — the top-level editorial vertical — assigned
+**deterministically** by keyword rules in `content/sections.yaml`
+(`lib/curation/section.ts`), exactly like topics/entities. No model.
+
+- Financial verticals (`financial: true`): **markets**, **economy**. Everything
+  else — **technology** (Tech & AI), **health**, **sports**, **entertainment**
+  (Culture), **science** — is non-financial.
+- **Product rule:** Mizan is markets-first, but at least **~30%** of the live wire
+  is deliberately non-financial to keep a broad audience engaged. Guarded by
+  `lib/curation/section.test.ts` (currently 33%). Non-financial stays a minority.
+- Non-financial feeds live in `content/sources.yaml` under the same rules: primary
+  gov/agency feeds (NASA, WHO, CDC, BLS, World Bank) are public-domain/open;
+  commercial outlets are added headline+dek+link only and left `active: false`
+  pending feed/terms verification (§6, §10).
+
+**Images.** Cards carry a cover image. `RawArticle.imageUrl` is an optional
+**reference** (a URL / og:image), never stored body text — the no-body invariant
+still holds. When absent, `components/news/CoverArt.tsx` renders a deterministic,
+on-brand SVG cover (offline, no vendor call on render). Section covers/tags use a
+**muted section tint** for the motif only — it avoids gain-green / loss-red and
+never touches chrome or data, so §12 holds.
+
 ## Build discipline (§14)
 
 Work **phase by phase**. At each gate: stop, report what was built, show acceptance

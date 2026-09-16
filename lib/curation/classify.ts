@@ -12,7 +12,8 @@ export interface Classification {
 }
 
 // Word-ish boundary match, case-insensitive. Escapes regex metachars in aliases.
-function mentions(haystack: string, needle: string): boolean {
+// Exported so the section classifier reuses the exact same matcher (§9).
+export function mentions(haystack: string, needle: string): boolean {
   const esc = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`, "i").test(haystack);
 }
