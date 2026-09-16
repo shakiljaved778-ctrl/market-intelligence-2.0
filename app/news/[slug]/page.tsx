@@ -25,14 +25,30 @@ export default async function ClusterPage({ params }: Params) {
   return (
     <div className="py-8">
       {/* Cover hero. */}
-      <div className="border-line bg-surface mb-6 aspect-[16/6] w-full overflow-hidden rounded-[14px] border">
-        <CoverArt
-          section={cluster.section}
-          seed={cluster.slug}
-          imageUrl={cluster.imageUrl}
-          className="h-full w-full"
-        />
-      </div>
+      <figure className="mb-6">
+        <div className="border-line bg-surface aspect-[16/6] w-full overflow-hidden rounded-[14px] border">
+          <CoverArt
+            section={cluster.section}
+            seed={cluster.slug}
+            imageUrl={cluster.imageUrl}
+            className="h-full w-full"
+          />
+        </div>
+        {cluster.imageCredit ? (
+          <figcaption className="text-text-low mt-1.5 text-[11px]">
+            Photo:{" "}
+            <a
+              href={cluster.imageCredit.creditUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-text-mid"
+            >
+              {cluster.imageCredit.credit}
+            </a>{" "}
+            / Pexels
+          </figcaption>
+        ) : null}
+      </figure>
 
       <div className="flex items-center gap-3 text-[12px]">
         <SectionTag

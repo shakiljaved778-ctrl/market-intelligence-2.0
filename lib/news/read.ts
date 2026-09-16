@@ -1,4 +1,5 @@
 import { FIXTURE_ARTICLES, type RawArticle } from "@/fixtures/articles";
+import { COVER_IMAGES } from "@/fixtures/cover-images";
 import { UNIVERSE } from "@/fixtures/universe";
 import { HashEmbedder } from "@/lib/curation/embed";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
@@ -26,6 +27,7 @@ const DEMO_NOW = new Date("2026-09-16T20:00:00.000Z");
 export interface WireCluster extends SluggedCluster {
   section: string;
   imageUrl: string | null;
+  imageCredit: { credit: string; creditUrl: string } | null;
 }
 
 function context(): RankContext {
@@ -47,7 +49,15 @@ function enrich(cluster: SluggedCluster): WireCluster {
     topics: cluster.topics,
     tickers: cluster.tickers,
   });
-  return { ...cluster, section, imageUrl: primary?.imageUrl ?? null };
+  // Prefer a resolved Pexels cover (committed offline); fall back to any image
+  // reference on the article, else null → the UI draws the SVG cover.
+  const cover = COVER_IMAGES[cluster.primaryId];
+  return {
+    ...cluster,
+    section,
+    imageUrl: cover?.url ?? primary?.imageUrl ?? null,
+    imageCredit: cover ? { credit: cover.credit, creditUrl: cover.creditUrl } : null,
+  };
 }
 
 async function allClusters(): Promise<WireCluster[]> {
