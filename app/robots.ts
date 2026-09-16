@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { SITE_URL as SITE } from "@/lib/site";
 
 /** Our own robots.txt (§6 SEO) — allow crawling, disallow API, point to sitemap. */
 export default function robots(): MetadataRoute.Robots {

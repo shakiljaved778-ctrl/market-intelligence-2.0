@@ -1,6 +1,6 @@
 import { readWire } from "@/lib/news/read";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { SITE_URL as SITE } from "@/lib/site";
 
 // Outbound RSS (§6) — our own ranked wire of computed clusters. We publish our
 // cluster titles + links, never third-party article bodies.

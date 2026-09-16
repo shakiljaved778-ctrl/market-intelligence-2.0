@@ -6,8 +6,9 @@ import { Footer } from "@/components/layout/Footer";
 import { MarketStrip } from "@/components/market/MarketStrip";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { getTheme } from "@/lib/theme/server";
+import { SITE_URL } from "@/lib/site";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

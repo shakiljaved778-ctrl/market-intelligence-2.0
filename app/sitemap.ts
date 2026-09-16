@@ -3,7 +3,7 @@ import { UNIVERSE } from "@/fixtures/universe";
 import { readWire } from "@/lib/news/read";
 import { MACRO_SERIES } from "@/fixtures/macro";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { SITE_URL as SITE } from "@/lib/site";
 
 /** Sitemap (§6 SEO) — static routes plus known instruments, clusters and series. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
