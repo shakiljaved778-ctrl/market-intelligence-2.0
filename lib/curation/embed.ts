@@ -56,10 +56,7 @@ export class HashEmbedder implements Embedder {
   }
 }
 
-type FeatureExtractor = (
-  t: string,
-  o: object,
-) => Promise<{ data: ArrayLike<number> }>;
+type FeatureExtractor = (t: string, o: object) => Promise<{ data: ArrayLike<number> }>;
 
 export class MiniLmEmbedder implements Embedder {
   readonly id = "all-MiniLM-L6-v2";

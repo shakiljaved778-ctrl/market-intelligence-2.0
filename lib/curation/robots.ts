@@ -6,7 +6,7 @@ import { swr } from "@/lib/cache/swr";
  * disallow; fail-open only when robots.txt is absent/unreachable (the internet
  * convention), which we cache to avoid hammering the host.
  */
-const UA = "MarketIntelligenceBot";
+const UA = "MizanBot";
 
 interface RobotsRules {
   disallow: string[];

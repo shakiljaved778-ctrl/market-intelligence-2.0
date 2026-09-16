@@ -9,7 +9,14 @@ export function Footer() {
   return (
     <footer className="border-line bg-surface mt-16 border-t">
       <div className="mx-auto max-w-[1280px] px-4 py-8">
-        <div className="text-text-mid flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+        <div className="flex items-center gap-2">
+          <span className="mark" aria-hidden />
+          <span className="font-editorial text-text-hi text-[16px] leading-none">
+            miza<span className="ours">n</span>
+          </span>
+          <span className="eyebrow ml-1">mizan.com</span>
+        </div>
+        <div className="text-text-mid mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
           <Link href="/methodology" className="hover:text-text-hi">
             Methodology
           </Link>

@@ -1,97 +1,168 @@
+import Link from "next/link";
 import { getDisplayCurrency } from "@/lib/currency/server";
+import { readMovers } from "@/lib/market/read";
+import { readWire } from "@/lib/news/read";
 import { formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 
 /**
- * The Board (§13). Phase 0 renders the structural shell: the lead cluster beside
- * the instrument it concerns, the accent-marked computed recap, and figures that
- * respect the currency toggle. Live data arrives in later phases.
+ * The Board (§13). Editorial hero + honest stat row + the session's lead cluster
+ * beside its instrument + what Mizan does. Chrome is monochrome; the iris accent
+ * marks only our own computed content (source counts, scores, recaps).
  */
 
-// Fixture lead story so the shell is useful with zero keys (§2).
-const LEAD = {
-  headline: "OPEC+ holds output targets as Brent extends weekly decline",
-  sourceCount: 7,
-  instrument: {
-    symbol: "BRN",
-    name: "Brent Crude",
-    priceUsd: 71.4,
-    change: -1.68,
-    changePct: -2.3,
+const STATS: { value: string; sup?: string; label: string }[] = [
+  { value: "2", label: "rails · global markets + a dedicated GCC/Qatar rail" },
+  {
+    value: "10",
+    sup: "min",
+    label: "wire refresh, ranked by independent source count",
   },
-};
+  { value: "USD·QAR", label: "dual currency, everywhere, persistently" },
+  { value: "0", label: "article bodies stored — headlines, deks and links only" },
+];
+
+const FEATURES: { title: string; body: string }[] = [
+  {
+    title: "Source-count as signal",
+    body: "Every story shows how many independent outlets cover it. That number is the ranking, made visible — not an undifferentiated firehose.",
+  },
+  {
+    title: "News-to-price adjacency",
+    body: "Every cluster is bound to the instruments it concerns, with the live move rendered right alongside the coverage.",
+  },
+  {
+    title: "Computed recaps",
+    body: "Session recaps written from our own numbers by a deterministic engine — factual, original, and clearly marked as ours.",
+  },
+];
 
 export default async function BoardPage() {
-  const currency = await getDisplayCurrency();
-  const dir = directionOf(LEAD.instrument.change);
-  const dirClass =
-    dir === "gain" ? "dir-gain" : dir === "loss" ? "dir-loss" : "text-text-mid";
+  const [currency, clusters, movers] = await Promise.all([
+    getDisplayCurrency(),
+    readWire(),
+    readMovers(4),
+  ]);
+  const lead = clusters[0];
+  const leadTicker = lead?.tickers[0];
+  const leadMover = movers.find((m) => m.symbol === leadTicker) ?? movers[0];
 
   return (
-    <div className="py-8">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Lead cluster — news and price adjacent (§13). */}
-        <article className="lg:col-span-8">
-          <div className="text-text-mid flex items-center gap-3 text-[12px]">
-            <span className="border-line rounded-[4px] border px-1.5 py-0.5">
-              Session lead
-            </span>
-            {/* Source-count is the ranking, made visible (§1) — accent = ours. */}
-            <span className="ours tnum">{LEAD.sourceCount} outlets covering</span>
-          </div>
-          <h1 className="font-editorial text-text-hi mt-3 max-w-[68ch] text-[34px] leading-tight">
-            {LEAD.headline}
+    <div className="py-10 sm:py-14">
+      {/* Hero */}
+      <section className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-6">
+        <div className="lg:col-span-7">
+          <p className="eyebrow">signal over noise · GCC + global</p>
+          <h1 className="font-editorial text-text-hi mt-4 text-[40px] leading-[1.03] sm:text-[56px]">
+            The market, weighted by{" "}
+            <span className="ours">what actually moves it.</span>
           </h1>
+          <p className="text-text-mid mt-5 max-w-[54ch] text-[15px] leading-relaxed">
+            Mizan ranks which stories matter, binds them to the instruments they move,
+            and shows how markets responded — computed deterministically from data we
+            hold, in USD or QAR. Not a wire. Not AI-written analysis.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Link
+              href="/news"
+              className="pill inline-flex items-center gap-2 px-5 py-2.5 text-[14px]"
+              style={{ background: "var(--text-hi)", color: "var(--canvas)" }}
+            >
+              Explore the wire
+            </Link>
+            <Link
+              href="/markets"
+              className="pill border-line text-text-hi hover:bg-surface border px-5 py-2.5 text-[14px]"
+            >
+              Open markets
+            </Link>
+          </div>
+        </div>
 
-          <div className="border-line mt-5 flex items-center gap-4 border-t pt-4">
-            <div>
-              <div className="text-text-mid text-[12px]">
-                {LEAD.instrument.name} · {LEAD.instrument.symbol}
+        {/* Lead cluster beside its instrument (§13). */}
+        <div className="lg:col-span-5">
+          {lead ? (
+            <Link
+              href={`/news/${lead.slug}`}
+              className="border-line bg-surface hover:bg-raised block border p-5 transition-colors"
+            >
+              <div className="eyebrow flex items-center gap-3">
+                <span className="ours">◆ {lead.importanceScore}</span>
+                <span className="ours">{lead.sourceCount} sources</span>
+                <span>session lead</span>
               </div>
-              <div className="tnum text-text-hi mt-0.5 text-[27px]">
-                {formatMoney(LEAD.instrument.priceUsd, currency)}
+              <h2 className="font-editorial text-text-hi mt-3 text-[21px] leading-snug">
+                {lead.title}
+              </h2>
+              {leadMover ? (
+                <div className="border-line mt-4 flex items-center justify-between border-t pt-3">
+                  <span className="text-text-mid text-[12px]">
+                    {leadMover.name} · {leadMover.symbol}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="tnum text-text-hi text-[15px]">
+                      {formatMoney(leadMover.priceUsd, currency)}
+                    </span>
+                    <span
+                      className={`tnum flex items-center gap-1 text-[12px] ${
+                        directionOf(leadMover.change) === "gain"
+                          ? "dir-gain"
+                          : directionOf(leadMover.change) === "loss"
+                            ? "dir-loss"
+                            : "text-text-mid"
+                      }`}
+                    >
+                      <span aria-hidden>{directionGlyph(leadMover.change)}</span>
+                      {formatPercent(leadMover.changePct)}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
+            </Link>
+          ) : null}
+        </div>
+      </section>
+
+      {/* Stat row — big tokens, mono labels (§12). */}
+      <section className="border-line bg-line mt-14 grid grid-cols-2 gap-px border lg:grid-cols-4">
+        {STATS.map((s) => (
+          <div key={s.label} className="bg-canvas p-5">
+            <div className="tnum text-text-hi flex items-baseline gap-0.5 text-[34px] leading-none">
+              {s.value}
+              {s.sup ? <span className="ours text-[15px]">{s.sup}</span> : null}
+            </div>
+            <p className="text-text-low mt-2 text-[12px] leading-snug">{s.label}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* What Mizan does — alternating raised cards, one corner mark (not on link text). */}
+      <section className="mt-14">
+        <p className="eyebrow">what mizan ships that the wires don&rsquo;t</p>
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {FEATURES.map((f, i) => (
+            <div
+              key={f.title}
+              className={`border-line flex flex-col border p-5 ${
+                i === 1 ? "bg-raised" : "bg-surface"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <span className="ours text-[13px]" aria-hidden>
+                  ◆
+                </span>
+                <span className="text-text-low text-[13px]" aria-hidden>
+                  ↗
+                </span>
               </div>
+              <h3 className="font-editorial text-text-hi mt-3 text-[19px] leading-snug">
+                {f.title}
+              </h3>
+              <p className="text-text-mid mt-2 text-[13px] leading-relaxed">{f.body}</p>
             </div>
-            <div className={`tnum flex items-center gap-1.5 text-[15px] ${dirClass}`}>
-              <span aria-hidden>{directionGlyph(LEAD.instrument.change)}</span>
-              {formatMoney(Math.abs(LEAD.instrument.change), currency)}
-              <span className="text-text-mid">·</span>
-              {formatPercent(LEAD.instrument.changePct)}
-            </div>
-          </div>
-
-          {/* Computed recap — accent marks it as OURS, not the wire's (§11). */}
-          <div className="border-iris mt-6 border-l-2 pl-4">
-            <div className="ours flex items-center gap-2 text-[12px]">
-              <span aria-hidden>◆</span>
-              <span>Computed from market data</span>
-            </div>
-            <p className="font-editorial text-text-hi mt-2 max-w-[68ch] text-[17px] leading-[1.6]">
-              Brent settled 2.3% lower at $71.40, a third consecutive decline and the
-              lowest close in over a month. Energy was the weakest of the sectors
-              tracked. Seven outlets are covering the OPEC+ meeting.
-            </p>
-            <p className="text-text-low mt-2 text-[12px]">
-              Illustrative fixture · live recaps generated deterministically in Phase 5
-            </p>
-          </div>
-        </article>
-
-        {/* Rail placeholder — movers/wire land in later phases. */}
-        <aside className="lg:col-span-4">
-          <div className="border-line bg-surface rounded-none border p-4">
-            <h2 className="text-text-mid text-[13px] font-medium">
-              Phase 0 · Foundation
-            </h2>
-            <p className="text-text-low mt-2 text-[13px] leading-relaxed">
-              This is the layout shell: monochrome chrome, the reserved
-              <span className="ours"> iris</span> accent for our own computed content,
-              dual currency, and dark / light themes. Data surfaces arrive phase by
-              phase.
-            </p>
-          </div>
-        </aside>
-      </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

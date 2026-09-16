@@ -7,7 +7,7 @@ import { SymbolSearch } from "@/components/market/SymbolSearch";
 
 const NAV = [
   { href: "/markets", label: "Markets" },
-  { href: "/news", label: "News" },
+  { href: "/news", label: "Wire" },
   { href: "/economy", label: "Economy" },
   { href: "/methodology", label: "Methodology" },
 ];
@@ -21,23 +21,25 @@ export function Header({
 }) {
   return (
     <header className="border-line bg-canvas/95 sticky top-0 z-40 border-b backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[1280px] items-center gap-6 px-4">
-        <Link
-          href="/"
-          className="flex items-baseline gap-1.5"
-          aria-label="MarketIntelligence home"
-        >
-          <span className="font-editorial text-text-hi text-[19px] leading-none">
-            Market<span className="ours">Intelligence</span>
+      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4">
+        {/* Wordmark: hairline mark + editorial name. */}
+        <Link href="/" className="flex items-center gap-2" aria-label="Mizan home">
+          <span className="mark" aria-hidden />
+          <span className="font-editorial text-text-hi text-[20px] leading-none">
+            miza<span className="ours">n</span>
           </span>
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-5 md:flex">
+        {/* Pill nav with mono labels — chrome, not data. */}
+        <nav
+          aria-label="Primary"
+          className="pill border-line bg-surface ml-2 hidden items-center border p-1 md:flex"
+        >
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-text-mid hover:text-text-hi text-[13px] transition-colors"
+              className="pill text-text-mid hover:bg-raised hover:text-text-hi px-3 py-1.5 font-mono text-[12px] transition-colors"
             >
               {item.label}
             </Link>

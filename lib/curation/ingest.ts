@@ -25,7 +25,7 @@ export interface IngestResult {
 async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
   if (!(await isAllowed(source.feed_url))) return [];
   const res = await fetch(source.feed_url, {
-    headers: { "user-agent": "MarketIntelligenceBot" },
+    headers: { "user-agent": "MizanBot" },
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`${source.id}: HTTP ${res.status}`);

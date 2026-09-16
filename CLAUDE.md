@@ -1,4 +1,4 @@
-# CLAUDE.md — MarketIntelligence 2.0
+# CLAUDE.md — Mizan (MarketIntelligence 2.0)
 
 Standing rules for this repository. Condensed from the master prompt (§2, §3, §4,
 §10, §17). These are non-negotiable; read them before writing code.

@@ -12,12 +12,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "MarketIntelligence 2.0",
-    template: "%s · MarketIntelligence",
+    default: "Mizan — market intelligence",
+    template: "%s · Mizan",
   },
   // Written to match what V1 genuinely does (§1) — no "AI-written" claim.
   description:
-    "Algorithmically curated market intelligence: signal ranking, cross-source clustering, and news-to-price attribution. Not AI-written analysis.",
+    "Mizan: algorithmically curated market intelligence — signal ranking, cross-source clustering, and news-to-price attribution across global and GCC markets. Not AI-written analysis.",
 };
 
 export const viewport: Viewport = {
