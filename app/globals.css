@@ -11,23 +11,43 @@
  */
 
 :root {
-  /* Monochrome chrome — dark (default) */
-  --canvas: #0c0e11;
-  --surface: #14171b;
-  --raised: #1d2127;
-  --line: #2a2f36;
+  /* Monochrome chrome — dark (default). Deep, slightly cool for atmosphere. */
+  --canvas: #08090c;
+  --surface: #101319;
+  --raised: #161a21;
+  --raised-2: #1c212a;
+  --line: #242932;
+  --line-strong: #333a45;
 
-  --text-hi: #e8eaed;
-  --text-mid: #a0a7b0;
+  --text-hi: #edeff2;
+  --text-mid: #a6adb8;
   --text-low: #6b7280;
 
   /* Data colour — identical in both modes (it means the same thing). */
   /* Always paired with ▲/▼ and a sign — never colour alone. */
-  --gain: #2bb673;
-  --loss: #e04b4b;
+  --gain: #34d399;
+  --loss: #f2555a;
 
   /* The one accent. OUR computed content only. Used nowhere else. Ever. */
-  --iris: #5d5fef;
+  --iris: #6d70f5;
+  --iris-strong: #8b8dff;
+
+  /* Elevation + shape + glow. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
+  --r-card: 14px;
+  --r-sm: 8px;
+  --glow: radial-gradient(
+    60% 60% at 50% 0%,
+    color-mix(in srgb, var(--iris) 22%, transparent),
+    transparent 70%
+  );
+  --card-top: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 5%, transparent),
+    transparent 40%
+  );
 
   /* Type scale (§12): 12/13/15/17/21/27/34/44 */
   --step-0: 0.75rem; /* 12 */
@@ -45,14 +65,30 @@
 /* Light mode — the client rejected navy/gold and white/charcoal;
    this is a warm paper, not a stark white. */
 :root[data-theme="light"] {
-  --canvas: #f3f4f1;
-  --surface: #e9eae6;
+  --canvas: #f4f5f2;
+  --surface: #fbfbf9;
   --raised: #ffffff;
-  --line: #d7d9d3;
+  --raised-2: #ffffff;
+  --line: #e4e5e0;
+  --line-strong: #d2d4cd;
 
-  --text-hi: #111418;
-  --text-mid: #4b525c;
-  --text-low: #767c86;
+  --text-hi: #14171b;
+  --text-mid: #545b64;
+  --text-low: #8a9098;
+
+  --gain: #10a071;
+  --loss: #d93b40;
+  --iris: #5457e8;
+  --iris-strong: #4144d6;
+
+  --shadow-sm: 0 1px 2px rgba(16, 20, 28, 0.06);
+  --shadow-md: 0 8px 24px -8px rgba(16, 20, 28, 0.12);
+  --shadow-lg: 0 24px 56px -20px rgba(16, 20, 28, 0.16);
+  --card-top: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 70%, transparent),
+    transparent 40%
+  );
 
   color-scheme: light;
 }
@@ -60,14 +96,25 @@
 /* Respect OS preference only when the user has not set an explicit theme. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --canvas: #f3f4f1;
-    --surface: #e9eae6;
+    --canvas: #f4f5f2;
+    --surface: #fbfbf9;
     --raised: #ffffff;
-    --line: #d7d9d3;
+    --raised-2: #ffffff;
+    --line: #e4e5e0;
+    --line-strong: #d2d4cd;
 
-    --text-hi: #111418;
-    --text-mid: #4b525c;
-    --text-low: #767c86;
+    --text-hi: #14171b;
+    --text-mid: #545b64;
+    --text-low: #8a9098;
+
+    --gain: #10a071;
+    --loss: #d93b40;
+    --iris: #5457e8;
+    --iris-strong: #4144d6;
+
+    --shadow-sm: 0 1px 2px rgba(16, 20, 28, 0.06);
+    --shadow-md: 0 8px 24px -8px rgba(16, 20, 28, 0.12);
+    --shadow-lg: 0 24px 56px -20px rgba(16, 20, 28, 0.16);
 
     color-scheme: light;
   }
@@ -79,13 +126,16 @@
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
+  --color-raised-2: var(--raised-2);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-text-hi: var(--text-hi);
   --color-text-mid: var(--text-mid);
   --color-text-low: var(--text-low);
   --color-gain: var(--gain);
   --color-loss: var(--loss);
   --color-iris: var(--iris);
+  --color-iris-strong: var(--iris-strong);
 
   /* Fonts are injected as CSS variables by next/font in the root layout. */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -109,6 +159,11 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Editorial display gets tighter tracking + optical weight. */
+.font-editorial {
+  letter-spacing: -0.011em;
 }
 
 /* Every price, percentage and table figure: mono + tabular-nums (§12). */
@@ -234,5 +289,162 @@ body {
   .flash-gain,
   .flash-loss {
     animation: none;
+  }
+}
+
+/* ============================================================
+   Polish layer — depth, elevation and motion. Keeps the mono
+   identity; adds the finish that separates product from wireframe.
+   ============================================================ */
+
+/* Elevated card: subtle top highlight + soft shadow + hover lift. */
+.card {
+  position: relative;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-md);
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--card-top);
+  pointer-events: none;
+}
+.card-hover {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--line-strong);
+}
+
+/* Buttons. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.62rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(180deg, var(--iris-strong), var(--iris));
+  box-shadow:
+    0 6px 18px -6px color-mix(in srgb, var(--iris) 65%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent);
+}
+.btn-primary:hover {
+  box-shadow:
+    0 10px 26px -6px color-mix(in srgb, var(--iris) 75%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 35%, transparent);
+}
+.btn-ghost {
+  color: var(--text-hi);
+  background: color-mix(in srgb, var(--raised) 60%, transparent);
+  border: 1px solid var(--line-strong);
+}
+.btn-ghost:hover {
+  background: var(--raised-2);
+  border-color: var(--text-low);
+}
+
+/* Iris gradient text — used sparingly on the hero accent. */
+.ours-grad {
+  background: linear-gradient(120deg, var(--iris-strong), var(--iris) 55%, #9b7cff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Atmospheric hero glow behind the headline. */
+.hero-glow {
+  position: relative;
+}
+.hero-glow::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -8%;
+  top: -30%;
+  width: 60%;
+  height: 130%;
+  background: var(--glow);
+  filter: blur(20px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Live dot — a quiet pulse next to "live" labels. */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--gain);
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  border: 1px solid var(--gain);
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ping {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Entrance: gentle fade-up, staggered by an inline --d delay. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-up {
+  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    animation: none;
+  }
+  .live-dot::after {
+    animation: none;
+  }
+  .card-hover {
+    transition: none;
   }
 }
