@@ -58,6 +58,18 @@ async function write<T>(key: string, ttlSeconds: number, value: T): Promise<void
   await store.set(key, JSON.stringify(env), ttlSeconds * STALE_GRACE_MULTIPLIER);
 }
 
+/**
+ * Write a value into the SWR cache directly. Used by scheduled jobs to prime
+ * the read cache (`market:quote:*`) that page reads consume — pages never fetch.
+ */
+export async function cachePut<T>(
+  key: string,
+  ttlSeconds: number,
+  value: T,
+): Promise<void> {
+  await write(key, ttlSeconds, value);
+}
+
 async function refreshUnderLock<T>(
   key: string,
   ttlSeconds: number,

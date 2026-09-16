@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "drizzle-orm": "0.38.3",
+    "lightweight-charts": "4.2.3",
     "next": "15.5.4",
     "postgres": "3.4.5",
     "react": "19.1.0",

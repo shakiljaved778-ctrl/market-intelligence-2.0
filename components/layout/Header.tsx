@@ -3,6 +3,7 @@ import type { DisplayCurrency } from "@/lib/currency/peg";
 import type { Theme } from "@/lib/theme/theme";
 import { CurrencyToggle } from "./CurrencyToggle";
 import { ThemeToggle } from "./ThemeToggle";
+import { SymbolSearch } from "@/components/market/SymbolSearch";
 
 const NAV = [
   { href: "/markets", label: "Markets" },
@@ -44,6 +45,7 @@ export function Header({
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <SymbolSearch />
           <CurrencyToggle current={currency} />
           <ThemeToggle initial={theme} />
         </div>
