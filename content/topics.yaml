@@ -1,0 +1,38 @@
+# Topic keyword rules (§9 Stage 2) — committed, reviewable, adjustable.
+# A topic is assigned when any of its keywords appears in headline + dek
+# (case-insensitive, word-ish match). Tuned against real ingested data.
+
+topics:
+  monetary_policy:
+    [
+      rate decision,
+      interest rate,
+      rate cut,
+      rate hike,
+      policy rate,
+      fomc,
+      monetary policy,
+      basis points,
+      hawkish,
+      dovish,
+    ]
+  inflation: [inflation, cpi, consumer prices, ppi, pce, deflation, price index]
+  employment:
+    [jobs report, unemployment, payrolls, nonfarm, labor market, jobless claims]
+  energy: [oil, crude, brent, wti, opec, natural gas, energy prices, barrel]
+  earnings:
+    [
+      earnings,
+      quarterly results,
+      revenue,
+      profit,
+      guidance,
+      eps,
+      results beat,
+      results miss,
+    ]
+  regulation:
+    [sec, regulator, filing, lawsuit, settlement, enforcement, antitrust, investigation]
+  mergers: [merger, acquisition, takeover, buyout, deal, m&a]
+  gcc: [qatar, gcc, doha, tadawul, saudi, gulf, riyal, dfm, adx, qse]
+  crypto: [bitcoin, ethereum, crypto, digital asset, stablecoin, token]

@@ -8,6 +8,13 @@
       "when": 1789556493538,
       "tag": "0000_thankful_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789559329354,
+      "tag": "0001_amused_warpath",
+      "breakpoints": true
     }
   ]
 }

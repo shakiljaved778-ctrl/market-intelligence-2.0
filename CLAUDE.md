@@ -107,6 +107,33 @@ computed content (recaps, scores, source counts) — it *means* "this is ours". 
 Newsreader (headlines/recaps), Geist Sans (UI), Geist Mono `tabular-nums` (all
 figures). Hairline rules + surface elevation, not shadows.
 
+## Curation engine tuning (§9) — recorded per the Phase 4 gate
+
+**Embeddings.** Default is `HashEmbedder` (deterministic, offline, 384-dim) so the
+build/tests/wire run with no model. The mandated `all-MiniLM-L6-v2` (via
+`@xenova/transformers`) is used in the Actions runner when `EMBEDDER=minilm`; it
+loads dynamically and never enters the Next serving bundle.
+
+**Clustering** (`lib/curation/cluster.ts`): score = embedding cosine + overlap
+boost, single-link within a 48h window. With the HashEmbedder, paraphrase cosine
+is weak, so the overlap boost dominates: `BOOST_TICKER=0.30`, `BOOST_ENTITY=0.30`,
+`BOOST_TOPIC=0.10` (cap 0.45), `SIM_THRESHOLD=0.50`. Evidence: on the fixture wire
+this merges one Fed decision across four sources into **one** cluster and one
+OPEC+ story across three, while keeping the SEC enforcement and Apple items as
+singletons (`lib/curation/pipeline.test.ts`). With `EMBEDDER=minilm`, lower boosts
+to ≈0.12 and raise `SIM_THRESHOLD` toward ~0.68 pure cosine.
+
+**Ranking** (`lib/curation/rank.ts`), weights sum to 1, one place, tunable:
+`W_SOURCES=0.40` (distinct sources, log-scaled), `W_TIER=0.20` (regulator/primary
+1.0, wire 0.7, outlet 0.4), `W_MARKET=0.25` (max |move| of tickers / 5%),
+`W_PRIMARY=0.15` (a regulator/primary source present). Multiplied by a recency
+factor (18h half-life, floored at 0.30 so covered news doesn't vanish).
+
+**Legal invariant.** `articles` has no body column — guarded by
+`lib/db/schema.test.ts`. robots.txt is checked inside the fetcher
+(`lib/curation/robots.ts`). Only sources in `content/sources.yaml` with a
+`license_note` are ingested.
+
 ## Build discipline (§14)
 
 Work **phase by phase**. At each gate: stop, report what was built, show acceptance

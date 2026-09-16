@@ -23,20 +23,26 @@ import {
  * headline, dek (≤40 words), link, timestamp and source — never article text.
  */
 
-export const sources = pgTable("sources", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  homepage: text("homepage"),
-  feedUrl: text("feed_url"),
-  kind: text("kind", { enum: ["rss", "api"] }).notNull(),
-  region: text("region"),
-  tier: text("tier", { enum: ["wire", "outlet", "regulator", "primary"] }).notNull(),
-  trustScore: integer("trust_score").notNull().default(50),
-  licenseNote: text("license_note").notNull(),
-  active: boolean("active").notNull().default(true),
-  lastFetchedAt: timestamp("last_fetched_at", { withTimezone: true }),
-  failureCount: integer("failure_count").notNull().default(0),
-});
+export const sources = pgTable(
+  "sources",
+  {
+    id: serial("id").primaryKey(),
+    // Stable natural key = the id in content/sources.yaml. Upsert target.
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    homepage: text("homepage"),
+    feedUrl: text("feed_url"),
+    kind: text("kind", { enum: ["rss", "api"] }).notNull(),
+    region: text("region"),
+    tier: text("tier", { enum: ["wire", "outlet", "regulator", "primary"] }).notNull(),
+    trustScore: integer("trust_score").notNull().default(50),
+    licenseNote: text("license_note").notNull(),
+    active: boolean("active").notNull().default(true),
+    lastFetchedAt: timestamp("last_fetched_at", { withTimezone: true }),
+    failureCount: integer("failure_count").notNull().default(0),
+  },
+  (t) => [uniqueIndex("sources_slug_uq").on(t.slug)],
+);
 
 export const articles = pgTable(
   "articles",

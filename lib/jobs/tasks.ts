@@ -59,11 +59,38 @@ export async function eodTask(): Promise<JobSummary> {
 }
 
 export async function ingestTask(): Promise<JobSummary> {
-  // Phase 4 fills this: pull feeds, dedupe, classify, store (no body text).
-  return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
+  // Pull feeds (robots-checked), normalise, dedupe, store headline metadata —
+  // never body text (§9 Stage 1, §10).
+  const { ingestAll } = await import("@/lib/curation/ingest");
+  const { loadSources } = await import("@/lib/curation/config");
+  const { ensureSources, persistArticles } = await import("@/lib/db/queries/articles");
+
+  const sources = loadSources();
+  const result = await ingestAll(sources);
+  const sourceMap = await ensureSources(sources);
+  const stored = await persistArticles(result.articles, sourceMap);
+  return { itemsIn: result.articles.length, itemsOut: stored };
 }
 
 export async function clusterTask(): Promise<JobSummary> {
-  // Phase 4 fills this: embed, cluster, rank, generate computed recaps.
-  return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
+  // Embed (local all-MiniLM in the runner), cluster within 48h, rank, persist
+  // (§9 Stages 3–4). Reads recent articles from Postgres.
+  const { dbRecentArticles, persistClusters } = await import(
+    "@/lib/db/queries/articles"
+  );
+  const { runPipeline } = await import("@/lib/curation/pipeline");
+  const { getEmbedder } = await import("@/lib/curation/embed");
+  const { loadSources } = await import("@/lib/curation/config");
+
+  const recent = await dbRecentArticles(48);
+  if (recent.length === 0) return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
+
+  // Rank context: source tiers from the registry; ticker moves left empty here
+  // (the quotes job owns live moves — a follow-on join wires them in).
+  const tiers: Record<string, string> = {};
+  for (const s of loadSources()) tiers[s.id] = s.tier;
+
+  const ranked = await runPipeline(recent, { tiers, tickerMovePct: {} }, getEmbedder());
+  const stored = await persistClusters(ranked);
+  return { itemsIn: recent.length, itemsOut: stored };
 }

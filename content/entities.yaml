@@ -1,0 +1,52 @@
+# Entity dictionary (§9 Stage 2) — committed and reviewable, not inferred magic.
+# Each entity has a canonical name, a kind, and aliases matched case-insensitively
+# against headline + dek.
+
+entities:
+  - name: Federal Reserve
+    kind: central_bank
+    aliases:
+      [
+        Fed,
+        FOMC,
+        Federal Open Market Committee,
+        U.S. Federal Reserve,
+        US central bank,
+        U.S. central bank,
+      ]
+  - name: European Central Bank
+    kind: central_bank
+    aliases: [ECB]
+  - name: Bank of England
+    kind: central_bank
+    aliases: [BoE]
+  - name: Qatar Central Bank
+    kind: central_bank
+    aliases: [QCB]
+  - name: U.S. SEC
+    kind: regulator
+    aliases: [SEC, Securities and Exchange Commission]
+  - name: OPEC
+    kind: institution
+    aliases: [OPEC+, Organization of the Petroleum Exporting Countries]
+  - name: S&P 500
+    kind: index
+    aliases: [S&P, SPX, S&P 500 Index]
+  - name: Nasdaq
+    kind: index
+    aliases: [Nasdaq Composite, Nasdaq 100, NDX]
+  - name: Brent Crude
+    kind: commodity
+    aliases: [Brent, Brent oil]
+  - name: WTI Crude
+    kind: commodity
+    aliases: [WTI, West Texas Intermediate]
+  - name: Gold
+    kind: commodity
+    aliases: [XAU, gold price]
+  - name: United States
+    kind: country
+    aliases: [US, U.S., USA]
+  - name: Qatar
+    kind: country
+    aliases: [State of Qatar]

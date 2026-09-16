@@ -33,6 +33,7 @@ async function main(): Promise<void> {
     .insert(sources)
     .values([
       {
+        slug: "sec-edgar",
         name: "SEC EDGAR",
         homepage: "https://www.sec.gov",
         kind: "api" as const,
@@ -42,6 +43,7 @@ async function main(): Promise<void> {
         region: "US",
       },
       {
+        slug: "fred",
         name: "Federal Reserve (FRED)",
         homepage: "https://fred.stlouisfed.org",
         kind: "api" as const,

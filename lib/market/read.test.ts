@@ -15,11 +15,12 @@ describe("read layer (cache/DB/fixtures — never a vendor)", () => {
     expect(await readQuote("NOPE")).toBeNull();
   });
 
-  it("produces reproducible fixture candles ending near the quote price", async () => {
+  it("produces a reproducible fixture price series ending near the quote", async () => {
     const a = await readCandles("AAPL", "1M");
     const b = await readCandles("AAPL", "1M");
     expect(a.length).toBeGreaterThan(0);
-    expect(a).toEqual(b); // deterministic
+    // The close series is seeded/deterministic (only wall-clock timestamps move).
+    expect(a.map((c) => c.c)).toEqual(b.map((c) => c.c));
     const q = await readQuote("AAPL");
     const lastClose = a.at(-1)?.c ?? 0;
     expect(Math.abs(lastClose - (q?.priceUsd ?? 0))).toBeLessThan(1);

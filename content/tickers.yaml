@@ -1,0 +1,13 @@
+# Ticker dictionary (§9 Stage 2). Symbol -> aliases matched against headline+dek.
+# Committed and reviewable. Resolve ambiguity by exchange context + co-occurrence.
+tickers:
+  AAPL: [Apple, Apple Inc]
+  MSFT: [Microsoft, Microsoft Corp]
+  JPM: [JPMorgan, JPMorgan Chase, JP Morgan]
+  XOM: [Exxon, Exxon Mobil, ExxonMobil]
+  TSLA: [Tesla, Tesla Inc]
+  HSBA: [HSBC, HSBC Holdings]
+  SHEL: [Shell, Shell plc]
+  QNBK: [QNB, Qatar National Bank]
+  IQCD: [Industries Qatar]
+  BTC: [Bitcoin, BTC]

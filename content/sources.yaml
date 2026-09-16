@@ -1,0 +1,85 @@
+# MarketIntelligence 2.0 — feed registry (§10).
+# ONLY sources listed here with an explicit license_note may be ingested.
+# We weight heavily toward regulators, central banks, exchanges and statistics
+# authorities: licence-free, high-trust, and underused by competitors.
+#
+# tier: wire | outlet | regulator | primary
+# We store headline, dek (<=40 words), link, timestamp, source — NEVER body text.
+
+sources:
+  - id: sec-press
+    name: U.S. SEC — Press Releases
+    homepage: https://www.sec.gov
+    feed_url: https://www.sec.gov/news/pressreleases.rss
+    kind: rss
+    region: US
+    tier: regulator
+    trust_score: 100
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true
+
+  - id: fed-press
+    name: U.S. Federal Reserve — Press
+    homepage: https://www.federalreserve.gov
+    feed_url: https://www.federalreserve.gov/feeds/press_all.xml
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 100
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true
+
+  - id: ecb-press
+    name: European Central Bank — Press
+    homepage: https://www.ecb.europa.eu
+    feed_url: https://www.ecb.europa.eu/rss/press.html
+    kind: rss
+    region: EU
+    tier: primary
+    trust_score: 98
+    license_note: ECB content reproducible with acknowledgement of source.
+    active: true
+
+  - id: boe-news
+    name: Bank of England — News
+    homepage: https://www.bankofengland.co.uk
+    feed_url: https://www.bankofengland.co.uk/rss/news
+    kind: rss
+    region: UK
+    tier: primary
+    trust_score: 98
+    license_note: Open Government Licence v3.0 — attribution required.
+    active: true
+
+  - id: treasury-press
+    name: U.S. Treasury — Press
+    homepage: https://home.treasury.gov
+    feed_url: https://home.treasury.gov/rss/press.xml
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 98
+    license_note: U.S. government work, public domain.
+    active: true
+
+  - id: qcb-news
+    name: Qatar Central Bank — News
+    homepage: https://www.qcb.gov.qa
+    feed_url: https://www.qcb.gov.qa/en/rss/news
+    kind: rss
+    region: QA
+    tier: regulator
+    trust_score: 96
+    license_note: Official Qatari regulator publication; headline + link only.
+    active: false # verify feed URL before enabling (§6)
+
+  - id: qse-disclosures
+    name: Qatar Stock Exchange — Disclosures
+    homepage: https://www.qe.com.qa
+    feed_url: https://www.qe.com.qa/rss/disclosures
+    kind: rss
+    region: QA
+    tier: primary
+    trust_score: 96
+    license_note: Exchange regulatory disclosures; headline + link only.
+    active: false # verify feed URL before enabling (§6)
