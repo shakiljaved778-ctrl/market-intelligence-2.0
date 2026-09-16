@@ -166,6 +166,39 @@ body {
   border-radius: 999px;
 }
 
+/* Editorial prose for the written pages (§12). */
+.prose-body {
+  color: var(--text-mid);
+  font-size: var(--step-2);
+}
+.prose-body p {
+  margin: 0 0 1rem;
+  line-height: 1.6;
+}
+.prose-body h2 {
+  font-family: var(--font-serif);
+  color: var(--text-hi);
+  font-size: var(--step-4);
+  line-height: 1.2;
+  margin: 1.75rem 0 0.5rem;
+}
+.prose-body ul {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+.prose-body li {
+  margin: 0.35rem 0;
+  line-height: 1.55;
+}
+.prose-body strong {
+  color: var(--text-hi);
+  font-weight: 600;
+}
+.prose-body a {
+  color: var(--iris);
+}
+
 /* Visible keyboard focus is part of the unannounced quality floor (§12). */
 :where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--iris);

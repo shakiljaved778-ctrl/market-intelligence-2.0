@@ -69,9 +69,9 @@ export default async function QuotePage({ params }: Params) {
       <div className="border-line flex flex-wrap items-end justify-between gap-4 border-b pb-5">
         <div>
           <div className="text-text-mid flex items-center gap-2 text-[13px]">
-            <span className="font-editorial text-text-hi text-[21px]">
+            <h1 className="font-editorial text-text-hi text-[21px]">
               {meta?.name ?? sym}
-            </span>
+            </h1>
             <span className="tnum">{sym}</span>
             {meta ? <span className="text-text-low">· {meta.exchange}</span> : null}
           </div>
