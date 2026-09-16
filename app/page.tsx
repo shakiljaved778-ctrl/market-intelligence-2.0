@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { readMovers } from "@/lib/market/read";
 import { readWire } from "@/lib/news/read";
+import { listRecaps } from "@/lib/narrative/read";
 import { formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 
@@ -46,6 +47,7 @@ export default async function BoardPage() {
   const lead = clusters[0];
   const leadTicker = lead?.tickers[0];
   const leadMover = movers.find((m) => m.symbol === leadTicker) ?? movers[0];
+  const sessionRecap = listRecaps(currency).find((r) => r.kind === "session_close");
 
   return (
     <div className="py-10 sm:py-14">
@@ -122,6 +124,21 @@ export default async function BoardPage() {
           ) : null}
         </div>
       </section>
+
+      {/* Computed session recap — our own prose, accent-marked (§9, §11). */}
+      {sessionRecap ? (
+        <section className="border-iris mt-12 border-l-2 pl-5">
+          <Link href={`/recap/${sessionRecap.slug}`} className="block">
+            <div className="ours flex items-center gap-2 text-[12px]">
+              <span aria-hidden>◆</span>
+              <span>Session recap · computed from market data</span>
+            </div>
+            <p className="font-editorial text-text-hi mt-2 max-w-[68ch] text-[19px] leading-[1.6]">
+              {sessionRecap.output.bodyMd}
+            </p>
+          </Link>
+        </section>
+      ) : null}
 
       {/* Stat row — big tokens, mono labels (§12). */}
       <section className="border-line bg-line mt-14 grid grid-cols-2 gap-px border lg:grid-cols-4">

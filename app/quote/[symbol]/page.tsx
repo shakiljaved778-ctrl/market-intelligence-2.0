@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/chart/PriceChart";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { readQuote } from "@/lib/market/read";
+import { readCandles, readQuote } from "@/lib/market/read";
+import { deriveInstrumentRecap } from "@/lib/narrative/derive";
+import { instrumentRecap } from "@/lib/narrative/recap";
 import { formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 import { sessionFor } from "@/lib/format/session";
@@ -26,6 +28,12 @@ export default async function QuotePage({ params }: Params) {
 
   const meta = universeBySymbol(sym);
   const session = sessionFor(meta?.exchange ?? null);
+
+  // Computed "how it moved" recap — deterministic, from our own candles (§9).
+  const candles = await readCandles(sym, "6M");
+  const recap = instrumentRecap(
+    deriveInstrumentRecap(meta?.name ?? sym, currency, quote, candles),
+  );
   const dir = directionOf(quote.change);
   const dirClass =
     dir === "gain" ? "dir-gain" : dir === "loss" ? "dir-loss" : "text-text-mid";
@@ -121,11 +129,16 @@ export default async function QuotePage({ params }: Params) {
           <div className="border-iris border-l-2 pl-4">
             <div className="ours flex items-center gap-2 text-[12px]">
               <span aria-hidden>◆</span>
-              <span>How it moved</span>
+              <span>How it moved · computed</span>
             </div>
-            <p className="text-text-low mt-2 text-[13px] leading-relaxed">
-              A computed, deterministic recap of this instrument&rsquo;s session is
-              generated in Phase 5 from our own price data.
+            <p className="font-editorial text-text-hi mt-2 text-[15px] leading-[1.6]">
+              {recap.bodyMd}
+            </p>
+            <p className="text-text-low mt-2 text-[11px]">
+              Generated from our own price data ·{" "}
+              <a href="/methodology" className="ours">
+                methodology
+              </a>
             </p>
           </div>
 
