@@ -85,12 +85,29 @@ export async function clusterTask(): Promise<JobSummary> {
   const recent = await dbRecentArticles(48);
   if (recent.length === 0) return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
 
-  // Rank context: source tiers from the registry; ticker moves left empty here
-  // (the quotes job owns live moves — a follow-on join wires them in).
+  // Rank context: source tiers from the registry.
   const tiers: Record<string, string> = {};
   for (const s of loadSources()) tiers[s.id] = s.tier;
 
-  const ranked = await runPipeline(recent, { tiers, tickerMovePct: {} }, getEmbedder());
+  // Live market moves feed the W_MARKET ranking term. We read them from the KV
+  // cache the quotes job already primed (`market:quote:*`) — no new vendor call
+  // here (§2). When keys/cache are absent this is simply empty and ranking falls
+  // back to source-count/tier/recency, exactly as before.
+  const { classify } = await import("@/lib/curation/classify");
+  const { cacheGet } = await import("@/lib/cache/swr");
+  const symbols = new Set<string>();
+  for (const a of recent) {
+    for (const t of classify(a.headline, a.dek).tickers) symbols.add(t);
+  }
+  const tickerMovePct: Record<string, number> = {};
+  for (const symbol of symbols) {
+    const q = await cacheGet<{ changePct?: number }>(`market:quote:${symbol}`);
+    if (q && typeof q.changePct === "number") {
+      tickerMovePct[symbol] = Math.abs(q.changePct);
+    }
+  }
+
+  const ranked = await runPipeline(recent, { tiers, tickerMovePct }, getEmbedder());
   const stored = await persistClusters(ranked);
   return { itemsIn: recent.length, itemsOut: stored };
 }

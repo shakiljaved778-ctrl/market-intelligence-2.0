@@ -85,6 +85,18 @@ Actions**, add:
 They start running on their own once the secrets exist (or trigger one manually from
 the repo's **Actions** tab → pick a workflow → **Run workflow**).
 
+> ⚠️ **GitHub secrets ≠ Vercel env.** The **market-data provider keys**
+> (`FMP_API_KEY`, `POLYGON_API_KEY`, `EODHD_API_KEY`, `FINNHUB_API_KEY`,
+> `FRED_API_KEY`, `SEC_USER_AGENT`, …) are read by the **Vercel** app when it fetches
+> quotes/macro — so they must be set in **Vercel → Settings → Environment Variables**
+> (§2b). Putting *only* those provider keys in GitHub Actions secrets does **not**
+> feed the live site; the runner jobs (`ingest`/`cluster`) don't call those vendors.
+> What GitHub secrets are for: `APP_URL` + `CRON_SECRET` (all jobs), and
+> `POSTGRES_URL` + `KV_REST_API_URL`/`KV_REST_API_TOKEN` (so `ingest`/`cluster` can
+> write and cache). Set the provider keys in **both** places only if you later move
+> vendor fetching into the runner. `CRON_SECRET` must be **identical** in Vercel and
+> GitHub, and `POSTGRES_URL`/`KV_*` should match the same database in both.
+
 ### Go-live order (quick reference)
 
 1. Level 1 deploy (repo → Vercel → Deploy).

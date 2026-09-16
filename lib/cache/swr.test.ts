@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetKvStoreForTests } from "./store";
-import { swr } from "./swr";
+import { cacheGet, cachePut, swr } from "./swr";
 
 describe("swr (stale-while-revalidate)", () => {
   beforeEach(() => __resetKvStoreForTests());
@@ -39,5 +39,13 @@ describe("swr (stale-while-revalidate)", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("cacheGet reads a primed value and returns null on a miss", async () => {
+    await cachePut("market:quote:AAPL", 60, { changePct: -1.5 });
+    expect(await cacheGet<{ changePct: number }>("market:quote:AAPL")).toEqual({
+      changePct: -1.5,
+    });
+    expect(await cacheGet("market:quote:NOPE")).toBeNull();
   });
 });
