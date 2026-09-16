@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/*
+ * MarketIntelligence 2.0 — design tokens (§12)
+ * Core idea: the chrome is monochrome; COLOUR BELONGS TO DATA.
+ * The only saturated colour on a page comes from (a) price direction and
+ * (b) --iris, reserved exclusively for OUR OWN computed content.
+ *
+ * Dark is the primary mode. Light overrides live under [data-theme="light"]
+ * and prefers-color-scheme so a cookie-driven theme renders without a flash.
+ */
+
+:root {
+  /* Monochrome chrome — dark (default) */
+  --canvas: #0c0e11;
+  --surface: #14171b;
+  --raised: #1d2127;
+  --line: #2a2f36;
+
+  --text-hi: #e8eaed;
+  --text-mid: #a0a7b0;
+  --text-low: #6b7280;
+
+  /* Data colour — identical in both modes (it means the same thing). */
+  /* Always paired with ▲/▼ and a sign — never colour alone. */
+  --gain: #2bb673;
+  --loss: #e04b4b;
+
+  /* The one accent. OUR computed content only. Used nowhere else. Ever. */
+  --iris: #5d5fef;
+
+  /* Type scale (§12): 12/13/15/17/21/27/34/44 */
+  --step-0: 0.75rem; /* 12 */
+  --step-1: 0.8125rem; /* 13 */
+  --step-2: 0.9375rem; /* 15 */
+  --step-3: 1.0625rem; /* 17 */
+  --step-4: 1.3125rem; /* 21 */
+  --step-5: 1.6875rem; /* 27 */
+  --step-6: 2.125rem; /* 34 */
+  --step-7: 2.75rem; /* 44 */
+
+  color-scheme: dark;
+}
+
+/* Light mode — the client rejected navy/gold and white/charcoal;
+   this is a warm paper, not a stark white. */
+:root[data-theme="light"] {
+  --canvas: #f3f4f1;
+  --surface: #e9eae6;
+  --raised: #ffffff;
+  --line: #d7d9d3;
+
+  --text-hi: #111418;
+  --text-mid: #4b525c;
+  --text-low: #767c86;
+
+  color-scheme: light;
+}
+
+/* Respect OS preference only when the user has not set an explicit theme. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --canvas: #f3f4f1;
+    --surface: #e9eae6;
+    --raised: #ffffff;
+    --line: #d7d9d3;
+
+    --text-hi: #111418;
+    --text-mid: #4b525c;
+    --text-low: #767c86;
+
+    color-scheme: light;
+  }
+}
+
+/* Map tokens into Tailwind v4's theme so `bg-canvas`, `text-mid`,
+   `border-line`, `text-gain` etc. exist as utilities. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-text-hi: var(--text-hi);
+  --color-text-mid: var(--text-mid);
+  --color-text-low: var(--text-low);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
+  --color-iris: var(--iris);
+
+  /* Fonts are injected as CSS variables by next/font in the root layout. */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--text-hi);
+  font-family: var(--font-sans);
+  font-size: var(--step-2);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Every price, percentage and table figure: mono + tabular-nums (§12). */
+.tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Editorial voice: Newsreader for headlines and recap body. */
+.font-editorial {
+  font-family: var(--font-serif);
+}
+
+/* Data-direction helpers — the glyph carries meaning without colour. */
+.dir-gain {
+  color: var(--gain);
+}
+.dir-loss {
+  color: var(--loss);
+}
+
+/* The accent means "this is ours, not the wire's." */
+.ours {
+  color: var(--iris);
+}
+
+/* Visible keyboard focus is part of the unannounced quality floor (§12). */
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--iris);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Motion: one orchestrated moment — price cells flash on update, then decay.
+   prefers-reduced-motion disables the flash, leaving the glyph change. */
+@keyframes flash-gain {
+  from {
+    background-color: color-mix(in srgb, var(--gain) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes flash-loss {
+  from {
+    background-color: color-mix(in srgb, var(--loss) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.flash-gain {
+  animation: flash-gain 400ms ease-out;
+}
+.flash-loss {
+  animation: flash-loss 400ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash-gain,
+  .flash-loss {
+    animation: none;
+  }
+}
