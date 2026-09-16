@@ -10,8 +10,17 @@ import { SITE_URL } from "@/lib/site";
 
 const siteUrl = SITE_URL;
 
+// Never let a bad value crash the build (metadataBase is optional).
+function safeUrl(value: string): URL | undefined {
+  try {
+    return new URL(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: safeUrl(siteUrl),
   title: {
     default: "Mizan — market intelligence",
     template: "%s · Mizan",
