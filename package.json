@@ -15,7 +15,9 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "node --experimental-strip-types scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "job:ingest": "tsx jobs/ingest.ts",
+    "job:cluster": "tsx jobs/cluster.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.38.3",
@@ -38,6 +40,7 @@
     "prettier": "3.4.2",
     "prettier-plugin-tailwindcss": "0.6.9",
     "tailwindcss": "4.1.14",
+    "tsx": "4.19.2",
     "typescript": "5.7.3",
     "vitest": "2.1.8"
   },
