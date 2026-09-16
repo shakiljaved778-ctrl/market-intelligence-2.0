@@ -56,7 +56,9 @@ skip the rest; each one lights up more live data, anything missing stays on fixt
 | `POLYGON_API_KEY` | price charts / aggregate candles (free ~5/min) |
 | `EODHD_API_KEY` | end-of-day history + real-time fallback |
 | `FINNHUB_API_KEY` | optional — extra quotes/profiles |
+| `ALPHAVANTAGE_API_KEY` | last-resort quote/daily-candle/profile/search fallback (free ~25/day) |
 | `FRED_API_KEY` | US economic data (free) |
+| `PEXELS_API_KEY` | story cover photos (used by the backfill script/jobs, cached) |
 | `SEC_USER_AGENT` | e.g. `Mizan you@mizan.com` (required by SEC EDGAR) |
 | `NEXT_PUBLIC_SITE_URL` | your live URL (`https://…`) — fixes OG images + canonical |
 | `CRON_SECRET` | any long random string — protects the refresh jobs |

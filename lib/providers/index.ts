@@ -1,3 +1,4 @@
+import { AlphaVantageProvider } from "./alphavantage";
 import { CoinGeckoProvider } from "./coingecko";
 import { EodhdProvider } from "./eodhd";
 import { FinnhubProvider } from "./finnhub";
@@ -12,8 +13,9 @@ import { ProviderRegistry } from "./registry";
  * Each provider is skipped when its key is absent, so the order is safe
  * regardless of which subset of keys is configured.
  *
- * Quotes:  FMP → Finnhub → Polygon(EOD) → EODHD → CoinGecko(crypto) → fixture
- * Candles: Polygon → EODHD → fixture
+ * Quotes:  FMP → Finnhub → Polygon(EOD) → EODHD → CoinGecko(crypto)
+ *          → AlphaVantage(last-resort) → fixture
+ * Candles: Polygon → EODHD → AlphaVantage(daily) → fixture
  * Search/profile resolve across whichever providers declare the capability.
  */
 let singleton: ProviderRegistry | null = null;
@@ -26,6 +28,7 @@ export function getRegistry(): ProviderRegistry {
     new PolygonProvider(), // EOD quotes + aggregate candles
     new EodhdProvider(), // EOD candle backfill + real-time fallback
     new CoinGeckoProvider(), // crypto
+    new AlphaVantageProvider(), // last-resort equities fallback (tight free tier)
     new FixtureProvider(), // always-on fallback
   ]);
   return singleton;
