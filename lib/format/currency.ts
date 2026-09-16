@@ -19,3 +19,21 @@ export function formatMoney(
   });
   return currency === "USD" ? `$${num}` : `QR ${num}`;
 }
+
+/**
+ * Compact money for large figures like market cap — `$3.48T`, `$790.0B`,
+ * `QR 22B`. Converts USD → display currency at the peg (§7). Returns `—` for
+ * a null amount so callers can pass optional values straight through.
+ */
+export function formatCompactMoney(
+  amountUsd: number | null,
+  currency: DisplayCurrency,
+): string {
+  if (amountUsd === null) return "—";
+  const v = convertFromUsd(amountUsd, currency);
+  const unit = currency === "USD" ? "$" : "QR ";
+  if (v >= 1e12) return `${unit}${(v / 1e12).toFixed(2)}T`;
+  if (v >= 1e9) return `${unit}${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `${unit}${(v / 1e6).toFixed(0)}M`;
+  return `${unit}${v.toFixed(0)}`;
+}

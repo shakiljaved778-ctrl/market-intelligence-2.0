@@ -5,7 +5,7 @@ import { getDisplayCurrency } from "@/lib/currency/server";
 import { readCandles, readQuote } from "@/lib/market/read";
 import { deriveInstrumentRecap } from "@/lib/narrative/derive";
 import { instrumentRecap } from "@/lib/narrative/recap";
-import { formatMoney } from "@/lib/format/currency";
+import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 import { sessionFor } from "@/lib/format/session";
 import { universeBySymbol } from "@/fixtures/universe";
@@ -58,65 +58,83 @@ export default async function QuotePage({ params }: Params) {
     },
     {
       label: "Mkt cap",
-      value:
-        quote.marketCapUsd != null ? formatMoney(quote.marketCapUsd, currency) : "—",
+      value: formatCompactMoney(quote.marketCapUsd ?? null, currency),
     },
   ];
 
   return (
-    <div className="py-8">
+    <div className="pb-4">
       {/* Price header with session state and delay label (§13). */}
-      <div className="border-line flex flex-wrap items-end justify-between gap-4 border-b pb-5">
-        <div>
-          <div className="text-text-mid flex items-center gap-2 text-[13px]">
-            <h1 className="font-editorial text-text-hi text-[21px]">
-              {meta?.name ?? sym}
-            </h1>
-            <span className="tnum">{sym}</span>
-            {meta ? <span className="text-text-low">· {meta.exchange}</span> : null}
+      <div className="header-band bleed">
+        <div className="mx-auto max-w-[1280px] px-4 py-8">
+          <div className="fade-up flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="text-text-mid flex items-center gap-2 text-[13px]">
+                <h1 className="page-title !text-[clamp(1.5rem,3vw,2rem)]">
+                  {meta?.name ?? sym}
+                </h1>
+                <span className="tnum">{sym}</span>
+                {meta ? <span className="text-text-low">· {meta.exchange}</span> : null}
+              </div>
+              <div className="mt-2 flex items-baseline gap-3">
+                <span className="tnum text-text-hi text-[34px]">
+                  {formatMoney(quote.priceUsd, currency)}
+                </span>
+                <span
+                  className={`tnum flex items-center gap-1.5 text-[15px] ${dirClass}`}
+                >
+                  <span aria-hidden>{directionGlyph(quote.change)}</span>
+                  {formatMoney(Math.abs(quote.change), currency)}
+                  <span className="text-text-mid">·</span>
+                  {formatPercent(quote.changePct)}
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] ${
+                  session.state === "open"
+                    ? "border-gain/40 dir-gain bg-gain/10"
+                    : "border-line text-text-mid"
+                }`}
+              >
+                {session.state === "open" ? (
+                  <span className="live-dot" aria-hidden />
+                ) : null}
+                {session.label}
+              </span>
+              {quote.dataDelayMinutes > 0 || session.delayed ? (
+                <p className="text-text-low mt-1.5 text-[11px]">
+                  Delayed data · source {quote.provider}
+                </p>
+              ) : (
+                <p className="text-text-low mt-1.5 text-[11px]">
+                  Source {quote.provider}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-3">
-            <span className="tnum text-text-hi text-[34px]">
-              {formatMoney(quote.priceUsd, currency)}
-            </span>
-            <span className={`tnum flex items-center gap-1.5 text-[15px] ${dirClass}`}>
-              <span aria-hidden>{directionGlyph(quote.change)}</span>
-              {formatMoney(Math.abs(quote.change), currency)}
-              <span className="text-text-mid">·</span>
-              {formatPercent(quote.changePct)}
-            </span>
-          </div>
-        </div>
-        <div className="text-right">
-          <span
-            className={`inline-block rounded-[6px] border px-2 py-1 text-[12px] ${
-              session.state === "open"
-                ? "border-gain/40 dir-gain"
-                : "border-line text-text-mid"
-            }`}
-          >
-            {session.label}
-          </span>
-          {quote.dataDelayMinutes > 0 || session.delayed ? (
-            <p className="text-text-low mt-1 text-[11px]">
-              Delayed data · source {quote.provider}
-            </p>
-          ) : (
-            <p className="text-text-low mt-1 text-[11px]">Source {quote.provider}</p>
-          )}
         </div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <PriceChart symbol={sym} />
+        <div
+          className="fade-up lg:col-span-8"
+          style={{ "--d": "80ms" } as React.CSSProperties}
+        >
+          <div className="card p-4">
+            <PriceChart symbol={sym} />
+          </div>
 
-          <h2 className="text-text-mid mt-8 mb-2 text-[13px] font-medium">
+          <h2 className="text-text-mid mt-8 mb-2.5 text-[13px] font-medium">
             Key statistics
           </h2>
-          <dl className="border-line grid grid-cols-2 border sm:grid-cols-3">
+          <dl className="list-card grid grid-cols-2 sm:grid-cols-3">
             {stats.map((s) => (
-              <div key={s.label} className="border-line border-r border-b px-3 py-2.5">
+              <div
+                key={s.label}
+                className="border-line border-r border-b px-3.5 py-3 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r sm:[&:nth-child(3n)]:border-r-0"
+              >
                 <dt className="text-text-low text-[12px]">{s.label}</dt>
                 <dd className="tnum text-text-hi mt-0.5 text-[15px]">{s.value}</dd>
               </div>
@@ -124,17 +142,20 @@ export default async function QuotePage({ params }: Params) {
           </dl>
         </div>
 
-        <aside className="lg:col-span-4">
-          {/* Computed "how it moved" block — deterministic prose lands in Phase 5. */}
-          <div className="border-iris border-l-2 pl-4">
-            <div className="ours flex items-center gap-2 text-[12px]">
+        <aside
+          className="fade-up lg:col-span-4"
+          style={{ "--d": "160ms" } as React.CSSProperties}
+        >
+          {/* Computed "how it moved" block — deterministic prose from our candles (§9). */}
+          <div className="card overflow-hidden p-5">
+            <div className="ours border-iris/25 bg-iris/10 relative inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px]">
               <span aria-hidden>◆</span>
               <span>How it moved · computed</span>
             </div>
-            <p className="font-editorial text-text-hi mt-2 text-[15px] leading-[1.6]">
+            <p className="font-editorial text-text-hi relative mt-3 text-[15px] leading-[1.6]">
               {recap.bodyMd}
             </p>
-            <p className="text-text-low mt-2 text-[11px]">
+            <p className="text-text-low relative mt-3 text-[11px]">
               Generated from our own price data ·{" "}
               <a href="/methodology" className="ours">
                 methodology
@@ -142,13 +163,13 @@ export default async function QuotePage({ params }: Params) {
             </p>
           </div>
 
-          <h2 className="text-text-mid mt-8 mb-2 text-[13px] font-medium">
+          <h2 className="text-text-mid mt-8 mb-2.5 text-[13px] font-medium">
             Related coverage
           </h2>
-          <p className="text-text-low border-line border px-3 py-6 text-center text-[13px]">
-            News clusters bound to {sym} appear here once the curation engine (Phase 4)
-            is live.
-          </p>
+          <div className="card text-text-low px-3 py-8 text-center text-[13px]">
+            News clusters bound to <span className="tnum text-text-mid">{sym}</span>{" "}
+            surface here as the wire picks up coverage.
+          </div>
         </aside>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Movers } from "@/components/market/Movers";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { sessionFor } from "@/lib/format/session";
 
@@ -17,39 +18,53 @@ const EXCHANGES: { code: string; label: string }[] = [
 export default async function MarketsPage() {
   const currency = await getDisplayCurrency();
   return (
-    <div className="py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="font-editorial text-text-hi text-[27px]">Markets</h1>
-        <Link
-          href="/markets/screener"
-          className="text-iris text-[13px] hover:underline"
-        >
-          Open screener
-        </Link>
+    <div className="pb-4">
+      <div className="header-band bleed">
+        <div className="mx-auto max-w-[1280px] px-4 py-8">
+          <PageHeader
+            live
+            kicker="global markets + GCC rail"
+            title="Markets"
+            subtitle="Session clocks, movers and a server-side screener across the global and GCC rails. Index levels are currency-neutral and never converted."
+            action={
+              <Link href="/markets/screener" className="btn btn-ghost text-[13px]">
+                Open screener <span aria-hidden>→</span>
+              </Link>
+            }
+          />
+        </div>
       </div>
 
       {/* Per-exchange session clocks (§13). Global live; GCC labelled EOD. */}
-      <div className="mt-5 grid grid-cols-2 gap-px sm:grid-cols-3 lg:grid-cols-6">
+      <section
+        className="fade-up mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+        style={{ "--d": "80ms" } as React.CSSProperties}
+      >
         {EXCHANGES.map((ex) => {
           const s = sessionFor(ex.code);
+          const open = s.state === "open";
           return (
-            <div key={ex.code} className="border-line border p-3">
-              <div className="text-text-mid text-[12px]">{ex.label}</div>
+            <div key={ex.code} className="card card-hover p-3.5">
+              <div className="flex items-center justify-between">
+                <div className="text-text-mid text-[12px]">{ex.label}</div>
+                {open ? <span className="live-dot" aria-hidden /> : null}
+              </div>
               <div
-                className={`mt-1 text-[13px] ${
-                  s.state === "open" ? "dir-gain" : "text-text-low"
-                }`}
+                className={`mt-2 text-[13px] ${open ? "dir-gain" : "text-text-low"}`}
               >
                 {s.label}
               </div>
             </div>
           );
         })}
-      </div>
+      </section>
 
-      <div className="mt-8 max-w-xl">
+      <section
+        className="fade-up mt-8 max-w-xl"
+        style={{ "--d": "160ms" } as React.CSSProperties}
+      >
         <Movers currency={currency} />
-      </div>
+      </section>
     </div>
   );
 }

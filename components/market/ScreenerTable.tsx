@@ -1,18 +1,8 @@
 import Link from "next/link";
-import { formatMoney } from "@/lib/format/currency";
+import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 import type { DisplayCurrency } from "@/lib/currency/peg";
 import type { MarketRow } from "@/lib/market/read";
-
-function compactUsd(n: number | null, currency: DisplayCurrency): string {
-  if (n === null) return "—";
-  const v = currency === "USD" ? n : n * 3.64;
-  const unit = currency === "USD" ? "$" : "QR ";
-  if (v >= 1e12) return `${unit}${(v / 1e12).toFixed(2)}T`;
-  if (v >= 1e9) return `${unit}${(v / 1e9).toFixed(1)}B`;
-  if (v >= 1e6) return `${unit}${(v / 1e6).toFixed(0)}M`;
-  return `${unit}${v.toFixed(0)}`;
-}
 
 /** Server-rendered screener results (§13). Filtering happens on the server. */
 export function ScreenerTable({
@@ -24,23 +14,23 @@ export function ScreenerTable({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="text-text-mid border-line border px-4 py-8 text-center text-[13px]">
+      <div className="card text-text-mid px-4 py-10 text-center text-[13px]">
         No instruments match these filters.
-      </p>
+      </div>
     );
   }
   return (
-    <div className="border-line overflow-x-auto border">
+    <div className="list-card overflow-x-auto">
       <table className="w-full border-collapse text-[13px]">
         <thead>
-          <tr className="border-line text-text-mid border-b text-left">
-            <th className="px-3 py-2 font-medium">Symbol</th>
-            <th className="px-3 py-2 font-medium">Sector</th>
-            <th className="px-3 py-2 font-medium">Exchange</th>
-            <th className="px-3 py-2 text-right font-medium">Price</th>
-            <th className="px-3 py-2 text-right font-medium">Change</th>
-            <th className="px-3 py-2 text-right font-medium">Mkt cap</th>
-            <th className="px-3 py-2 text-center font-medium">Shariah</th>
+          <tr className="border-line bg-surface text-text-mid border-b text-left">
+            <th className="px-3 py-2.5 font-medium">Symbol</th>
+            <th className="px-3 py-2.5 font-medium">Sector</th>
+            <th className="px-3 py-2.5 font-medium">Exchange</th>
+            <th className="px-3 py-2.5 text-right font-medium">Price</th>
+            <th className="px-3 py-2.5 text-right font-medium">Change</th>
+            <th className="px-3 py-2.5 text-right font-medium">Mkt cap</th>
+            <th className="px-3 py-2.5 text-center font-medium">Shariah</th>
           </tr>
         </thead>
         <tbody>
@@ -55,27 +45,27 @@ export function ScreenerTable({
             return (
               <tr
                 key={row.symbol}
-                className="border-line hover:bg-surface border-b last:border-b-0"
+                className="border-line hover:bg-surface border-b transition-colors last:border-b-0"
               >
-                <td className="px-3 py-2">
+                <td className="px-3 py-2.5">
                   <Link href={`/quote/${row.symbol}`} className="hover:text-iris">
                     <span className="tnum text-text-hi">{row.symbol}</span>
                     <span className="text-text-low ml-2 text-[12px]">{row.name}</span>
                   </Link>
                 </td>
-                <td className="text-text-mid px-3 py-2">{row.sector ?? "—"}</td>
-                <td className="text-text-mid px-3 py-2">{row.exchange}</td>
-                <td className="tnum text-text-hi px-3 py-2 text-right">
+                <td className="text-text-mid px-3 py-2.5">{row.sector ?? "—"}</td>
+                <td className="text-text-mid px-3 py-2.5">{row.exchange}</td>
+                <td className="tnum text-text-hi px-3 py-2.5 text-right">
                   {formatMoney(row.priceUsd, currency)}
                 </td>
-                <td className={`tnum px-3 py-2 text-right ${dirClass}`}>
+                <td className={`tnum px-3 py-2.5 text-right ${dirClass}`}>
                   <span aria-hidden>{directionGlyph(row.change)}</span>{" "}
                   {formatPercent(row.changePct)}
                 </td>
-                <td className="tnum text-text-mid px-3 py-2 text-right">
-                  {compactUsd(row.marketCapUsd, currency)}
+                <td className="tnum text-text-mid px-3 py-2.5 text-right">
+                  {formatCompactMoney(row.marketCapUsd, currency)}
                 </td>
-                <td className="px-3 py-2 text-center">
+                <td className="px-3 py-2.5 text-center">
                   {row.isShariahCompliant === null ? (
                     <span className="text-text-low">—</span>
                   ) : row.isShariahCompliant ? (

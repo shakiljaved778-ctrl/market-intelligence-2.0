@@ -514,3 +514,81 @@ body {
   border-radius: var(--r-card);
   box-shadow: var(--shadow-lg);
 }
+
+/* ============================================================
+   Inner-page chrome — a consistent, elevated header and the
+   supporting rails that carry the hero's finish site-wide.
+   ============================================================ */
+
+/* Editorial page title, one notch below the marketing .display. */
+.page-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.9rem, 3.4vw, 2.55rem);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  color: var(--text-hi);
+}
+
+/* A short iris tick that opens a kicker — quietly marks a page as ours. */
+.rule-tick {
+  display: inline-block;
+  width: 1.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--iris-strong), transparent);
+}
+
+/* Full-bleed hairline that separates a page header band from content. */
+.header-band {
+  position: relative;
+  isolation: isolate;
+}
+.header-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+      70% 140% at 0% 0%,
+      color-mix(in srgb, var(--iris) 9%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(180deg, var(--surface), transparent);
+  pointer-events: none;
+}
+
+/* A soft-elevated list container: card body with internal hairline rows. */
+.list-card {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* Row that reveals an iris spine on hover — used in ranked lists. */
+.row-spine {
+  position: relative;
+  transition:
+    background 0.16s ease,
+    padding-left 0.16s ease;
+}
+.row-spine::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--iris);
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+.row-spine:hover::before {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-spine {
+    transition: none;
+  }
+}

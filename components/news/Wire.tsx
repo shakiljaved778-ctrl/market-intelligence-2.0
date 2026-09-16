@@ -11,33 +11,40 @@ import { relativeTime } from "@/lib/format/relative-time";
 export function Wire({ clusters }: { clusters: SluggedCluster[] }) {
   if (clusters.length === 0) {
     return (
-      <p className="text-text-mid border-line border px-4 py-10 text-center text-[13px]">
+      <div className="card text-text-mid px-4 py-12 text-center text-[13px]">
         No stories match this filter yet.
-      </p>
+      </div>
     );
   }
   return (
-    <ol className="border-line border-t">
-      {clusters.map((c) => (
-        <li key={c.slug} className="border-line border-b">
+    <ol className="list-card">
+      {clusters.map((c, i) => (
+        <li key={c.slug} className="border-line border-b last:border-b-0">
           <Link
             href={`/news/${c.slug}`}
-            className="hover:bg-surface block px-4 py-4 transition-colors"
+            className="row-spine hover:bg-surface block px-4 py-4 pl-5 sm:px-5 sm:pl-6"
           >
             <div className="flex items-center gap-3 text-[12px]">
+              {/* Rank — quiet chrome ordinal. */}
+              <span className="tnum text-text-low w-5 shrink-0 tabular-nums">
+                {String(i + 1).padStart(2, "0")}
+              </span>
               {/* Score + source count = ours (accent). */}
-              <span className="ours tnum" title="Importance score">
+              <span
+                className="ours tnum border-iris/25 bg-iris/10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5"
+                title="Importance score"
+              >
                 ◆ {c.importanceScore}
               </span>
               <span className="ours tnum">
                 {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
               </span>
-              <span className="text-text-low">{relativeTime(c.eventTime)}</span>
+              <span className="text-text-low ml-auto">{relativeTime(c.eventTime)}</span>
             </div>
-            <h3 className="font-editorial text-text-hi mt-1.5 max-w-[68ch] text-[19px] leading-snug">
+            <h3 className="font-editorial text-text-hi mt-2 max-w-[68ch] pl-8 text-[19px] leading-snug">
               {c.title}
             </h3>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2 pl-8">
               {c.tickers.map((t) => (
                 <span
                   key={t}
