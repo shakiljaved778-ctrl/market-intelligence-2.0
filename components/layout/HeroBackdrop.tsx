@@ -17,7 +17,7 @@ function Node({
   glyph: React.ReactNode;
 }) {
   return (
-    <div className={`hero-node hidden lg:inline-flex ${className}`}>
+    <div className={`hero-node ${className}`}>
       <span className="hero-node-mark">{glyph}</span>
       <span>{label}</span>
     </div>

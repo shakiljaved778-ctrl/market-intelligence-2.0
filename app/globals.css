@@ -679,15 +679,22 @@ body {
   backdrop-filter: blur(10px);
 }
 
-/* Floating labelled circuit node — a hex mark + a quiet label. */
+/* Floating labelled circuit node — a hex mark + a quiet label. Hidden below
+   the lg breakpoint (in CSS, not a utility: this class is unlayered and would
+   otherwise beat Tailwind's layered `hidden`, leaking the nodes onto phones). */
 .hero-node {
   position: absolute;
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 0.6rem;
   color: var(--text-low);
   font-size: 0.8rem;
   white-space: nowrap;
+}
+@media (min-width: 1024px) {
+  .hero-node {
+    display: inline-flex;
+  }
 }
 .hero-node-mark {
   display: inline-flex;
