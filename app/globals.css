@@ -6,40 +6,43 @@
  * The only saturated colour on a page comes from (a) price direction and
  * (b) --iris, reserved exclusively for OUR OWN computed content.
  *
- * Light is the default (airy editorial paper); dark is a warm charcoal + brown.
- * Overrides live under [data-theme] and prefers-color-scheme so a cookie-driven
- * theme renders without a flash.
+ * Theme (ref: Biofix health-tech): light default is a cool near-white with soft
+ * LAVENDER surfaces + a violet accent; dark is a cool deep indigo. Overrides live
+ * under [data-theme] and prefers-color-scheme so a cookie-driven theme renders
+ * without a flash. Data colour (gain/loss) is still reserved for price direction.
  */
 
 :root {
-  /* Chrome — dark. A warm CHARCOAL + BROWN, lifted off pure black so it reads
-     as a considered surface, not a void. Neutrals carry a ~30° brown undertone. */
-  --canvas: #1a1613;
-  --surface: #221d18;
-  --raised: #29231d;
-  --raised-2: #322a23;
-  --line: #3a322a;
-  --line-strong: #4b4038;
+  /* Chrome — dark. A cool deep INDIGO-charcoal (violet-tinted), lifted off black
+     so it shares the violet family with the light theme's lavender. */
+  --canvas: #121223;
+  --surface: #191a2e;
+  --raised: #1f2038;
+  --raised-2: #262742;
+  --line: #2d2e4b;
+  --line-strong: #3c3d63;
 
-  --text-hi: #f3ede5;
-  --text-mid: #b6aa9b;
-  --text-low: #8a7f70;
+  --text-hi: #eeecfa;
+  --text-mid: #a9a7c8;
+  --text-low: #7c7a9b;
 
   /* Data colour — identical in both modes (it means the same thing). */
   /* Always paired with ▲/▼ and a sign — never colour alone. */
   --gain: #34d399;
   --loss: #f2555a;
 
-  /* The one accent. OUR computed content only. Used nowhere else. Ever. */
-  --iris: #6d70f5;
-  --iris-strong: #8b8dff;
+  /* Violet accent — brand + "ours". A soft lavender surface pairs with it. */
+  --iris: #8b7cff;
+  --iris-strong: #a99bff;
+  --accent-soft: #221f3d; /* lilac panel on dark */
+  --accent-line: #3a3470;
 
-  /* Elevation + shape + glow. */
+  /* Elevation + shape + glow. Softer, rounder — the SaaS reference. */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
-  --r-card: 14px;
-  --r-sm: 8px;
+  --shadow-md: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 28px 70px -24px rgba(0, 0, 0, 0.72);
+  --r-card: 18px;
+  --r-sm: 10px;
   --glow: radial-gradient(
     60% 60% at 50% 0%,
     color-mix(in srgb, var(--iris) 22%, transparent),
@@ -64,28 +67,30 @@
   color-scheme: dark;
 }
 
-/* Light mode — the client rejected navy/gold and white/charcoal;
-   this is a warm paper, not a stark white. */
+/* Light mode (default) — a cool, airy near-white with soft LAVENDER surfaces and
+   a violet accent (ref: Biofix health-tech). Soft shadows, generous rounding. */
 :root[data-theme="light"] {
-  --canvas: #f4f5f2;
-  --surface: #fbfbf9;
+  --canvas: #f6f6fc;
+  --surface: #ffffff;
   --raised: #ffffff;
-  --raised-2: #ffffff;
-  --line: #e4e5e0;
-  --line-strong: #d2d4cd;
+  --raised-2: #f3f1fd;
+  --line: #e8e7f3;
+  --line-strong: #d8d6ea;
 
-  --text-hi: #14171b;
-  --text-mid: #545b64;
-  --text-low: #8a9098;
+  --text-hi: #16151f;
+  --text-mid: #56556b;
+  --text-low: #9997ae;
 
   --gain: #10a071;
-  --loss: #d93b40;
-  --iris: #5457e8;
-  --iris-strong: #4144d6;
+  --loss: #e0484d;
+  --iris: #6d5cf5;
+  --iris-strong: #5a46e8;
+  --accent-soft: #efeaff; /* soft lilac panel */
+  --accent-line: #e0d8ff;
 
-  --shadow-sm: 0 1px 2px rgba(16, 20, 28, 0.06);
-  --shadow-md: 0 8px 24px -8px rgba(16, 20, 28, 0.12);
-  --shadow-lg: 0 24px 56px -20px rgba(16, 20, 28, 0.16);
+  --shadow-sm: 0 1px 2px rgba(60, 50, 120, 0.06);
+  --shadow-md: 0 12px 34px -14px rgba(60, 50, 120, 0.18);
+  --shadow-lg: 0 28px 64px -24px rgba(60, 50, 120, 0.22);
   --card-top: linear-gradient(
     180deg,
     color-mix(in srgb, #ffffff 70%, transparent),
@@ -98,25 +103,27 @@
 /* Respect OS preference only when the user has not set an explicit theme. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --canvas: #f4f5f2;
-    --surface: #fbfbf9;
+    --canvas: #f6f6fc;
+    --surface: #ffffff;
     --raised: #ffffff;
-    --raised-2: #ffffff;
-    --line: #e4e5e0;
-    --line-strong: #d2d4cd;
+    --raised-2: #f3f1fd;
+    --line: #e8e7f3;
+    --line-strong: #d8d6ea;
 
-    --text-hi: #14171b;
-    --text-mid: #545b64;
-    --text-low: #8a9098;
+    --text-hi: #16151f;
+    --text-mid: #56556b;
+    --text-low: #9997ae;
 
     --gain: #10a071;
-    --loss: #d93b40;
-    --iris: #5457e8;
-    --iris-strong: #4144d6;
+    --loss: #e0484d;
+    --iris: #6d5cf5;
+    --iris-strong: #5a46e8;
+    --accent-soft: #efeaff;
+    --accent-line: #e0d8ff;
 
-    --shadow-sm: 0 1px 2px rgba(16, 20, 28, 0.06);
-    --shadow-md: 0 8px 24px -8px rgba(16, 20, 28, 0.12);
-    --shadow-lg: 0 24px 56px -20px rgba(16, 20, 28, 0.16);
+    --shadow-sm: 0 1px 2px rgba(60, 50, 120, 0.06);
+    --shadow-md: 0 12px 34px -14px rgba(60, 50, 120, 0.18);
+    --shadow-lg: 0 28px 64px -24px rgba(60, 50, 120, 0.22);
 
     color-scheme: light;
   }
@@ -138,6 +145,8 @@
   --color-loss: var(--loss);
   --color-iris: var(--iris);
   --color-iris-strong: var(--iris-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
 
   /* Fonts are injected as CSS variables by next/font in the root layout. */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -609,17 +618,16 @@ body {
    ============================================================ */
 
 :root {
-  /* Decorative header-band hues — warm bronze/amber to sit with the charcoal +
-     brown chrome. Decorative only, low-opacity; never on data. */
-  --aurora-1: #c8924f; /* amber-bronze */
-  --aurora-2: #a2673c; /* brown */
-  --aurora-3: #6d70f5; /* a hint of iris */
+  /* Decorative band hues — soft violet/lavender to sit with the accent. */
+  --aurora-1: #8b7cff; /* violet */
+  --aurora-2: #b39cff; /* lavender */
+  --aurora-3: #6d5cf5; /* iris */
   --node-line: color-mix(in srgb, var(--iris) 45%, var(--line-strong));
 }
 :root[data-theme="light"] {
-  --aurora-1: #6366f1;
-  --aurora-2: #7c3aed;
-  --aurora-3: #0891b2;
+  --aurora-1: #6d5cf5;
+  --aurora-2: #9b7cff;
+  --aurora-3: #b39cff;
   --node-line: color-mix(in srgb, var(--iris) 30%, var(--line-strong));
 }
 
@@ -799,4 +807,25 @@ body {
 .hair {
   height: 1px;
   background: var(--line);
+}
+
+/* ============================================================
+   Accent surface (ref: Biofix) — a soft lavender panel for the
+   masthead, feature cards and CTAs. Chrome, not data.
+   ============================================================ */
+.accent-panel {
+  background: radial-gradient(
+      120% 140% at 100% 0%,
+      color-mix(in srgb, var(--iris) 12%, transparent),
+      transparent 55%
+    ),
+    var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-card);
+}
+.accent-chip {
+  background: color-mix(in srgb, var(--iris) 12%, transparent);
+  border: 1px solid var(--accent-line);
+  color: var(--iris-strong);
+  border-radius: 999px;
 }

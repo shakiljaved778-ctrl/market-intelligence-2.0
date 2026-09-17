@@ -63,7 +63,7 @@ export default async function BoardPage() {
   return (
     <div>
       {/* ============ Masthead ============ */}
-      <section className="border-line border-b py-6 sm:py-8">
+      <section className="accent-panel mt-6 p-5 sm:p-7 lg:p-8">
         <div className="flex items-baseline justify-between">
           <p className="eyebrow">
             <span className="live-dot mr-2 inline-block align-middle" aria-hidden />
@@ -257,7 +257,7 @@ export default async function BoardPage() {
           <div className="lg:col-span-7">
             <Movers currency={currency} />
           </div>
-          <div className="card flex flex-col justify-center p-6 lg:col-span-5">
+          <div className="accent-panel flex flex-col justify-center p-6 lg:col-span-5">
             <p className="eyebrow">news-to-price</p>
             <p className="font-editorial text-text-hi mt-3 text-[20px] leading-snug">
               Every story is bound to the instruments it concerns — the move sits next
@@ -278,7 +278,10 @@ export default async function BoardPage() {
       {/* ============ Computed recap ============ */}
       {sessionRecap ? (
         <section className="py-8">
-          <Link href={`/recap/${sessionRecap.slug}`} className="block">
+          <Link
+            href={`/recap/${sessionRecap.slug}`}
+            className="accent-panel block p-6 sm:p-8"
+          >
             <div className="ours flex items-center gap-2 text-[12px]">
               <span aria-hidden>◆</span>
               <span>Session recap · computed from market data</span>
