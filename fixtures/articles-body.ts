@@ -134,4 +134,36 @@ Advances in observation routinely force revisions to long-held theories, and eac
 
 **Why it matters:** Sharper observations of the early universe are how cosmology's biggest questions get narrowed down.`,
   },
+  25: {
+    model: "editorial-demo",
+    md: `Researchers reported that a quantum processor crossed a key error-correction threshold, a long-sought benchmark on the road to machines that can run useful calculations reliably. Error correction is the bottleneck that has separated experimental quantum hardware from practical use.
+
+Milestones like this are incremental, not a finished product, but they narrow the gap between laboratory demonstrations and real applications in chemistry, materials and cryptography.
+
+**Why it matters:** Crossing the error-correction threshold is the step the field has been waiting for — practical quantum computing gets closer, if still years out.`,
+  },
+  26: {
+    model: "editorial-demo",
+    md: `A new Alzheimer's medicine met its primary goal in a late-stage clinical trial, its developer said, raising hopes that regulators could clear it for early-stage patients. The result adds to a slow but real run of progress against a disease that has frustrated drug developers for decades.
+
+Trial success is not approval, and questions on safety, cost and real-world benefit will follow. But a positive late-stage read-out is the highest bar most treatments must clear.
+
+**Why it matters:** Even incremental progress against Alzheimer's carries enormous human and economic weight given how many families it touches.`,
+  },
+  27: {
+    model: "editorial-demo",
+    md: `Gold pushed to a fresh record, extending a run as investors sought havens amid uncertainty over interest rates and geopolitics. The metal tends to gain when real yields soften or when risk appetite fades, and both forces have been in play.
+
+Records draw fresh attention but also raise the question of how much of the move is already priced. Gold pays no yield, so its appeal rises and falls with the alternatives.
+
+**Why it matters:** A record in gold is a barometer of how much caution is running through markets right now.`,
+  },
+  28: {
+    model: "editorial-demo",
+    md: `US employers added more jobs than expected while the unemployment rate held steady, pointing to a labour market that has cooled without cracking. The reading complicates the case for rapid rate cuts even as inflation eases.
+
+A resilient jobs market supports consumer spending but keeps upward pressure on wages, one of the stickier components of inflation. Policymakers weigh both sides of that ledger.
+
+**Why it matters:** Jobs and inflation are the two dials the Fed watches — and a firm labour market argues for patience on cuts.`,
+  },
 };

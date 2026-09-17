@@ -27,6 +27,7 @@ const DEMO_NOW = new Date("2026-09-16T20:00:00.000Z");
 /** A ranked cluster enriched with its editorial section + cover image. */
 export interface WireCluster extends SluggedCluster {
   section: string;
+  dek: string | null;
   imageUrl: string | null;
   imageCredit: { credit: string; creditUrl: string } | null;
 }
@@ -56,6 +57,7 @@ function enrich(cluster: SluggedCluster): WireCluster {
   return {
     ...cluster,
     section,
+    dek: primary?.dek ?? null,
     imageUrl: cover?.url ?? primary?.imageUrl ?? null,
     imageCredit: cover ? { credit: cover.credit, creditUrl: cover.creditUrl } : null,
   };
