@@ -109,5 +109,40 @@ export async function clusterTask(): Promise<JobSummary> {
 
   const ranked = await runPipeline(recent, { tiers, tickerMovePct }, getEmbedder());
   const stored = await persistClusters(ranked);
+
+  // AI-written briefs (§13): generate an ORIGINAL body per cluster with Groq and
+  // cache it under a stable key the read path consumes. Gated on GROQ_API_KEY —
+  // a no-op without it — and needs KV configured in the runner so the brief
+  // reaches the served site. Cached for a week (TTL.fundamentals) so each story
+  // is generated once; never source text (§10).
+  const { generateBrief, isGroqConfigured } = await import("@/lib/providers/groq");
+  if (isGroqConfigured()) {
+    const { classifySection } = await import("@/lib/curation/section");
+    const dekById = new Map(recent.map((a) => [a.id, a.dek]));
+    for (const c of ranked.slice(0, 24)) {
+      const dek = dekById.get(c.primaryId) ?? null;
+      const section = classifySection({
+        title: c.title,
+        dek,
+        topics: c.topics,
+        tickers: c.tickers,
+      });
+      const moves: Record<string, number> = {};
+      for (const t of c.tickers) {
+        const m = tickerMovePct[t];
+        if (typeof m === "number") moves[t] = m;
+      }
+      const brief = await generateBrief(String(c.primaryId), {
+        title: c.title,
+        dek,
+        section,
+        tickers: c.tickers,
+        sources: c.sourceIds,
+        moves,
+      });
+      if (brief) await cachePut(`wire:brief:${c.primaryId}`, TTL.fundamentals, brief);
+    }
+  }
+
   return { itemsIn: recent.length, itemsOut: stored };
 }
