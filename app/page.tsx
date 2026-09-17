@@ -90,7 +90,7 @@ export default async function BoardPage() {
           >
             Mizan ranks which stories matter, binds them to the instruments they move,
             and shows how markets responded — computed deterministically from data we
-            hold, in USD or QAR. Not a wire. Not AI-written analysis.
+            hold, in USD or QAR — with AI-written summaries from cited sources.
           </p>
 
           <div

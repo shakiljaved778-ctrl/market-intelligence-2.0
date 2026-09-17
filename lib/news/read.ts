@@ -1,4 +1,5 @@
 import { FIXTURE_ARTICLES, type RawArticle } from "@/fixtures/articles";
+import { ARTICLE_BODIES, type ArticleBody } from "@/fixtures/articles-body";
 import { COVER_IMAGES } from "@/fixtures/cover-images";
 import { UNIVERSE } from "@/fixtures/universe";
 import { HashEmbedder } from "@/lib/curation/embed";
@@ -106,12 +107,15 @@ export interface ClusterMember {
 export interface ClusterDetail {
   cluster: WireCluster;
   members: ClusterMember[];
+  /** Original, AI-written body synthesised from the story's facts (never source text). */
+  body: ArticleBody | null;
 }
 
 export async function readCluster(slug: string): Promise<ClusterDetail | null> {
   const clusters = await allClusters();
   const cluster = clusters.find((c) => c.slug === slug);
   if (!cluster) return null;
+  const body = ARTICLE_BODIES[cluster.primaryId] ?? null;
   const byId = new Map<number, RawArticle>(FIXTURE_ARTICLES.map((a) => [a.id, a]));
   const members: ClusterMember[] = cluster.articleIds
     .map((id) => byId.get(id))
@@ -126,7 +130,7 @@ export async function readCluster(slug: string): Promise<ClusterDetail | null> {
       publishedAt: a.publishedAt,
       dek: a.dek,
     }));
-  return { cluster, members };
+  return { cluster, members, body };
 }
 
 export function allTopics(): string[] {

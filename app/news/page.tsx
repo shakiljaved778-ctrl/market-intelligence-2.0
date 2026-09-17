@@ -56,7 +56,9 @@ export default async function NewsPage({ searchParams }: SearchParams) {
               <>
                 Stories ranked by how many independent outlets cover them — the source
                 count is the ranking, made visible.{" "}
-                <span className="text-text-low">Computed, not AI-written.</span>
+                <span className="text-text-low">
+                  Ranking computed; summaries AI-written.
+                </span>
               </>
             }
           />

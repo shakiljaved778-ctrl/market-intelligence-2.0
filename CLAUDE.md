@@ -9,19 +9,23 @@ Financial news, market data and **signal-ranked** intelligence. We don't beat th
 wires on speed or licensed data — we beat them on **signal**: which stories matter,
 which instruments they move, how markets responded.
 
-**V1 has no LLM.** Everything the site produces is computed **deterministically**
-from data we hold: clustering, ranking, entity extraction, and templated narrative
-built from our own price and macro numbers. V1 is *algorithmically curated market
-intelligence*, **not** "AI-written analysis". No page may imply otherwise. The LLM
-synthesis layer is V2 — design seams for it, build none of it.
+**The signal is deterministic; the summaries are AI.** Clustering, ranking, entity
+extraction and the session recaps are computed **deterministically** from data we
+hold — no model in the loop, and that stays true. On top of that, each story now
+carries an **AI-written summary** (owner decision, 2026-09 — this lifted the
+former "V1 has no LLM" rule): original prose synthesised from the story's facts and
+cited sources via Groq (`lib/providers/groq.ts`). Rankings are facts about
+coverage; summaries are AI interpretation — keep the two visibly distinct, label
+the AI content, and never imply the *rankings* are AI-written.
 
 ## Hard constraints (non-negotiable — §2)
 
 - **No paid APIs, no paid SaaS, no metered AI in V1.** Free tiers only. Signup keys
   (Finnhub, FRED, Twelve Data) are fine; anything that can generate a bill is not.
-- **No `ANTHROPIC_API_KEY`, no LLM SDK** (`@anthropic-ai/sdk`, `openai`, any hosted
-  embedding/summarisation service) in the dependency tree. Solve deterministically
-  or defer to V2.
+- **LLM use is limited to AI summaries via Groq** (owner-approved, free tier), and
+  only in scheduled jobs / the backfill script — never on page render, always
+  cached (§2), and always original content (never source text, §10). No other
+  hosted-model key, and the *ranking/clustering* engine stays model-free.
 - Next.js 15 App Router, TypeScript `strict: true`. Vercel deployment. Vercel
   Postgres (Neon) + pgvector + Vercel KV, free tiers.
 - **All external calls go through `lib/providers/*`.** No component ever calls a
@@ -89,8 +93,9 @@ cookie so Server Components render the right figures without a client flash.
 
 ## What not to do (§17)
 
-- No AI SDK, model call, or paid API in V1.
-- Never claim or imply, in UI or metadata, that content is AI-written.
+- No hosted-model key other than Groq for summaries; keep ranking/clustering model-free.
+- Never imply the rankings/recaps are AI-written; always label the AI summaries and
+  carry the not-advice + verify-against-sources disclaimer.
 - Never call vendor APIs from React components or on page render.
 - Never store or display third-party article bodies.
 - No sub-daily cron expression in `vercel.json` (Hobby deploy fails).

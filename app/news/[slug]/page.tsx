@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { readCluster } from "@/lib/news/read";
 import { relativeTime } from "@/lib/format/relative-time";
+import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
 import { SectionTag } from "@/components/news/SectionTag";
 
@@ -20,7 +21,7 @@ export default async function ClusterPage({ params }: Params) {
   const { slug } = await params;
   const detail = await readCluster(slug);
   if (!detail) notFound();
-  const { cluster, members } = detail;
+  const { cluster, members, body } = detail;
 
   return (
     <div className="py-8">
@@ -86,10 +87,26 @@ export default async function ClusterPage({ params }: Params) {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Development timeline / source list (§13). Each outlet linked out. */}
         <section className="lg:col-span-8">
+          {/* AI-written original brief — our content, synthesised from the facts. */}
+          {body ? (
+            <article className="border-line mb-8 border-b pb-8">
+              <div className="ours border-iris/25 bg-iris/10 mb-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px]">
+                <span aria-hidden>◆</span>
+                AI-written summary · from {cluster.sourceCount}{" "}
+                {cluster.sourceCount === 1 ? "source" : "sources"}
+              </div>
+              <ArticleBody md={body.md} />
+              <p className="text-text-low mt-5 text-[11px] leading-relaxed">
+                Written by AI from the linked reports below — original text, not copied
+                from any source. Informational only, not investment advice; verify
+                against the originals.
+              </p>
+            </article>
+          ) : null}
+
           <h2 className="text-text-mid mb-2 text-[13px] font-medium">
-            Coverage · {members.length} {members.length === 1 ? "report" : "reports"}
+            Sources · {members.length} {members.length === 1 ? "report" : "reports"}
           </h2>
           <ol className="border-line border-t">
             {members.map((m, i) => (

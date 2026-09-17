@@ -12,12 +12,19 @@ export default function MethodologyPage() {
   return (
     <Prose eyebrow="how mizan works" title="Methodology" updated="16 September 2026">
       <p>
-        Mizan is <strong>algorithmically curated market intelligence</strong>.
-        Everything on the site is computed deterministically from data we hold —
-        clustering, ranking, entity extraction, and templated narrative built from our
-        own price and macro numbers. It is <strong>not AI-written analysis</strong>, and
-        no page implies that it is. Where you see the iris accent, you are looking at
-        something we computed.
+        Mizan is <strong>algorithmically curated market intelligence</strong>. The
+        signal — clustering, ranking, entity extraction and the session recaps — is
+        computed <strong>deterministically</strong> from data we hold, with no model in
+        the loop. On top of that, each story carries an{" "}
+        <strong>AI-written summary</strong>: original prose synthesised from the
+        story&rsquo;s facts and its cited sources, clearly labelled and never copied
+        from source articles. Rankings are facts about coverage; summaries are AI
+        interpretation — we keep the two visibly distinct, and the iris accent marks
+        what we computed.
+      </p>
+      <p>
+        AI summaries can be wrong. They are informational only, not investment advice,
+        and every one links the underlying sources so you can verify.
       </p>
 
       <h2>Where the data comes from</h2>

@@ -35,8 +35,9 @@ export function Footer() {
           delayed; every price states its delay and source. No warranty is made as to
           accuracy or completeness. QAR figures are converted from USD at the official
           peg (<span className="tnum">{QAR_PER_USD}</span> QAR = 1 USD, reviewed{" "}
-          {pegReviewedOn}). V1 content is algorithmically computed from market data — it
-          is not AI-written analysis.
+          {pegReviewedOn}). Rankings and clustering are computed from market data; story
+          summaries are AI-written from the cited sources and may contain errors —
+          verify against the originals.
         </p>
       </div>
     </footer>

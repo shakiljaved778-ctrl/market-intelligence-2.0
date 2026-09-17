@@ -25,16 +25,17 @@ export const metadata: Metadata = {
     default: "Mizan — market intelligence",
     template: "%s · Mizan",
   },
-  // Written to match what V1 genuinely does (§1) — no "AI-written" claim.
+  // Rankings/clustering are computed deterministically; story summaries are
+  // AI-written from cited sources.
   description:
-    "Mizan: algorithmically curated market intelligence — signal ranking, cross-source clustering, and news-to-price attribution across global and GCC markets. Not AI-written analysis.",
+    "Mizan: algorithmically curated market intelligence — signal ranking, cross-source clustering and news-to-price attribution across global and GCC markets, with AI-written story summaries from cited sources.",
   applicationName: "Mizan",
   openGraph: {
     type: "website",
     siteName: "Mizan",
     title: "Mizan — market intelligence",
     description:
-      "Signal-ranked market intelligence across global and GCC markets. Computed, not AI-written.",
+      "Signal-ranked market intelligence across global and GCC markets. Computed rankings, AI-written summaries.",
     images: [{ url: "/api/og", width: 1200, height: 630 }],
   },
   twitter: {
