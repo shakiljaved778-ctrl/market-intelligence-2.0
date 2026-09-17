@@ -124,8 +124,11 @@ export async function clusterTask(): Promise<JobSummary> {
     const top = ranked.slice(0, 24);
     const alreadyHave = await existingClusterBriefs(top.map((c) => c.slug));
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
+    let briefsWritten = 0;
+    let briefsAttempted = 0;
     for (const c of top) {
       if (alreadyHave.has(c.slug)) continue;
+      briefsAttempted += 1;
       const dek = dekById.get(c.primaryId) ?? null;
       const section = classifySection({
         title: c.title,
@@ -146,8 +149,14 @@ export async function clusterTask(): Promise<JobSummary> {
         sources: c.sourceIds,
         moves,
       });
-      if (brief) await setClusterBrief(c.slug, brief.body, brief.model);
+      if (brief) {
+        await setClusterBrief(c.slug, brief.body, brief.model);
+        briefsWritten += 1;
+      }
     }
+    console.log(
+      `[cluster] briefs: ${briefsWritten} written, ${briefsAttempted} attempted, ${alreadyHave.size} already present`,
+    );
   }
 
   return { itemsIn: recent.length, itemsOut: stored };
