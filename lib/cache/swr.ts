@@ -70,6 +70,22 @@ export async function cachePut<T>(
   await write(key, ttlSeconds, value);
 }
 
+/**
+ * Read a value from the SWR cache directly, ignoring freshness. Used by
+ * scheduled jobs (e.g. the cluster ranker) to consume what another job already
+ * primed (`market:quote:*`) instead of making a fresh vendor call. Returns null
+ * on a miss, an unreadable store, or a parse error — callers degrade gracefully.
+ */
+export async function cacheGet<T>(key: string): Promise<T | null> {
+  try {
+    const raw = await getKvStore().get(key);
+    if (raw === null) return null;
+    return (JSON.parse(raw) as Envelope<T>).v;
+  } catch {
+    return null;
+  }
+}
+
 async function refreshUnderLock<T>(
   key: string,
   ttlSeconds: number,

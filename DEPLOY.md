@@ -56,7 +56,9 @@ skip the rest; each one lights up more live data, anything missing stays on fixt
 | `POLYGON_API_KEY` | price charts / aggregate candles (free ~5/min) |
 | `EODHD_API_KEY` | end-of-day history + real-time fallback |
 | `FINNHUB_API_KEY` | optional — extra quotes/profiles |
+| `ALPHAVANTAGE_API_KEY` | last-resort quote/daily-candle/profile/search fallback (free ~25/day) |
 | `FRED_API_KEY` | US economic data (free) |
+| `PEXELS_API_KEY` | story cover photos (used by the backfill script/jobs, cached) |
 | `SEC_USER_AGENT` | e.g. `Mizan you@mizan.com` (required by SEC EDGAR) |
 | `NEXT_PUBLIC_SITE_URL` | your live URL (`https://…`) — fixes OG images + canonical |
 | `CRON_SECRET` | any long random string — protects the refresh jobs |
@@ -64,6 +66,28 @@ skip the rest; each one lights up more live data, anything missing stays on fixt
 > Free-tier discipline (§2): every provider above is used on its **free tier** and
 > every response is **cached in KV** so pages never re-hit a vendor. Keep them on the
 > free plans; don't upgrade a key to a metered/billed tier.
+
+#### ⚠️ The variable name must match EXACTLY
+
+The app reads specific `process.env.*` names — a near-miss name is silently
+ignored (no error, just no data). Case, underscores and the `_API_KEY` suffix all
+matter. Common mistakes:
+
+| ✅ Correct (what the code reads) | ❌ Do NOT use |
+|---|---|
+| `FINNHUB_API_KEY` | `FINN_HUB_KEY`, `FINNHUB_KEY` |
+| `ALPHAVANTAGE_API_KEY` | `ALPHA_VANTAGE_KEY`, `ALPHAVANTAGE_KEY` |
+| `FMP_API_KEY` | `FMP_KEY` |
+| `POLYGON_API_KEY` · `EODHD_API_KEY` · `FRED_API_KEY` | (drop the `_API` / add extra words) |
+| `PEXELS_API_KEY` (cover photos) · `GROQ_API_KEY` (AI summaries) | `PEXELS_KEY`, `GROQ_KEY` |
+
+The full set of names the app actually reads: `FMP_API_KEY`, `FINNHUB_API_KEY`,
+`POLYGON_API_KEY`, `EODHD_API_KEY`, `ALPHAVANTAGE_API_KEY`, `FRED_API_KEY`,
+`PEXELS_API_KEY`, `GROQ_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`,
+`POSTGRES_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `SEC_USER_AGENT`.
+`TWELVEDATA_API_KEY` and `MARKETSTACK_API_KEY` are **not wired in V1** — setting
+them has no effect. Scope each var to **Production + Preview** if you use preview
+deploys.
 
 Redeploy (Vercel → **Deployments → Redeploy**) after adding them.
 
@@ -84,6 +108,18 @@ Actions**, add:
 
 They start running on their own once the secrets exist (or trigger one manually from
 the repo's **Actions** tab → pick a workflow → **Run workflow**).
+
+> ⚠️ **GitHub secrets ≠ Vercel env.** The **market-data provider keys**
+> (`FMP_API_KEY`, `POLYGON_API_KEY`, `EODHD_API_KEY`, `FINNHUB_API_KEY`,
+> `FRED_API_KEY`, `SEC_USER_AGENT`, …) are read by the **Vercel** app when it fetches
+> quotes/macro — so they must be set in **Vercel → Settings → Environment Variables**
+> (§2b). Putting *only* those provider keys in GitHub Actions secrets does **not**
+> feed the live site; the runner jobs (`ingest`/`cluster`) don't call those vendors.
+> What GitHub secrets are for: `APP_URL` + `CRON_SECRET` (all jobs), and
+> `POSTGRES_URL` + `KV_REST_API_URL`/`KV_REST_API_TOKEN` (so `ingest`/`cluster` can
+> write and cache). Set the provider keys in **both** places only if you later move
+> vendor fetching into the runner. `CRON_SECRET` must be **identical** in Vercel and
+> GitHub, and `POSTGRES_URL`/`KV_*` should match the same database in both.
 
 ### Go-live order (quick reference)
 

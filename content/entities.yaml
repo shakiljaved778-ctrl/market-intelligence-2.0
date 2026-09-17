@@ -50,3 +50,20 @@ entities:
   - name: Qatar
     kind: country
     aliases: [State of Qatar]
+
+  # --- Non-financial verticals (§13 editorial mix). Same reviewable rules. ---
+  - name: OpenAI
+    kind: company
+    aliases: [Open AI]
+  - name: World Health Organization
+    kind: institution
+    aliases: [WHO, W.H.O.]
+  - name: FIFA
+    kind: institution
+    aliases: [Federation Internationale de Football Association]
+  - name: NASA
+    kind: institution
+    aliases: [National Aeronautics and Space Administration]
+  - name: International Olympic Committee
+    kind: institution
+    aliases: [IOC, Olympics, Olympic Games]

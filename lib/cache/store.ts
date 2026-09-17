@@ -1,8 +1,9 @@
 /**
  * KV store abstraction (§4). Two backends:
  *   - In-memory (default / fixture mode) so the app boots with ZERO keys (§2).
- *   - Vercel KV via its Upstash-compatible REST API when KV_REST_API_URL and
- *     KV_REST_API_TOKEN are set.
+ *   - Vercel KV / Upstash Redis via its REST API when KV_REST_API_URL and
+ *     KV_REST_API_TOKEN (or UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN)
+ *     are set.
  *
  * Nothing outside this module knows which backend is live.
  */
@@ -94,8 +95,10 @@ let singleton: KvStore | null = null;
 
 export function getKvStore(): KvStore {
   if (singleton) return singleton;
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
+  // Accept either the Vercel KV names or Upstash's own REST names — the
+  // Upstash Marketplace integration may inject either set.
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
   singleton = url && token ? new RestStore(url, token) : new MemoryStore();
   return singleton;
 }

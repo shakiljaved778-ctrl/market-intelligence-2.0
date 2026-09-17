@@ -60,7 +60,7 @@ export function GET(request: Request) {
           </div>
         </div>
         <div style={{ color: "#6B7280", fontSize: 20 }}>
-          Computed from market data — not AI-written analysis.
+          Computed rankings · AI-written summaries from cited sources.
         </div>
       </div>
     ),

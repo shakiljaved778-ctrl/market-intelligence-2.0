@@ -2,14 +2,14 @@ import { Prose } from "@/components/layout/Prose";
 
 export const metadata = {
   title: "Privacy",
-  description: "What Mizan stores and why. The site runs without accounts in V1.",
+  description: "What Mizaan stores and why. The site runs without accounts in V1.",
 };
 
 export default function PrivacyPage() {
   return (
     <Prose eyebrow="what we keep" title="Privacy" updated="16 September 2026">
       <p>
-        Mizan runs <strong>without user accounts</strong> in this version. We
+        Mizaan runs <strong>without user accounts</strong> in this version. We
         don&rsquo;t ask for your name, email or payment details, and we don&rsquo;t
         build a profile of you.
       </p>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
         Market and macro data is fetched server-side from data providers on our
         schedule, not from your browser, so those providers don&rsquo;t see you.
         Outbound links take you to publishers whose own privacy practices apply once you
-        leave Mizan.
+        leave Mizaan.
       </p>
     </Prose>
   );

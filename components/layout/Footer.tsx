@@ -11,10 +11,10 @@ export function Footer() {
       <div className="mx-auto max-w-[1280px] px-4 py-8">
         <div className="flex items-center gap-2.5">
           <span className="mark" aria-hidden />
-          <span className="text-text-hi text-[15px] leading-none font-bold tracking-[0.18em]">
-            MIZA<span className="ours">N</span>
+          <span className="text-text-hi text-[15px] leading-none font-bold tracking-[0.16em]">
+            MIZAA<span className="ours">N</span>
           </span>
-          <span className="eyebrow ml-1">mizan.com</span>
+          <span className="eyebrow ml-0.5 tracking-[0.28em]">INTELLIGENCE</span>
         </div>
         <div className="text-text-mid mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
           <Link href="/methodology" className="hover:text-text-hi">
@@ -35,8 +35,9 @@ export function Footer() {
           delayed; every price states its delay and source. No warranty is made as to
           accuracy or completeness. QAR figures are converted from USD at the official
           peg (<span className="tnum">{QAR_PER_USD}</span> QAR = 1 USD, reviewed{" "}
-          {pegReviewedOn}). V1 content is algorithmically computed from market data — it
-          is not AI-written analysis.
+          {pegReviewedOn}). Rankings and clustering are computed from market data; story
+          summaries are AI-written from the cited sources and may contain errors —
+          verify against the originals.
         </p>
       </div>
     </footer>
