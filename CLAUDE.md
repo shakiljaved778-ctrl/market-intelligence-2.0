@@ -1,10 +1,11 @@
 # CLAUDE.md — Mizaan Intelligence (MarketIntelligence 2.0)
 
 > Brand: **Mizaan Intelligence** (wordmark MIZAAN + "intelligence"). Theme (ref:
-> Biofix health-tech): light default is cool near-white with soft **lavender**
-> surfaces (`.accent-panel`) + a **violet** accent; dark is a cool deep indigo.
-> Rounded cards + soft shadows. Front page follows an editorial news-front
-> pattern, kept distinct. Data colour (gain/loss) stays reserved for price.
+> YureCorp business landing): **dark default** is near-black neutral with a bold
+> **orange** accent; light is a warm off-white with the same orange. The accent
+> token is still named `--iris` (= "the accent") across the code. Rounded cards +
+> soft shadows; `.accent-panel` is the warm surface. Data colour (gain/loss) stays
+> reserved for price direction.
 
 Standing rules for this repository. Condensed from the master prompt (§2, §3, §4,
 §10, §17). These are non-negotiable; read them before writing code.
