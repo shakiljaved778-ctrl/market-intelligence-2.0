@@ -726,3 +726,74 @@ body {
     animation: none;
   }
 }
+
+/* ============================================================
+   Layout rhythm — tonal bands + white space (ref: Bloomberg).
+   The page is NOT one flat colour: full-bleed sections alternate
+   between the canvas and a lifted surface, separated by hairlines,
+   so content breathes and the eye can find its place. Chrome stays
+   monochrome; only the tone (canvas ↔ surface) changes (§12).
+   ============================================================ */
+
+/* A full-bleed section on the lifted surface tone, hairline-separated. */
+.band {
+  background: var(--surface);
+  border-block: 1px solid var(--line);
+}
+/* A faint aurora-tinted band for the one "ours" moment per page. */
+.band-ours {
+  background: radial-gradient(
+      80% 140% at 8% 0%,
+      color-mix(in srgb, var(--aurora-1) 8%, transparent),
+      transparent 60%
+    ),
+    var(--surface);
+  border-block: 1px solid var(--line);
+}
+
+/* Standard inner wrapper for a full-bleed band. */
+.wrap {
+  margin-inline: auto;
+  max-width: 1280px;
+  padding-inline: 1rem;
+}
+
+/* Generous, consistent section spacing — the "readiness"/white space. */
+.section-y {
+  padding-block: clamp(3rem, 6vw, 5.5rem);
+}
+.section-y-sm {
+  padding-block: clamp(2rem, 4vw, 3.25rem);
+}
+
+/* Section header: an overline rule + label, with an optional trailing link. */
+.rail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.rail-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  letter-spacing: -0.01em;
+  color: var(--text-hi);
+}
+.rail-title::before {
+  content: "";
+  width: 3px;
+  height: 1.1em;
+  border-radius: 2px;
+  background: var(--iris);
+  opacity: 0.85;
+}
+
+/* Divider used between editorial blocks. */
+.hair {
+  height: 1px;
+  background: var(--line);
+}
