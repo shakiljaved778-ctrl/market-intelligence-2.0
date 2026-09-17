@@ -4,7 +4,15 @@
  * from cache. Page requests never trigger vendor calls. Kept small in V1;
  * sourced from the `instruments` table once populated.
  */
-export const TRACKED_SYMBOLS: readonly string[] = ["AAPL", "MSFT", "BTC"];
+export const TRACKED_SYMBOLS: readonly string[] = [
+  "AAPL",
+  "MSFT",
+  "NVDA",
+  "TSLA",
+  "JPM",
+  "XOM",
+  "BTC",
+];
 
 /** FRED series refreshed by the macro job. */
 export const TRACKED_MACRO_SERIES: readonly string[] = ["CPIAUCSL", "UNRATE", "DGS10"];
