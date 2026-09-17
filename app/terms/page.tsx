@@ -2,14 +2,14 @@ import { Prose } from "@/components/layout/Prose";
 
 export const metadata = {
   title: "Terms",
-  description: "Terms of use for Mizan — informational only, not investment advice.",
+  description: "Terms of use for Mizaan — informational only, not investment advice.",
 };
 
 export default function TermsPage() {
   return (
     <Prose eyebrow="the fine print" title="Terms of use" updated="16 September 2026">
       <p>
-        Mizan provides market information and computed intelligence for{" "}
+        Mizaan provides market information and computed intelligence for{" "}
         <strong>informational purposes only</strong>. Nothing on this site is
         investment, legal, tax or financial advice, a recommendation, or an offer or
         solicitation to buy or sell any instrument. You are solely responsible for your

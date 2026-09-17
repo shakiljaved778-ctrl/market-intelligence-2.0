@@ -5,14 +5,14 @@ import { QAR_PER_USD, pegReviewedOn } from "@/lib/currency/peg";
 export const metadata = {
   title: "Methodology",
   description:
-    "How Mizan works: where data comes from, how stories are clustered and ranked, what 'computed' means, and what delays apply.",
+    "How Mizaan works: where data comes from, how stories are clustered and ranked, what 'computed' means, and what delays apply.",
 };
 
 export default function MethodologyPage() {
   return (
-    <Prose eyebrow="how mizan works" title="Methodology" updated="16 September 2026">
+    <Prose eyebrow="how mizaan works" title="Methodology" updated="16 September 2026">
       <p>
-        Mizan is <strong>algorithmically curated market intelligence</strong>. The
+        Mizaan is <strong>algorithmically curated market intelligence</strong>. The
         signal — clustering, ranking, entity extraction and the session recaps — is
         computed <strong>deterministically</strong> from data we hold, with no model in
         the loop. On top of that, each story carries an{" "}

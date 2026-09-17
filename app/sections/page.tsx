@@ -22,7 +22,7 @@ export default async function SectionsPage() {
             title="Sections"
             subtitle={
               <>
-                Mizan is markets-first — but a deliberate share of the wire is{" "}
+                Mizaan is markets-first — but a deliberate share of the wire is{" "}
                 non-financial, so the feed reflects the world, not just the tape.{" "}
                 <span className="text-text-low">
                   Sections are assigned deterministically, never by a model.

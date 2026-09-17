@@ -1,4 +1,9 @@
-# CLAUDE.md — Mizan (MarketIntelligence 2.0)
+# CLAUDE.md — Mizaan Intelligence (MarketIntelligence 2.0)
+
+> Brand: **Mizaan Intelligence** (wordmark MIZAAN + "intelligence"). Themes: light
+> is the default (warm editorial paper); dark is a warm **charcoal + brown**, not
+> pure black. Front page follows an editorial news-front pattern, kept distinct
+> (iris accent, not red).
 
 Standing rules for this repository. Condensed from the master prompt (§2, §3, §4,
 §10, §17). These are non-negotiable; read them before writing code.

@@ -32,7 +32,7 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Mizan — the wire</title>
+    <title>Mizaan Intelligence — the wire</title>
     <link>${SITE}/news</link>
     <description>Signal-ranked market intelligence. Computed, not AI-written.</description>
     <language>en</language>

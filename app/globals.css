@@ -1,27 +1,29 @@
 @import "tailwindcss";
 
 /*
- * Mizan — design tokens (§12)
+ * Mizaan Intelligence — design tokens (§12)
  * Core idea: the chrome is monochrome; COLOUR BELONGS TO DATA.
  * The only saturated colour on a page comes from (a) price direction and
  * (b) --iris, reserved exclusively for OUR OWN computed content.
  *
- * Dark is the primary mode. Light overrides live under [data-theme="light"]
- * and prefers-color-scheme so a cookie-driven theme renders without a flash.
+ * Light is the default (airy editorial paper); dark is a warm charcoal + brown.
+ * Overrides live under [data-theme] and prefers-color-scheme so a cookie-driven
+ * theme renders without a flash.
  */
 
 :root {
-  /* Monochrome chrome — dark (default). Deep, slightly cool for atmosphere. */
-  --canvas: #08090c;
-  --surface: #101319;
-  --raised: #161a21;
-  --raised-2: #1c212a;
-  --line: #242932;
-  --line-strong: #333a45;
+  /* Chrome — dark. A warm CHARCOAL + BROWN, lifted off pure black so it reads
+     as a considered surface, not a void. Neutrals carry a ~30° brown undertone. */
+  --canvas: #1a1613;
+  --surface: #221d18;
+  --raised: #29231d;
+  --raised-2: #322a23;
+  --line: #3a322a;
+  --line-strong: #4b4038;
 
-  --text-hi: #edeff2;
-  --text-mid: #a6adb8;
-  --text-low: #6b7280;
+  --text-hi: #f3ede5;
+  --text-mid: #b6aa9b;
+  --text-low: #8a7f70;
 
   /* Data colour — identical in both modes (it means the same thing). */
   /* Always paired with ▲/▼ and a sign — never colour alone. */
@@ -607,10 +609,11 @@ body {
    ============================================================ */
 
 :root {
-  /* Decorative aurora hues — hero chrome only, not data. */
-  --aurora-1: #6d70f5; /* iris */
-  --aurora-2: #8b5cf6; /* violet */
-  --aurora-3: #22d3ee; /* cyan */
+  /* Decorative header-band hues — warm bronze/amber to sit with the charcoal +
+     brown chrome. Decorative only, low-opacity; never on data. */
+  --aurora-1: #c8924f; /* amber-bronze */
+  --aurora-2: #a2673c; /* brown */
+  --aurora-3: #6d70f5; /* a hint of iris */
   --node-line: color-mix(in srgb, var(--iris) 45%, var(--line-strong));
 }
 :root[data-theme="light"] {

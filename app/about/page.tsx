@@ -4,14 +4,14 @@ import { Prose } from "@/components/layout/Prose";
 export const metadata = {
   title: "About",
   description:
-    "Mizan surfaces which stories matter, which instruments they move, and how markets responded — signal over an undifferentiated firehose.",
+    "Mizaan surfaces which stories matter, which instruments they move, and how markets responded — signal over an undifferentiated firehose.",
 };
 
 export default function AboutPage() {
   return (
-    <Prose eyebrow="signal over noise" title="About Mizan">
+    <Prose eyebrow="signal over noise" title="About Mizaan Intelligence">
       <p>
-        <strong>Mizan</strong> — Arabic for <em>balance</em>, the scale — is a market
+        <strong>Mizaan</strong> — Arabic for <em>balance</em>, the scale — is a market
         intelligence platform for global and GCC markets. We don&rsquo;t compete with
         the wires on speed or licensed data. We compete on <strong>signal</strong>:
         which stories matter, which instruments they move, and how markets actually

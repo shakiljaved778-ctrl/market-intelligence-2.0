@@ -67,7 +67,7 @@ export default async function BoardPage() {
         <div className="flex items-baseline justify-between">
           <p className="eyebrow">
             <span className="live-dot mr-2 inline-block align-middle" aria-hidden />
-            Today on Mizan · {new Date(lead.eventTime).toUTCString().slice(0, 16)}
+            Today on Mizaan · {new Date(lead.eventTime).toUTCString().slice(0, 16)}
           </p>
           <Link href="/news" className="ours text-[12px]">
             The wire <span aria-hidden>→</span>

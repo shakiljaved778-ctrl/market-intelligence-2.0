@@ -22,25 +22,25 @@ function safeUrl(value: string): URL | undefined {
 export const metadata: Metadata = {
   metadataBase: safeUrl(siteUrl),
   title: {
-    default: "Mizan — market intelligence",
-    template: "%s · Mizan",
+    default: "Mizaan Intelligence",
+    template: "%s · Mizaan Intelligence",
   },
   // Rankings/clustering are computed deterministically; story summaries are
   // AI-written from cited sources.
   description:
-    "Mizan: algorithmically curated market intelligence — signal ranking, cross-source clustering and news-to-price attribution across global and GCC markets, with AI-written story summaries from cited sources.",
-  applicationName: "Mizan",
+    "Mizaan Intelligence: algorithmically curated market intelligence — signal ranking, cross-source clustering and news-to-price attribution across global and GCC markets, with AI-written story summaries from cited sources.",
+  applicationName: "Mizaan Intelligence",
   openGraph: {
     type: "website",
-    siteName: "Mizan",
-    title: "Mizan — market intelligence",
+    siteName: "Mizaan Intelligence",
+    title: "Mizaan Intelligence",
     description:
       "Signal-ranked market intelligence across global and GCC markets. Computed rankings, AI-written summaries.",
     images: [{ url: "/api/og", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mizan — market intelligence",
+    title: "Mizaan Intelligence",
     images: ["/api/og"],
   },
   alternates: { types: { "application/rss+xml": `${siteUrl}/feed.xml` } },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0c0e11" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1613" },
     { media: "(prefers-color-scheme: light)", color: "#f3f4f1" },
   ],
 };
@@ -64,14 +64,14 @@ export default async function RootLayout({
     "@graph": [
       {
         "@type": "Organization",
-        name: "Mizan",
+        name: "Mizaan Intelligence",
         url: siteUrl,
         description:
           "Algorithmically curated market intelligence for global and GCC markets.",
       },
       {
         "@type": "WebSite",
-        name: "Mizan",
+        name: "Mizaan Intelligence",
         url: siteUrl,
         potentialAction: {
           "@type": "SearchAction",
