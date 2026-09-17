@@ -5,6 +5,7 @@ import { COVER_IMAGES } from "@/fixtures/cover-images";
 import { UNIVERSE } from "@/fixtures/universe";
 import { isDbConfigured } from "@/lib/db/client";
 import { dbReadWire, type DbWireRow } from "@/lib/db/queries/wire";
+import { cacheGet } from "@/lib/cache/swr";
 import { HashEmbedder } from "@/lib/curation/embed";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
@@ -187,7 +188,16 @@ export interface ClusterDetail {
 export async function readCluster(slug: string): Promise<ClusterDetail | null> {
   const loaded = (await loadAll()).find((l) => l.cluster.slug === slug);
   if (!loaded) return null;
-  const body = ARTICLE_BODIES[loaded.primaryId] ?? null;
+  // Fixtures carry authored demo bodies; live stories get their AI brief from the
+  // cache the cluster job primed (`wire:brief:<primaryId>`). No brief → the UI
+  // falls back to the dek + source list. Only touch KV in DB mode.
+  let body: ArticleBody | null = ARTICLE_BODIES[loaded.primaryId] ?? null;
+  if (!body && isDbConfigured()) {
+    const cached = await cacheGet<{ body: string; model: string }>(
+      `wire:brief:${loaded.primaryId}`,
+    );
+    if (cached?.body) body = { md: cached.body, model: cached.model };
+  }
   return { cluster: loaded.cluster, members: loaded.members, body };
 }
 
