@@ -111,15 +111,21 @@ export async function clusterTask(): Promise<JobSummary> {
   const stored = await persistClusters(ranked);
 
   // AI-written briefs (§13): generate an ORIGINAL body per cluster with Groq and
-  // cache it under a stable key the read path consumes. Gated on GROQ_API_KEY —
-  // a no-op without it — and needs KV configured in the runner so the brief
-  // reaches the served site. Cached for a week (TTL.fundamentals) so each story
-  // is generated once; never source text (§10).
+  // persist it on the cluster row (Postgres), which the read path serves. Gated
+  // on GROQ_API_KEY — a no-op without it. Only clusters that don't already have a
+  // brief are generated, so each story costs one Groq call. Never source text
+  // (§10 — that governs the articles table; this is our synthesised content).
   const { generateBrief, isGroqConfigured } = await import("@/lib/providers/groq");
   if (isGroqConfigured()) {
     const { classifySection } = await import("@/lib/curation/section");
+    const { existingClusterBriefs, setClusterBrief } = await import(
+      "@/lib/db/queries/articles"
+    );
+    const top = ranked.slice(0, 24);
+    const alreadyHave = await existingClusterBriefs(top.map((c) => c.slug));
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
-    for (const c of ranked.slice(0, 24)) {
+    for (const c of top) {
+      if (alreadyHave.has(c.slug)) continue;
       const dek = dekById.get(c.primaryId) ?? null;
       const section = classifySection({
         title: c.title,
@@ -140,7 +146,7 @@ export async function clusterTask(): Promise<JobSummary> {
         sources: c.sourceIds,
         moves,
       });
-      if (brief) await cachePut(`wire:brief:${c.primaryId}`, TTL.fundamentals, brief);
+      if (brief) await setClusterBrief(c.slug, brief.body, brief.model);
     }
   }
 

@@ -5,7 +5,6 @@ import { COVER_IMAGES } from "@/fixtures/cover-images";
 import { UNIVERSE } from "@/fixtures/universe";
 import { isDbConfigured } from "@/lib/db/client";
 import { dbReadWire, type DbWireRow } from "@/lib/db/queries/wire";
-import { cacheGet } from "@/lib/cache/swr";
 import { HashEmbedder } from "@/lib/curation/embed";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
@@ -50,6 +49,8 @@ interface LoadedCluster {
   cluster: WireCluster;
   members: ClusterMember[];
   primaryId: number;
+  /** AI-written brief: fixtures carry demo bodies; live stories carry the Groq brief. */
+  body: ArticleBody | null;
 }
 
 function context(): RankContext {
@@ -97,7 +98,12 @@ function fixtureLoaded(cluster: SluggedCluster): LoadedCluster {
       (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
     )
     .map(toMember);
-  return { cluster: wire, members, primaryId: cluster.primaryId };
+  return {
+    cluster: wire,
+    members,
+    primaryId: cluster.primaryId,
+    body: ARTICLE_BODIES[cluster.primaryId] ?? null,
+  };
 }
 
 /** Build a cluster from a persisted (live) row. Live articles carry no stored
@@ -125,7 +131,12 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
     imageUrl: null,
     imageCredit: null,
   };
-  return { cluster, members: row.members, primaryId: row.primaryId };
+  return {
+    cluster,
+    members: row.members,
+    primaryId: row.primaryId,
+    body: row.brief ? { md: row.brief.md, model: row.brief.model } : null,
+  };
 }
 
 /**
@@ -188,17 +199,9 @@ export interface ClusterDetail {
 export async function readCluster(slug: string): Promise<ClusterDetail | null> {
   const loaded = (await loadAll()).find((l) => l.cluster.slug === slug);
   if (!loaded) return null;
-  // Fixtures carry authored demo bodies; live stories get their AI brief from the
-  // cache the cluster job primed (`wire:brief:<primaryId>`). No brief → the UI
-  // falls back to the dek + source list. Only touch KV in DB mode.
-  let body: ArticleBody | null = ARTICLE_BODIES[loaded.primaryId] ?? null;
-  if (!body && isDbConfigured()) {
-    const cached = await cacheGet<{ body: string; model: string }>(
-      `wire:brief:${loaded.primaryId}`,
-    );
-    if (cached?.body) body = { md: cached.body, model: cached.model };
-  }
-  return { cluster: loaded.cluster, members: loaded.members, body };
+  // Fixtures carry authored demo bodies; live stories carry the Groq brief the
+  // cluster job persisted. No brief → the UI falls back to the dek + source list.
+  return { cluster: loaded.cluster, members: loaded.members, body: loaded.body };
 }
 
 export function allTopics(): string[] {

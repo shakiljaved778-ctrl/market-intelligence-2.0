@@ -15,6 +15,13 @@
       "when": 1789559329354,
       "tag": "0001_amused_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789679309786,
+      "tag": "0002_simple_forge",
+      "breakpoints": true
     }
   ]
 }

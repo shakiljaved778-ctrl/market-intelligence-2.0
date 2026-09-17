@@ -34,6 +34,8 @@ export interface DbWireRow {
   articleIds: number[];
   primaryId: number;
   primaryDek: string | null;
+  /** AI-written brief persisted by the cluster job, if generated. */
+  brief: { md: string; model: string } | null;
   members: DbWireMember[];
 }
 
@@ -61,6 +63,8 @@ export async function dbReadWire(limit = 60): Promise<DbWireRow[]> {
       eventTime: clusters.eventTime,
       importanceScore: clusters.importanceScore,
       sourceCount: clusters.sourceCount,
+      briefMd: clusters.briefMd,
+      briefModel: clusters.briefModel,
     })
     .from(clusters)
     .where(eq(clusters.status, "published"))
@@ -127,6 +131,7 @@ export async function dbReadWire(limit = 60): Promise<DbWireRow[]> {
       articleIds: members.map((m) => m.articleId),
       primaryId: primary.articleId,
       primaryDek: primary.dek,
+      brief: c.briefMd ? { md: c.briefMd, model: c.briefModel ?? "groq" } : null,
       members: members.map((m) => ({
         headline: m.headline,
         sourceName: m.sourceName,
