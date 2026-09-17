@@ -4,9 +4,26 @@ import { SectionTag } from "@/components/news/SectionTag";
 import { StoryCard } from "@/components/news/StoryCard";
 import { Movers } from "@/components/market/Movers";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { allSections, readWire, type WireCluster } from "@/lib/news/read";
+import {
+  allSections,
+  readSectionSummaries,
+  readWire,
+  type WireCluster,
+} from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
+
+/** A YureCorp-style stat tile — a big REAL number + a quiet label. */
+function StatTile({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="card p-5">
+      <div className="tnum text-text-hi flex items-baseline gap-0.5 text-[34px] leading-none">
+        {value}
+      </div>
+      <p className="text-text-low mt-2.5 text-[12px] leading-snug">{label}</p>
+    </div>
+  );
+}
 
 /**
  * The front page (§13). An editorial masthead in the pattern of a real news
@@ -32,7 +49,13 @@ function LatestRow({ c }: { c: WireCluster }) {
 }
 
 export default async function BoardPage() {
-  const [currency, clusters] = await Promise.all([getDisplayCurrency(), readWire()]);
+  const [currency, clusters, summary] = await Promise.all([
+    getDisplayCurrency(),
+    readWire(),
+    readSectionSummaries(),
+  ]);
+  const totalSources = clusters.reduce((n, c) => n + c.sourceCount, 0);
+  const sectionsCount = allSections().length;
 
   const lead = clusters[0];
   const secondary = clusters[1];
@@ -62,8 +85,61 @@ export default async function BoardPage() {
 
   return (
     <div>
+      {/* ============ Hero band (ref: YureCorp) ============ */}
+      <section className="accent-panel mt-6 overflow-hidden p-6 sm:p-9 lg:p-11">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
+          {/* Left: pitch + CTA + trusted-by. */}
+          <div>
+            <p className="eyebrow inline-flex items-center gap-2">
+              <span className="ours" aria-hidden>
+                ◆
+              </span>
+              signal over noise
+            </p>
+            <h1 className="display text-text-hi mt-4 text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.03]">
+              Market intelligence, weighted by{" "}
+              <span className="ours">what actually moves it.</span>
+            </h1>
+            <p className="text-text-mid mt-5 max-w-[52ch] text-[15px] leading-relaxed">
+              Mizaan ranks which stories matter, binds them to the instruments they
+              move, and writes an AI summary from cited sources — computed
+              deterministically, in USD or QAR.
+            </p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link href="/news" className="btn btn-primary">
+                Explore the wire <span aria-hidden>→</span>
+              </Link>
+              <Link href="/methodology" className="btn btn-ghost">
+                How it works
+              </Link>
+            </div>
+            <div className="mt-8">
+              <span className="eyebrow">Market &amp; macro data from</span>
+              <div className="trust-strip mt-2.5">
+                {["FMP", "Finnhub", "FRED", "World Bank", "Pexels"].map((p) => (
+                  <span key={p} className="trust-logo">
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: REAL computed stat tiles (no fabricated numbers). */}
+          <div className="grid grid-cols-2 gap-4">
+            <StatTile value={String(summary.total)} label="stories ranked today" />
+            <StatTile value={String(totalSources)} label="source reports clustered" />
+            <StatTile value={String(sectionsCount)} label="sections covered" />
+            <StatTile
+              value={`${summary.nonFinancialPct}%`}
+              label="beyond markets & economy"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ============ Masthead ============ */}
-      <section className="accent-panel mt-6 p-5 sm:p-7 lg:p-8">
+      <section className="mt-10 pt-2">
         <div className="flex items-baseline justify-between">
           <p className="eyebrow">
             <span className="live-dot mr-2 inline-block align-middle" aria-hidden />
