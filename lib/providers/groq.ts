@@ -17,7 +17,28 @@ import { TTL } from "@/lib/cache/ttl";
  *   - No key → returns null and the UI falls back to the dek + source list.
  */
 const BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+
+/**
+ * Candidate models, tried in order until one is accepted (Groq retires model
+ * IDs over time, so a single hard-coded name goes stale). `GROQ_MODEL` (when
+ * set) is tried first. The first model that returns a completion is remembered
+ * for the rest of the process so we don't re-probe dead names per story.
+ */
+const FALLBACK_MODELS = [
+  "llama-3.1-8b-instant",
+  "openai/gpt-oss-20b",
+  "openai/gpt-oss-120b",
+  "llama-3.3-70b-versatile",
+  "gemma2-9b-it",
+];
+
+function candidateModels(): string[] {
+  const preferred = process.env.GROQ_MODEL?.trim();
+  return [...new Set([preferred, ...FALLBACK_MODELS].filter(Boolean) as string[])];
+}
+
+// Remembered working model for this process (reset each job run).
+let resolvedModel: string | null = null;
 
 export interface BriefInput {
   title: string;
@@ -73,44 +94,71 @@ const SYSTEM = [
  * Generate an original brief for a story. Cached by a stable key so a story is
  * generated once. Returns null when unconfigured or on any failure.
  */
+async function callGroq(model: string, input: BriefInput): Promise<Brief> {
+  const res = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY as string}`,
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body: JSON.stringify({
+      model,
+      temperature: 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: "system", content: SYSTEM },
+        { role: "user", content: prompt(input) },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Groq ${res.status} (model=${model}): ${detail.slice(0, 300)}`);
+  }
+  const parsed = Completion.parse(await res.json());
+  const body = parsed.choices[0]!.message.content.trim();
+  if (!body) throw new Error(`Groq returned empty content (model=${model})`);
+  return { body, model };
+}
+
+const MODEL_UNAVAILABLE = /404|model_not_found|does not exist|decommission|deprecat/i;
+
+/**
+ * Generate an original brief for a story. Tries candidate models until one is
+ * accepted (remembering the winner for the rest of the run), and returns null
+ * when unconfigured or if every candidate fails. Cached by a model-independent
+ * key so a story is generated once where KV is present.
+ */
 export async function generateBrief(
   key: string,
   input: BriefInput,
 ): Promise<Brief | null> {
   if (!isGroqConfigured()) return null;
-  const model = process.env.GROQ_MODEL || DEFAULT_MODEL;
   try {
     const { value } = await swr<Brief | null>(
-      `brief:${model}:${key}`,
+      `brief:${key}`,
       TTL.fundamentals,
       async () => {
-        const res = await fetch(BASE_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.GROQ_API_KEY as string}`,
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-          body: JSON.stringify({
-            model,
-            temperature: 0.4,
-            max_tokens: 400,
-            messages: [
-              { role: "system", content: SYSTEM },
-              { role: "user", content: prompt(input) },
-            ],
-          }),
-        });
-        if (!res.ok) {
-          const detail = await res.text().catch(() => "");
-          throw new Error(
-            `Groq ${res.status} (model=${model}): ${detail.slice(0, 300)}`,
-          );
+        const models = resolvedModel ? [resolvedModel] : candidateModels();
+        for (const model of models) {
+          try {
+            const brief = await callGroq(model, input);
+            if (resolvedModel !== model) {
+              resolvedModel = model;
+              console.log(`[groq] using model ${model}`);
+            }
+            return brief;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (MODEL_UNAVAILABLE.test(msg) && models.length > 1) {
+              console.warn(`[groq] model ${model} unavailable, trying next`);
+              continue;
+            }
+            throw err;
+          }
         }
-        const parsed = Completion.parse(await res.json());
-        const body = parsed.choices[0]!.message.content.trim();
-        if (!body) return null;
-        return { body, model };
+        return null;
       },
     );
     return value;
