@@ -101,7 +101,12 @@ export async function generateBrief(
             ],
           }),
         });
-        if (!res.ok) throw new Error(`Groq ${res.status}`);
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          throw new Error(
+            `Groq ${res.status} (model=${model}): ${detail.slice(0, 300)}`,
+          );
+        }
         const parsed = Completion.parse(await res.json());
         const body = parsed.choices[0]!.message.content.trim();
         if (!body) return null;
@@ -109,7 +114,9 @@ export async function generateBrief(
       },
     );
     return value;
-  } catch {
+  } catch (err) {
+    // Diagnostics for the scheduled job — the caller still degrades gracefully.
+    console.warn("[groq] brief failed:", err instanceof Error ? err.message : err);
     return null;
   }
 }
