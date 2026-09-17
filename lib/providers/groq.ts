@@ -105,7 +105,9 @@ async function callGroq(model: string, input: BriefInput): Promise<Brief> {
     body: JSON.stringify({
       model,
       temperature: 0.4,
-      max_tokens: 400,
+      // Headroom for reasoning models (e.g. gpt-oss): the ~300-token brief plus
+      // the reasoning pass. Too small a budget yields empty content.
+      max_tokens: 2000,
       messages: [
         { role: "system", content: SYSTEM },
         { role: "user", content: prompt(input) },
