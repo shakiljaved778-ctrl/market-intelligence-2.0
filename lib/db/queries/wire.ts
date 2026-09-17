@@ -36,6 +36,9 @@ export interface DbWireRow {
   primaryDek: string | null;
   /** AI-written brief persisted by the cluster job, if generated. */
   brief: { md: string; model: string } | null;
+  /** Pexels cover photo persisted by the cluster job, if resolved. */
+  imageUrl: string | null;
+  imageCredit: { credit: string; creditUrl: string } | null;
   members: DbWireMember[];
 }
 
@@ -65,6 +68,9 @@ export async function dbReadWire(limit = 60): Promise<DbWireRow[]> {
       sourceCount: clusters.sourceCount,
       briefMd: clusters.briefMd,
       briefModel: clusters.briefModel,
+      coverUrl: clusters.coverUrl,
+      coverCredit: clusters.coverCredit,
+      coverCreditUrl: clusters.coverCreditUrl,
     })
     .from(clusters)
     .where(eq(clusters.status, "published"))
@@ -132,6 +138,13 @@ export async function dbReadWire(limit = 60): Promise<DbWireRow[]> {
       primaryId: primary.articleId,
       primaryDek: primary.dek,
       brief: c.briefMd ? { md: c.briefMd, model: c.briefModel ?? "groq" } : null,
+      imageUrl: c.coverUrl ?? null,
+      imageCredit: c.coverUrl
+        ? {
+            credit: c.coverCredit ?? "Pexels",
+            creditUrl: c.coverCreditUrl ?? "https://www.pexels.com",
+          }
+        : null,
       members: members.map((m) => ({
         headline: m.headline,
         sourceName: m.sourceName,

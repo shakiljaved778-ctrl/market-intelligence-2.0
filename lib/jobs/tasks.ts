@@ -110,25 +110,32 @@ export async function clusterTask(): Promise<JobSummary> {
   const ranked = await runPipeline(recent, { tiers, tickerMovePct }, getEmbedder());
   const stored = await persistClusters(ranked);
 
-  // AI-written briefs (§13): generate an ORIGINAL body per cluster with Groq and
-  // persist it on the cluster row (Postgres), which the read path serves. Gated
-  // on GROQ_API_KEY — a no-op without it. Only clusters that don't already have a
-  // brief are generated, so each story costs one Groq call. Never source text
-  // (§10 — that governs the articles table; this is our synthesised content).
+  // Enrich clusters (§13): an AI brief (Groq) and a cover photo (Pexels), each
+  // gated on its own key and only for clusters that don't already have one, so a
+  // story costs at most one call per provider. Both are persisted on the cluster
+  // row (URL/attribution + synthesised prose only — never source text, §10).
   const { generateBrief, isGroqConfigured } = await import("@/lib/providers/groq");
-  if (isGroqConfigured()) {
+  const { searchPexels, isPexelsConfigured } = await import("@/lib/providers/pexels");
+  if (isGroqConfigured() || isPexelsConfigured()) {
     const { classifySection } = await import("@/lib/curation/section");
-    const { existingClusterBriefs, setClusterBrief } = await import(
-      "@/lib/db/queries/articles"
-    );
+    const { coverQuery } = await import("@/lib/news/cover-query");
+    const {
+      existingClusterBriefs,
+      setClusterBrief,
+      existingClusterCovers,
+      setClusterCover,
+    } = await import("@/lib/db/queries/articles");
     const top = ranked.slice(0, 24);
-    const alreadyHave = await existingClusterBriefs(top.map((c) => c.slug));
+    const slugs = top.map((c) => c.slug);
+    const empty = new Set<string>();
+    const [haveBrief, haveCover] = await Promise.all([
+      isGroqConfigured() ? existingClusterBriefs(slugs) : Promise.resolve(empty),
+      isPexelsConfigured() ? existingClusterCovers(slugs) : Promise.resolve(empty),
+    ]);
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
     let briefsWritten = 0;
-    let briefsAttempted = 0;
+    let coversWritten = 0;
     for (const c of top) {
-      if (alreadyHave.has(c.slug)) continue;
-      briefsAttempted += 1;
       const dek = dekById.get(c.primaryId) ?? null;
       const section = classifySection({
         title: c.title,
@@ -136,26 +143,39 @@ export async function clusterTask(): Promise<JobSummary> {
         topics: c.topics,
         tickers: c.tickers,
       });
-      const moves: Record<string, number> = {};
-      for (const t of c.tickers) {
-        const m = tickerMovePct[t];
-        if (typeof m === "number") moves[t] = m;
+
+      if (isGroqConfigured() && !haveBrief.has(c.slug)) {
+        const moves: Record<string, number> = {};
+        for (const t of c.tickers) {
+          const m = tickerMovePct[t];
+          if (typeof m === "number") moves[t] = m;
+        }
+        const brief = await generateBrief(String(c.primaryId), {
+          title: c.title,
+          dek,
+          section,
+          tickers: c.tickers,
+          sources: c.sourceIds,
+          moves,
+        });
+        if (brief) {
+          await setClusterBrief(c.slug, brief.body, brief.model);
+          briefsWritten += 1;
+        }
       }
-      const brief = await generateBrief(String(c.primaryId), {
-        title: c.title,
-        dek,
-        section,
-        tickers: c.tickers,
-        sources: c.sourceIds,
-        moves,
-      });
-      if (brief) {
-        await setClusterBrief(c.slug, brief.body, brief.model);
-        briefsWritten += 1;
+
+      if (isPexelsConfigured() && !haveCover.has(c.slug)) {
+        const extra =
+          c.entities[0] ?? c.tickers[0] ?? c.topics[0]?.replace(/_/g, " ") ?? "";
+        const cover = await searchPexels(coverQuery(section, extra));
+        if (cover) {
+          await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
+          coversWritten += 1;
+        }
       }
     }
     console.log(
-      `[cluster] briefs: ${briefsWritten} written, ${briefsAttempted} attempted, ${alreadyHave.size} already present`,
+      `[cluster] enrich: ${briefsWritten} briefs, ${coversWritten} covers written`,
     );
   }
 

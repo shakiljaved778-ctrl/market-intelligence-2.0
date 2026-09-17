@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { FIXTURE_ARTICLES } from "@/fixtures/articles";
 import { classify } from "@/lib/curation/classify";
 import { classifySection } from "@/lib/curation/section";
+import { coverQuery } from "@/lib/news/cover-query";
 import {
   isPexelsConfigured,
   searchPexels,
@@ -21,18 +22,6 @@ import {
  * the deterministic SVG covers).
  */
 
-// A base search term per section; the article's own topic/entity is appended so
-// stories in the same section resolve to different photos.
-const SECTION_QUERY: Record<string, string> = {
-  markets: "stock market trading",
-  economy: "economy finance city",
-  technology: "artificial intelligence technology",
-  health: "medicine health laboratory",
-  sports: "stadium sport action",
-  entertainment: "cinema film culture",
-  science: "space science research",
-};
-
 function queryFor(headline: string, dek: string | null): string {
   const c = classify(headline, dek);
   const section = classifySection({
@@ -41,9 +30,8 @@ function queryFor(headline: string, dek: string | null): string {
     topics: c.topics,
     tickers: c.tickers,
   });
-  const base = SECTION_QUERY[section] ?? "global news";
   const extra = c.entities[0] ?? c.tickers[0] ?? c.topics[0]?.replace(/_/g, " ") ?? "";
-  return extra ? `${base} ${extra}` : base;
+  return coverQuery(section, extra);
 }
 
 async function main(): Promise<void> {

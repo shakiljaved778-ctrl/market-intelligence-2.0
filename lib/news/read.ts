@@ -128,8 +128,8 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
       tickers: row.tickers,
     }),
     dek: row.primaryDek,
-    imageUrl: null,
-    imageCredit: null,
+    imageUrl: row.imageUrl,
+    imageCredit: row.imageCredit,
   };
   return {
     cluster,

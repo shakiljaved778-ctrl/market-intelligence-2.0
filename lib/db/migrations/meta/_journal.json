@@ -22,6 +22,13 @@
       "when": 1789679309786,
       "tag": "0002_simple_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789682140704,
+      "tag": "0003_previous_morph",
+      "breakpoints": true
     }
   ]
 }
