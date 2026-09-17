@@ -5,11 +5,11 @@ import { CoverArt } from "./CoverArt";
 import { SectionTag } from "./SectionTag";
 
 /**
- * The wire (§11, §13). Clusters ordered by importance. OUR computed numbers —
- * the importance score and the source count — carry the iris accent that means
- * "this is ours". The aggregated headline is visually distinct (editorial serif)
- * so a reader is never unsure what they are reading. Each row carries a cover
- * image and a section tag so the editorial mix is legible at a glance.
+ * The wire (§11, §13). Clusters ordered by importance, each in its own spaced
+ * card so stories breathe (white space between articles). OUR computed numbers —
+ * importance score and source count — carry the iris accent ("this is ours").
+ * The aggregated headline is editorial serif so a reader is never unsure what
+ * they are reading. Every story carries a cover and a section tag.
  */
 export function Wire({ clusters }: { clusters: WireCluster[] }) {
   if (clusters.length === 0) {
@@ -20,31 +20,29 @@ export function Wire({ clusters }: { clusters: WireCluster[] }) {
     );
   }
   return (
-    <ol className="list-card">
+    <ol className="flex flex-col gap-4 sm:gap-5">
       {clusters.map((c, i) => (
-        <li key={c.slug} className="border-line border-b last:border-b-0">
+        <li key={c.slug}>
           <Link
             href={`/news/${c.slug}`}
-            className="row-spine hover:bg-surface flex gap-4 px-4 py-4 pl-5 sm:px-5 sm:pl-6"
+            className="card card-hover group flex items-stretch gap-0 overflow-hidden"
           >
             {/* Cover image. */}
-            <div className="border-line bg-surface hidden h-[72px] w-[116px] shrink-0 overflow-hidden rounded-[8px] border sm:block">
+            <div className="border-line bg-surface relative hidden w-[180px] shrink-0 self-stretch overflow-hidden border-r sm:block lg:w-[240px]">
               <CoverArt
                 section={c.section}
                 seed={c.slug}
                 imageUrl={c.imageUrl}
                 label={false}
-                className="h-full w-full"
+                className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
               />
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 p-5 sm:p-6">
               <div className="flex items-center gap-3 text-[12px]">
-                {/* Rank — quiet chrome ordinal. */}
                 <span className="tnum text-text-low w-5 shrink-0 tabular-nums">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                {/* Score + source count = ours (accent). */}
                 <span
                   className="ours tnum border-iris/25 bg-iris/10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5"
                   title="Importance score"
@@ -58,10 +56,10 @@ export function Wire({ clusters }: { clusters: WireCluster[] }) {
                   {relativeTime(c.eventTime)}
                 </span>
               </div>
-              <h3 className="font-editorial text-text-hi mt-2 max-w-[68ch] text-[19px] leading-snug">
+              <h3 className="font-editorial text-text-hi group-hover:text-iris mt-2.5 max-w-[68ch] text-[20px] leading-snug transition-colors">
                 {c.title}
               </h3>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <SectionTag section={c.section} />
                 {c.tickers.map((t) => (
                   <span

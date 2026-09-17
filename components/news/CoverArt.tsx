@@ -153,55 +153,36 @@ function Motif({ glyph, hue, n }: { glyph: string; hue: string; n: number }) {
   }
 }
 
-export function CoverArt({
-  section,
-  seed,
-  imageUrl,
+/**
+ * A keyless, deterministic real photo for a story that has no resolved image.
+ * Browser-loaded from a CDN (a static asset, not a data API), so it needs no key
+ * and never calls a vendor on the server (§17). Topical Pexels photos, when the
+ * backfill script has run, take precedence via `imageUrl`. If this ever fails to
+ * load, the generative art layer beneath shows through — nothing renders empty.
+ */
+function fallbackPhoto(seed: string): string {
+  return `https://picsum.photos/seed/mizan-${encodeURIComponent(seed)}/960/600`;
+}
+
+/** The on-brand generative art — used as the base layer under every photo. */
+function GenerativeArt({
+  meta,
+  n,
+  uid,
   className,
-  label = true,
 }: {
-  section: string;
-  seed: string;
-  imageUrl?: string | null;
+  meta: ReturnType<typeof sectionMeta>;
+  n: number;
+  uid: string;
   className?: string;
-  label?: boolean;
 }) {
-  const meta = sectionMeta(section);
-  const n = seedNum(seed);
-  const uid = `${section}-${n}`;
-
-  if (imageUrl) {
-    // A real photo (reference/URL, never body text). Scrim keeps overlaid text
-    // legible and unifies photography with the monochrome chrome.
-    return (
-      <div className={`relative overflow-hidden ${className ?? ""}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, color-mix(in srgb, var(--canvas) 10%, transparent) 0%, transparent 34%, color-mix(in srgb, var(--canvas) 78%, transparent) 100%)",
-          }}
-        />
-      </div>
-    );
-  }
-
-  // Two soft blooms + gradient base + grid + grain + motif + label scrim.
   const angle = (n % 90) - 45;
   return (
     <svg
       viewBox="0 0 400 250"
       preserveAspectRatio="xMidYMid slice"
       className={className}
-      role="img"
-      aria-label={`${meta.label} cover`}
+      aria-hidden
     >
       <defs>
         <linearGradient id={`base-${uid}`} x1="0" y1="0" x2="1" y2="1">
@@ -255,22 +236,63 @@ export function CoverArt({
       <Motif glyph={meta.glyph} hue={meta.hue} n={n} />
       <rect width="400" height="250" fill={`url(#vig-${uid})`} />
       <rect width="400" height="250" filter={`url(#grain-${uid})`} opacity="0.05" />
-
-      {label ? (
-        <g>
-          <circle cx="20" cy="226" r="3" fill={meta.hue} />
-          <text
-            x="30"
-            y="230"
-            fill="var(--text-mid)"
-            fontSize="11"
-            letterSpacing="1.5"
-            style={{ fontFamily: "var(--font-mono)", textTransform: "uppercase" }}
-          >
-            {meta.label}
-          </text>
-        </g>
-      ) : null}
     </svg>
+  );
+}
+
+export function CoverArt({
+  section,
+  seed,
+  imageUrl,
+  className,
+  label = true,
+}: {
+  section: string;
+  seed: string;
+  imageUrl?: string | null;
+  className?: string;
+  label?: boolean;
+}) {
+  const meta = sectionMeta(section);
+  const n = seedNum(seed);
+  const uid = `${section}-${n}`;
+  const photo = imageUrl ?? fallbackPhoto(seed);
+
+  return (
+    <div className={`relative overflow-hidden ${className ?? ""}`}>
+      {/* Base layer: on-brand generative art (shows if the photo fails). */}
+      <GenerativeArt
+        meta={meta}
+        n={n}
+        uid={uid}
+        className="absolute inset-0 h-full w-full"
+      />
+      {/* Real photo on top; object-cover fills the frame. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photo}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      {/* Legibility scrim + a subtle top vignette to seat text. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--canvas) 22%, transparent) 0%, transparent 38%, color-mix(in srgb, var(--canvas) 82%, transparent) 100%)",
+        }}
+      />
+      {label ? (
+        <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] tracking-[0.12em] text-white/90 uppercase backdrop-blur-sm">
+          <span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 rounded-full"
+            style={{ background: meta.hue }}
+          />
+          {meta.label}
+        </span>
+      ) : null}
+    </div>
   );
 }

@@ -162,7 +162,7 @@ export default async function BoardPage() {
               The wire <span aria-hidden>→</span>
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <StoryCard cluster={lead} variant="lead" />
             </div>
@@ -173,7 +173,7 @@ export default async function BoardPage() {
             </div>
           </div>
           {secondary.length > 0 ? (
-            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {secondary.map((c) => (
                 <StoryCard key={c.slug} cluster={c} variant="card" />
               ))}
@@ -191,7 +191,7 @@ export default async function BoardPage() {
               All markets <span aria-hidden>→</span>
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <Movers currency={currency} />
             </div>
@@ -248,7 +248,7 @@ export default async function BoardPage() {
                   View all <span aria-hidden>→</span>
                 </Link>
               </div>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {stories.slice(0, 3).map((c) => (
                   <StoryCard key={c.slug} cluster={c} variant="card" />
                 ))}
