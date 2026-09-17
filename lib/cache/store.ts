@@ -98,8 +98,7 @@ export function getKvStore(): KvStore {
   // Accept either the Vercel KV names or Upstash's own REST names — the
   // Upstash Marketplace integration may inject either set.
   const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-  const token =
-    process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
   singleton = url && token ? new RestStore(url, token) : new MemoryStore();
   return singleton;
 }
