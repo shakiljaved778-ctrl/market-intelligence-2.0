@@ -20,7 +20,21 @@ jobs:
           APP_URL: ${{ secrets.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl --fail-with-body --show-error --silent \
-            --retry 3 --retry-delay 8 \
+          if [ -z "${APP_URL:-}" ]; then
+            echo "::error::APP_URL secret is not set. Add it in Settings → Secrets and variables → Actions (see DEPLOY.md §2c). Use the STABLE production domain, not a preview URL."
+            exit 1
+          fi
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET secret is not set (it must match the value configured in Vercel)."
+            exit 1
+          fi
+          code=$(curl --show-error --silent --retry 3 --retry-delay 8 \
             -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${APP_URL}/api/cron/eod"
+            -o response.txt -w '%{http_code}' \
+            "${APP_URL%/}/api/cron/eod") || true
+          echo "HTTP ${code} from ${APP_URL%/}/api/cron/eod"
+          head -c 600 response.txt || true; echo
+          if [ "${code}" != "200" ]; then
+            echo "::error::Expected 200. 401 = CRON_SECRET mismatch or Vercel Deployment Protection; 404 = wrong APP_URL or route not deployed."
+            exit 1
+          fi

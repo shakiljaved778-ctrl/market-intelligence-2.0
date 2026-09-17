@@ -14,6 +14,7 @@ export const TTL = {
   macroSeries: 24 * 60 * 60,
   newsWire: 90,
   searchSymbol: 24 * 60 * 60,
+  coverImage: 7 * 24 * 60 * 60, // stock photos are stable; cache hard.
 } as const;
 
 export type TtlKey = keyof typeof TTL;

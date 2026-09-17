@@ -8,6 +8,7 @@ import { SymbolSearch } from "@/components/market/SymbolSearch";
 const NAV = [
   { href: "/markets", label: "Markets" },
   { href: "/news", label: "Wire" },
+  { href: "/sections", label: "Sections" },
   { href: "/economy", label: "Economy" },
   { href: "/methodology", label: "Methodology" },
 ];
@@ -22,11 +23,20 @@ export function Header({
   return (
     <header className="border-line bg-canvas/95 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4">
-        {/* Wordmark: hairline mark + bold uppercase name. */}
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Mizan home">
+        {/* Wordmark: hairline mark + bold name + a quiet "intelligence" lockup. */}
+        <Link
+          href="/"
+          className="flex items-center gap-2.5"
+          aria-label="Mizaan Intelligence home"
+        >
           <span className="mark" aria-hidden />
-          <span className="text-text-hi text-[19px] leading-none font-bold tracking-[0.18em]">
-            MIZA<span className="ours">N</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-text-hi text-[19px] font-bold tracking-[0.16em]">
+              MIZAA<span className="ours">N</span>
+            </span>
+            <span className="text-text-low mt-1 hidden font-mono text-[9px] tracking-[0.34em] sm:block">
+              INTELLIGENCE
+            </span>
           </span>
         </Link>
 

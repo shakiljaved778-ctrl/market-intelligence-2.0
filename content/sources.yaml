@@ -83,3 +83,103 @@ sources:
     trust_score: 96
     license_note: Exchange regulatory disclosures; headline + link only.
     active: false # verify feed URL before enabling (§6)
+
+  # ============================================================
+  # NON-FINANCIAL verticals (§13 editorial mix). We keep the same bias toward
+  # licence-free, high-trust primary sources: government/agency feeds that are
+  # public domain or openly licensed. Commercial outlets are added headline +
+  # dek + link only (never body, §10) and left inactive pending feed/terms
+  # verification (§6), exactly like the GCC feeds above.
+  # ============================================================
+
+  # --- Science & tech (public domain / open) ---
+  - id: nasa-news
+    name: NASA — Breaking News
+    homepage: https://www.nasa.gov
+    feed_url: https://www.nasa.gov/rss/dyn/breaking_news.rss
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 96
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: false # verify feed URL before enabling (§6)
+
+  - id: mit-news
+    name: MIT News
+    homepage: https://news.mit.edu
+    feed_url: https://news.mit.edu/rss/feed
+    kind: rss
+    region: US
+    tier: outlet
+    trust_score: 80
+    license_note: MIT News reproducible for non-commercial use with attribution; headline + dek + link only.
+    active: false # verify feed URL + terms before enabling (§6)
+
+  # --- Health (public domain / open) ---
+  - id: who-news
+    name: World Health Organization — News
+    homepage: https://www.who.int
+    feed_url: https://www.who.int/rss-feeds/news-english.xml
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 96
+    license_note: WHO content reproducible with attribution to source; headline + link only.
+    active: false # verify feed URL before enabling (§6)
+
+  - id: cdc-newsroom
+    name: U.S. CDC — Newsroom
+    homepage: https://www.cdc.gov
+    feed_url: https://tools.cdc.gov/api/v2/resources/media/403372.rss
+    kind: rss
+    region: US
+    tier: regulator
+    trust_score: 95
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: false # verify feed URL before enabling (§6)
+
+  # --- Economy / statistics (public domain / open) ---
+  - id: bls-news
+    name: U.S. Bureau of Labor Statistics — News
+    homepage: https://www.bls.gov
+    feed_url: https://www.bls.gov/feed/bls_latest.rss
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 98
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: false # verify feed URL before enabling (§6)
+
+  - id: worldbank-news
+    name: World Bank — News
+    homepage: https://www.worldbank.org
+    feed_url: https://www.worldbank.org/en/news/all?format=rss
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 96
+    license_note: World Bank content under CC BY 4.0 with attribution; headline + dek + link only.
+    active: false # verify feed URL before enabling (§6)
+
+  # --- Sports & culture (commercial outlets — inactive pending terms review) ---
+  - id: sports-outlet
+    name: Sports Outlet (placeholder)
+    homepage: https://example.com
+    feed_url: https://example.com/sports/rss
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 55
+    license_note: Headline + dek + link only under RSS syndication; body never stored; link-out to source. Verify terms before enabling.
+    active: false # placeholder — set a real, terms-checked feed before enabling (§6, §10)
+
+  - id: culture-outlet
+    name: Culture Outlet (placeholder)
+    homepage: https://example.com
+    feed_url: https://example.com/culture/rss
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 52
+    license_note: Headline + dek + link only under RSS syndication; body never stored; link-out to source. Verify terms before enabling.
+    active: false # placeholder — set a real, terms-checked feed before enabling (§6, §10)

@@ -153,3 +153,55 @@ export async function persistClusters(ranked: SluggedCluster[]): Promise<number>
   }
   return stored;
 }
+
+/** Slugs among `slugs` whose cluster already has an AI brief (skip regeneration). */
+export async function existingClusterBriefs(slugs: string[]): Promise<Set<string>> {
+  const have = new Set<string>();
+  const db = getDb();
+  if (!db || slugs.length === 0) return have;
+  const rows = await db
+    .select({ slug: clusters.slug, briefMd: clusters.briefMd })
+    .from(clusters)
+    .where(inArray(clusters.slug, slugs));
+  for (const r of rows) if (r.briefMd) have.add(r.slug);
+  return have;
+}
+
+/** Persist an AI-written brief onto a cluster (original content only, §10/§13). */
+export async function setClusterBrief(
+  slug: string,
+  briefMd: string,
+  briefModel: string,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await db.update(clusters).set({ briefMd, briefModel }).where(eq(clusters.slug, slug));
+}
+
+/** Slugs among `slugs` whose cluster already has a cover photo (skip re-fetch). */
+export async function existingClusterCovers(slugs: string[]): Promise<Set<string>> {
+  const have = new Set<string>();
+  const db = getDb();
+  if (!db || slugs.length === 0) return have;
+  const rows = await db
+    .select({ slug: clusters.slug, coverUrl: clusters.coverUrl })
+    .from(clusters)
+    .where(inArray(clusters.slug, slugs));
+  for (const r of rows) if (r.coverUrl) have.add(r.slug);
+  return have;
+}
+
+/** Persist a Pexels cover reference onto a cluster (URL + attribution, §13). */
+export async function setClusterCover(
+  slug: string,
+  coverUrl: string,
+  coverCredit: string,
+  coverCreditUrl: string,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await db
+    .update(clusters)
+    .set({ coverUrl, coverCredit, coverCreditUrl })
+    .where(eq(clusters.slug, slug));
+}

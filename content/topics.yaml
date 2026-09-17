@@ -36,3 +36,77 @@ topics:
   mergers: [merger, acquisition, takeover, buyout, deal, m&a]
   gcc: [qatar, gcc, doha, tadawul, saudi, gulf, riyal, dfm, adx, qse]
   crypto: [bitcoin, ethereum, crypto, digital asset, stablecoin, token]
+  # --- Non-financial verticals (§13 editorial mix) — same deterministic rules. ---
+  artificial_intelligence:
+    [
+      artificial intelligence,
+      ai model,
+      machine learning,
+      generative ai,
+      chatbot,
+      large language model,
+      neural network,
+    ]
+  technology:
+    [
+      semiconductor,
+      chip,
+      quantum,
+      software,
+      smartphone,
+      gadget,
+      startup,
+      robotics,
+      cybersecurity,
+    ]
+  health:
+    [
+      health,
+      vaccine,
+      disease,
+      outbreak,
+      virus,
+      clinical trial,
+      drug approval,
+      pandemic,
+      nutrition,
+    ]
+  sports:
+    [
+      football,
+      soccer,
+      world cup,
+      olympic,
+      tennis,
+      cricket,
+      basketball,
+      formula 1,
+      championship,
+      tournament,
+    ]
+  entertainment:
+    [
+      film,
+      movie,
+      box office,
+      streaming,
+      album,
+      music,
+      concert,
+      festival,
+      celebrity,
+      gaming,
+    ]
+  science:
+    [
+      research,
+      study,
+      climate,
+      renewable,
+      emissions,
+      discovery,
+      genome,
+      nasa,
+      telescope,
+      breakthrough,
+    ]

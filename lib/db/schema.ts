@@ -104,6 +104,16 @@ export const clusters = pgTable(
     status: text("status", { enum: ["forming", "published", "stale"] })
       .notNull()
       .default("forming"),
+    // AI-written brief for this cluster (Groq, §13). ORIGINAL content synthesised
+    // from the story's facts — never source article text (§10, which governs the
+    // articles table). Generated once in the cluster job.
+    briefMd: text("brief_md"),
+    briefModel: text("brief_model"),
+    // Pexels cover photo reference (§13). A URL + attribution only — never body
+    // text. Resolved once in the cluster job; absent → the UI draws the SVG cover.
+    coverUrl: text("cover_url"),
+    coverCredit: text("cover_credit"),
+    coverCreditUrl: text("cover_credit_url"),
   },
   (t) => [
     uniqueIndex("clusters_slug_uq").on(t.slug),

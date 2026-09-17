@@ -85,12 +85,99 @@ export async function clusterTask(): Promise<JobSummary> {
   const recent = await dbRecentArticles(48);
   if (recent.length === 0) return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
 
-  // Rank context: source tiers from the registry; ticker moves left empty here
-  // (the quotes job owns live moves — a follow-on join wires them in).
+  // Rank context: source tiers from the registry.
   const tiers: Record<string, string> = {};
   for (const s of loadSources()) tiers[s.id] = s.tier;
 
-  const ranked = await runPipeline(recent, { tiers, tickerMovePct: {} }, getEmbedder());
+  // Live market moves feed the W_MARKET ranking term. We read them from the KV
+  // cache the quotes job already primed (`market:quote:*`) — no new vendor call
+  // here (§2). When keys/cache are absent this is simply empty and ranking falls
+  // back to source-count/tier/recency, exactly as before.
+  const { classify } = await import("@/lib/curation/classify");
+  const { cacheGet } = await import("@/lib/cache/swr");
+  const symbols = new Set<string>();
+  for (const a of recent) {
+    for (const t of classify(a.headline, a.dek).tickers) symbols.add(t);
+  }
+  const tickerMovePct: Record<string, number> = {};
+  for (const symbol of symbols) {
+    const q = await cacheGet<{ changePct?: number }>(`market:quote:${symbol}`);
+    if (q && typeof q.changePct === "number") {
+      tickerMovePct[symbol] = Math.abs(q.changePct);
+    }
+  }
+
+  const ranked = await runPipeline(recent, { tiers, tickerMovePct }, getEmbedder());
   const stored = await persistClusters(ranked);
+
+  // Enrich clusters (§13): an AI brief (Groq) and a cover photo (Pexels), each
+  // gated on its own key and only for clusters that don't already have one, so a
+  // story costs at most one call per provider. Both are persisted on the cluster
+  // row (URL/attribution + synthesised prose only — never source text, §10).
+  const { generateBrief, isGroqConfigured } = await import("@/lib/providers/groq");
+  const { searchPexels, isPexelsConfigured } = await import("@/lib/providers/pexels");
+  if (isGroqConfigured() || isPexelsConfigured()) {
+    const { classifySection } = await import("@/lib/curation/section");
+    const { coverQuery } = await import("@/lib/news/cover-query");
+    const {
+      existingClusterBriefs,
+      setClusterBrief,
+      existingClusterCovers,
+      setClusterCover,
+    } = await import("@/lib/db/queries/articles");
+    const top = ranked.slice(0, 24);
+    const slugs = top.map((c) => c.slug);
+    const empty = new Set<string>();
+    const [haveBrief, haveCover] = await Promise.all([
+      isGroqConfigured() ? existingClusterBriefs(slugs) : Promise.resolve(empty),
+      isPexelsConfigured() ? existingClusterCovers(slugs) : Promise.resolve(empty),
+    ]);
+    const dekById = new Map(recent.map((a) => [a.id, a.dek]));
+    let briefsWritten = 0;
+    let coversWritten = 0;
+    for (const c of top) {
+      const dek = dekById.get(c.primaryId) ?? null;
+      const section = classifySection({
+        title: c.title,
+        dek,
+        topics: c.topics,
+        tickers: c.tickers,
+      });
+
+      if (isGroqConfigured() && !haveBrief.has(c.slug)) {
+        const moves: Record<string, number> = {};
+        for (const t of c.tickers) {
+          const m = tickerMovePct[t];
+          if (typeof m === "number") moves[t] = m;
+        }
+        const brief = await generateBrief(String(c.primaryId), {
+          title: c.title,
+          dek,
+          section,
+          tickers: c.tickers,
+          sources: c.sourceIds,
+          moves,
+        });
+        if (brief) {
+          await setClusterBrief(c.slug, brief.body, brief.model);
+          briefsWritten += 1;
+        }
+      }
+
+      if (isPexelsConfigured() && !haveCover.has(c.slug)) {
+        const extra =
+          c.entities[0] ?? c.tickers[0] ?? c.topics[0]?.replace(/_/g, " ") ?? "";
+        const cover = await searchPexels(coverQuery(section, extra));
+        if (cover) {
+          await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
+          coversWritten += 1;
+        }
+      }
+    }
+    console.log(
+      `[cluster] enrich: ${briefsWritten} briefs, ${coversWritten} covers written`,
+    );
+  }
+
   return { itemsIn: recent.length, itemsOut: stored };
 }

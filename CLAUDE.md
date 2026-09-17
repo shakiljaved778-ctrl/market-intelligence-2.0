@@ -1,4 +1,11 @@
-# CLAUDE.md — Mizan (MarketIntelligence 2.0)
+# CLAUDE.md — Mizaan Intelligence (MarketIntelligence 2.0)
+
+> Brand: **Mizaan Intelligence** (wordmark MIZAAN + "intelligence"). Theme (ref:
+> YureCorp business landing): **dark default** is near-black neutral with a bold
+> **orange** accent; light is a warm off-white with the same orange. The accent
+> token is still named `--iris` (= "the accent") across the code. Rounded cards +
+> soft shadows; `.accent-panel` is the warm surface. Data colour (gain/loss) stays
+> reserved for price direction.
 
 Standing rules for this repository. Condensed from the master prompt (§2, §3, §4,
 §10, §17). These are non-negotiable; read them before writing code.
@@ -9,19 +16,23 @@ Financial news, market data and **signal-ranked** intelligence. We don't beat th
 wires on speed or licensed data — we beat them on **signal**: which stories matter,
 which instruments they move, how markets responded.
 
-**V1 has no LLM.** Everything the site produces is computed **deterministically**
-from data we hold: clustering, ranking, entity extraction, and templated narrative
-built from our own price and macro numbers. V1 is *algorithmically curated market
-intelligence*, **not** "AI-written analysis". No page may imply otherwise. The LLM
-synthesis layer is V2 — design seams for it, build none of it.
+**The signal is deterministic; the summaries are AI.** Clustering, ranking, entity
+extraction and the session recaps are computed **deterministically** from data we
+hold — no model in the loop, and that stays true. On top of that, each story now
+carries an **AI-written summary** (owner decision, 2026-09 — this lifted the
+former "V1 has no LLM" rule): original prose synthesised from the story's facts and
+cited sources via Groq (`lib/providers/groq.ts`). Rankings are facts about
+coverage; summaries are AI interpretation — keep the two visibly distinct, label
+the AI content, and never imply the *rankings* are AI-written.
 
 ## Hard constraints (non-negotiable — §2)
 
 - **No paid APIs, no paid SaaS, no metered AI in V1.** Free tiers only. Signup keys
   (Finnhub, FRED, Twelve Data) are fine; anything that can generate a bill is not.
-- **No `ANTHROPIC_API_KEY`, no LLM SDK** (`@anthropic-ai/sdk`, `openai`, any hosted
-  embedding/summarisation service) in the dependency tree. Solve deterministically
-  or defer to V2.
+- **LLM use is limited to AI summaries via Groq** (owner-approved, free tier), and
+  only in scheduled jobs / the backfill script — never on page render, always
+  cached (§2), and always original content (never source text, §10). No other
+  hosted-model key, and the *ranking/clustering* engine stays model-free.
 - Next.js 15 App Router, TypeScript `strict: true`. Vercel deployment. Vercel
   Postgres (Neon) + pgvector + Vercel KV, free tiers.
 - **All external calls go through `lib/providers/*`.** No component ever calls a
@@ -89,8 +100,9 @@ cookie so Server Components render the right figures without a client flash.
 
 ## What not to do (§17)
 
-- No AI SDK, model call, or paid API in V1.
-- Never claim or imply, in UI or metadata, that content is AI-written.
+- No hosted-model key other than Groq for summaries; keep ranking/clustering model-free.
+- Never imply the rankings/recaps are AI-written; always label the AI summaries and
+  carry the not-advice + verify-against-sources disclaimer.
 - Never call vendor APIs from React components or on page render.
 - Never store or display third-party article bodies.
 - No sub-daily cron expression in `vercel.json` (Hobby deploy fails).
@@ -133,6 +145,30 @@ factor (18h half-life, floored at 0.30 so covered news doesn't vanish).
 `lib/db/schema.test.ts`. robots.txt is checked inside the fetcher
 (`lib/curation/robots.ts`). Only sources in `content/sources.yaml` with a
 `license_note` are ingested.
+
+## Sections & editorial mix (§13)
+
+Every cluster gets a **section** — the top-level editorial vertical — assigned
+**deterministically** by keyword rules in `content/sections.yaml`
+(`lib/curation/section.ts`), exactly like topics/entities. No model.
+
+- Financial verticals (`financial: true`): **markets**, **economy**. Everything
+  else — **technology** (Tech & AI), **health**, **sports**, **entertainment**
+  (Culture), **science** — is non-financial.
+- **Product rule:** Mizan is markets-first, but at least **~30%** of the live wire
+  is deliberately non-financial to keep a broad audience engaged. Guarded by
+  `lib/curation/section.test.ts` (currently 33%). Non-financial stays a minority.
+- Non-financial feeds live in `content/sources.yaml` under the same rules: primary
+  gov/agency feeds (NASA, WHO, CDC, BLS, World Bank) are public-domain/open;
+  commercial outlets are added headline+dek+link only and left `active: false`
+  pending feed/terms verification (§6, §10).
+
+**Images.** Cards carry a cover image. `RawArticle.imageUrl` is an optional
+**reference** (a URL / og:image), never stored body text — the no-body invariant
+still holds. When absent, `components/news/CoverArt.tsx` renders a deterministic,
+on-brand SVG cover (offline, no vendor call on render). Section covers/tags use a
+**muted section tint** for the motif only — it avoids gain-green / loss-red and
+never touches chrome or data, so §12 holds.
 
 ## Build discipline (§14)
 
