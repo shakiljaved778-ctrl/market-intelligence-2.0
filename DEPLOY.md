@@ -67,6 +67,28 @@ skip the rest; each one lights up more live data, anything missing stays on fixt
 > every response is **cached in KV** so pages never re-hit a vendor. Keep them on the
 > free plans; don't upgrade a key to a metered/billed tier.
 
+#### ⚠️ The variable name must match EXACTLY
+
+The app reads specific `process.env.*` names — a near-miss name is silently
+ignored (no error, just no data). Case, underscores and the `_API_KEY` suffix all
+matter. Common mistakes:
+
+| ✅ Correct (what the code reads) | ❌ Do NOT use |
+|---|---|
+| `FINNHUB_API_KEY` | `FINN_HUB_KEY`, `FINNHUB_KEY` |
+| `ALPHAVANTAGE_API_KEY` | `ALPHA_VANTAGE_KEY`, `ALPHAVANTAGE_KEY` |
+| `FMP_API_KEY` | `FMP_KEY` |
+| `POLYGON_API_KEY` · `EODHD_API_KEY` · `FRED_API_KEY` | (drop the `_API` / add extra words) |
+| `PEXELS_API_KEY` (cover photos) · `GROQ_API_KEY` (AI summaries) | `PEXELS_KEY`, `GROQ_KEY` |
+
+The full set of names the app actually reads: `FMP_API_KEY`, `FINNHUB_API_KEY`,
+`POLYGON_API_KEY`, `EODHD_API_KEY`, `ALPHAVANTAGE_API_KEY`, `FRED_API_KEY`,
+`PEXELS_API_KEY`, `GROQ_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`,
+`POSTGRES_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `SEC_USER_AGENT`.
+`TWELVEDATA_API_KEY` and `MARKETSTACK_API_KEY` are **not wired in V1** — setting
+them has no effect. Scope each var to **Production + Preview** if you use preview
+deploys.
+
 Redeploy (Vercel → **Deployments → Redeploy**) after adding them.
 
 ### 2c. Auto-refresh (these secrets live in **GitHub**)
