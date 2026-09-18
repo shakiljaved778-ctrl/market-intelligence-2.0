@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/chart/PriceChart";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { readCandles, readQuote } from "@/lib/market/read";
+import { readWire } from "@/lib/news/read";
+import { sectionMeta } from "@/lib/curation/section";
 import { deriveInstrumentRecap } from "@/lib/narrative/derive";
 import { instrumentRecap } from "@/lib/narrative/recap";
 import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
+import { relativeTime } from "@/lib/format/relative-time";
 import { sessionFor } from "@/lib/format/session";
 import { universeBySymbol } from "@/fixtures/universe";
 
@@ -28,6 +32,9 @@ export default async function QuotePage({ params }: Params) {
 
   const meta = universeBySymbol(sym);
   const session = sessionFor(meta?.exchange ?? null);
+
+  // News clusters bound to this instrument, newest-ranked first.
+  const coverage = (await readWire({ ticker: sym })).slice(0, 6);
 
   // Computed "how it moved" recap — deterministic, from our own candles (§9).
   const candles = await readCandles(sym, "6M");
@@ -166,10 +173,41 @@ export default async function QuotePage({ params }: Params) {
           <h2 className="text-text-mid mt-8 mb-2.5 text-[13px] font-medium">
             Related coverage
           </h2>
-          <div className="card text-text-low px-3 py-8 text-center text-[13px]">
-            News clusters bound to <span className="tnum text-text-mid">{sym}</span>{" "}
-            surface here as the wire picks up coverage.
-          </div>
+          {coverage.length > 0 ? (
+            <ul className="list-card divide-line divide-y">
+              {coverage.map((c) => (
+                <li key={c.slug} className="p-3.5">
+                  <Link href={`/news/${c.slug}`} className="group block">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                      <span className="text-text-mid inline-flex items-center gap-1 tracking-wide uppercase">
+                        <span
+                          aria-hidden
+                          className="inline-block h-1.5 w-1.5 rounded-full"
+                          style={{ background: sectionMeta(c.section).hue }}
+                        />
+                        {sectionMeta(c.section).label}
+                      </span>
+                      <span className="ours tnum">◆ {c.importanceScore}</span>
+                      <span className="text-text-low">
+                        {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
+                      </span>
+                      <span className="text-text-low">
+                        · {relativeTime(c.eventTime)}
+                      </span>
+                    </div>
+                    <h3 className="font-editorial text-text-hi group-hover:text-iris mt-1 text-[14px] leading-snug">
+                      {c.title}
+                    </h3>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="card text-text-low px-3 py-8 text-center text-[13px]">
+              News clusters bound to <span className="tnum text-text-mid">{sym}</span>{" "}
+              surface here as the wire picks up coverage.
+            </div>
+          )}
         </aside>
       </div>
     </div>
