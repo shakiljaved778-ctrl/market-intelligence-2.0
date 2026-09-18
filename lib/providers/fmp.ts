@@ -20,6 +20,10 @@ import type {
  * converted to USD via Frankfurter and the rate used is recorded (§7).
  */
 const BASE_URL = "https://financialmodelingprep.com/api/v3";
+// FMP migrated to a new "stable" API; keys issued now work ONLY here, and the
+// legacy /api/v3 endpoints return 403 for them. Stable uses ?symbol= query
+// params and renamed a few fields (mapped defensively below).
+const STABLE_URL = "https://financialmodelingprep.com/stable";
 
 const QuoteResponse = z.array(
   z.object({
@@ -61,8 +65,18 @@ const SearchResponse = z.array(
 const RatiosTtmResponse = z.array(
   z
     .object({
+      // v3 (legacy) names
       peRatioTTM: z.number().nullable().optional(),
       pegRatioTTM: z.number().nullable().optional(),
+      debtEquityRatioTTM: z.number().nullable().optional(),
+      dividendYielPercentageTTM: z.number().nullable().optional(),
+      payoutRatioTTM: z.number().nullable().optional(),
+      // stable names (current API)
+      priceToEarningsRatioTTM: z.number().nullable().optional(),
+      priceToEarningsGrowthRatioTTM: z.number().nullable().optional(),
+      debtToEquityRatioTTM: z.number().nullable().optional(),
+      dividendPayoutRatioTTM: z.number().nullable().optional(),
+      // shared names
       priceToSalesRatioTTM: z.number().nullable().optional(),
       priceToBookRatioTTM: z.number().nullable().optional(),
       grossProfitMarginTTM: z.number().nullable().optional(),
@@ -70,11 +84,8 @@ const RatiosTtmResponse = z.array(
       netProfitMarginTTM: z.number().nullable().optional(),
       returnOnEquityTTM: z.number().nullable().optional(),
       returnOnAssetsTTM: z.number().nullable().optional(),
-      debtEquityRatioTTM: z.number().nullable().optional(),
       currentRatioTTM: z.number().nullable().optional(),
       dividendYieldTTM: z.number().nullable().optional(),
-      dividendYielPercentageTTM: z.number().nullable().optional(),
-      payoutRatioTTM: z.number().nullable().optional(),
     })
     .passthrough(),
 );
@@ -173,16 +184,18 @@ export class FmpProvider implements MarketDataProvider {
    * fall back rather than tripping the breaker.
    */
   private async ratiosTtm(sym: string): Promise<Partial<Fundamentals> | null> {
-    const res = await fetch(`${BASE_URL}/ratios-ttm/${sym}?apikey=${this.key()}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${STABLE_URL}/ratios-ttm?symbol=${sym}&apikey=${this.key()}`,
+      { cache: "no-store" },
+    );
     if (res.status === 402 || res.status === 403) return null;
     if (!res.ok) throw new Error(`FMP ratios-ttm ${res.status}`);
     const r = RatiosTtmResponse.parse(await res.json())[0];
     if (!r) return null;
     return {
-      peRatio: r.peRatioTTM ?? null,
-      pegRatio: r.pegRatioTTM ?? null,
+      // Prefer stable field names, fall back to v3 names.
+      peRatio: r.priceToEarningsRatioTTM ?? r.peRatioTTM ?? null,
+      pegRatio: r.priceToEarningsGrowthRatioTTM ?? r.pegRatioTTM ?? null,
       priceToSales: r.priceToSalesRatioTTM ?? null,
       priceToBook: r.priceToBookRatioTTM ?? null,
       grossMargin: r.grossProfitMarginTTM ?? null,
@@ -190,17 +203,16 @@ export class FmpProvider implements MarketDataProvider {
       netMargin: r.netProfitMarginTTM ?? null,
       returnOnEquity: r.returnOnEquityTTM ?? null,
       returnOnAssets: r.returnOnAssetsTTM ?? null,
-      debtToEquity: r.debtEquityRatioTTM ?? null,
+      debtToEquity: r.debtToEquityRatioTTM ?? r.debtEquityRatioTTM ?? null,
       currentRatio: r.currentRatioTTM ?? null,
-      // FMP spells the yield field two different ways across plans.
       dividendYield: r.dividendYieldTTM ?? r.dividendYielPercentageTTM ?? null,
-      payoutRatio: r.payoutRatioTTM ?? null,
+      payoutRatio: r.dividendPayoutRatioTTM ?? r.payoutRatioTTM ?? null,
     };
   }
 
-  /** P/E from FMP's free /quote endpoint — the always-available fallback. */
+  /** P/E from FMP's free stable /quote endpoint — the always-available fallback. */
   private async quotePe(sym: string): Promise<number | null> {
-    const res = await fetch(`${BASE_URL}/quote/${sym}?apikey=${this.key()}`, {
+    const res = await fetch(`${STABLE_URL}/quote?symbol=${sym}&apikey=${this.key()}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -255,14 +267,16 @@ export class FmpProvider implements MarketDataProvider {
     if (!this.isConfigured()) return "no-key";
     try {
       const [q, r] = await Promise.all([
-        fetch(`${BASE_URL}/quote/${sym}?apikey=${this.key()}`, { cache: "no-store" }),
-        fetch(`${BASE_URL}/ratios-ttm/${sym}?apikey=${this.key()}`, {
+        fetch(`${STABLE_URL}/quote?symbol=${sym}&apikey=${this.key()}`, {
+          cache: "no-store",
+        }),
+        fetch(`${STABLE_URL}/ratios-ttm?symbol=${sym}&apikey=${this.key()}`, {
           cache: "no-store",
         }),
       ]);
       const qLen = (await q.text()).length;
       const rLen = (await r.text()).length;
-      return `quote=${q.status}/${qLen} ratios=${r.status}/${rLen}`;
+      return `stable quote=${q.status}/${qLen} ratios=${r.status}/${rLen}`;
     } catch (err) {
       return `err:${err instanceof Error ? err.message : String(err)}`;
     }
