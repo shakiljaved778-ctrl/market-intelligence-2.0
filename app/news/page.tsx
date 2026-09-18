@@ -24,6 +24,9 @@ export default async function NewsPage({ searchParams }: SearchParams) {
     section: section || undefined,
   });
   const sections = allSections();
+  const activeSection = section
+    ? (sections.find((s) => s.id === section) ?? null)
+    : null;
 
   const chip = (active: boolean) =>
     `rounded-full border px-3 py-1 text-[12px] transition-colors ${
@@ -48,20 +51,52 @@ export default async function NewsPage({ searchParams }: SearchParams) {
     <div className="pb-4">
       <div className="header-band bleed">
         <div className="mx-auto max-w-[1280px] px-4 py-8">
-          <PageHeader
-            live
-            kicker="the wire · ranked by source count"
-            title="The wire"
-            subtitle={
-              <>
-                Stories ranked by how many independent outlets cover them — the source
-                count is the ranking, made visible.{" "}
-                <span className="text-text-low">
-                  Ranking computed; summaries AI-written.
+          {activeSection ? (
+            <PageHeader
+              live
+              kicker={`${
+                activeSection.financial ? "markets-first" : "beyond markets & economy"
+              } · section`}
+              title={
+                <span className="inline-flex items-center gap-2.5">
+                  <span
+                    aria-hidden
+                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ background: activeSection.hue }}
+                  />
+                  {activeSection.label}
                 </span>
-              </>
-            }
-          />
+              }
+              subtitle={
+                <>
+                  {activeSection.blurb}{" "}
+                  <span className="text-text-low">
+                    Ranking computed; summaries AI-written.
+                  </span>
+                </>
+              }
+              action={
+                <span className="ours tnum border-iris/25 bg-iris/10 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px]">
+                  ◆ {clusters.length} {clusters.length === 1 ? "story" : "stories"}
+                </span>
+              }
+            />
+          ) : (
+            <PageHeader
+              live
+              kicker="the wire · ranked by source count"
+              title="The wire"
+              subtitle={
+                <>
+                  Stories ranked by how many independent outlets cover them — the source
+                  count is the ranking, made visible.{" "}
+                  <span className="text-text-low">
+                    Ranking computed; summaries AI-written.
+                  </span>
+                </>
+              }
+            />
+          )}
 
           {/* Section switcher (§13) — markets-first, with the non-financial mix. */}
           <div
