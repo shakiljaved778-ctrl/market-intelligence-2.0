@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { readCluster } from "@/lib/news/read";
+import { readCluster, readWire } from "@/lib/news/read";
+import { readQuote } from "@/lib/market/read";
+import { getDisplayCurrency } from "@/lib/currency/server";
+import { sectionMeta } from "@/lib/curation/section";
 import { relativeTime } from "@/lib/format/relative-time";
+import { formatMoney } from "@/lib/format/currency";
+import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
+import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
 import { SectionTag } from "@/components/news/SectionTag";
@@ -22,6 +28,22 @@ export default async function ClusterPage({ params }: Params) {
   const detail = await readCluster(slug);
   if (!detail) notFound();
   const { cluster, members, body } = detail;
+
+  // Right-rail context (real data only): the instruments this story concerns with
+  // their latest cached move, and more stories in the same section.
+  const [currency, sectionWire] = await Promise.all([
+    getDisplayCurrency(),
+    readWire({ section: cluster.section }),
+  ]);
+  const instruments: { symbol: string; quote: Quote }[] = (
+    await Promise.all(
+      cluster.tickers.map(async (symbol) => {
+        const quote = await readQuote(symbol);
+        return quote ? { symbol, quote } : null;
+      }),
+    )
+  ).filter((x): x is { symbol: string; quote: Quote } => x !== null);
+  const more = sectionWire.filter((c) => c.slug !== cluster.slug).slice(0, 4);
 
   return (
     <div className="py-8">
@@ -139,21 +161,109 @@ export default async function ClusterPage({ params }: Params) {
         </section>
 
         <aside className="lg:col-span-4">
-          <div className="border-iris border-l-2 pl-4">
-            <div className="ours flex items-center gap-2 text-[12px]">
-              <span aria-hidden>◆</span>
-              <span>Why this ranks</span>
+          <div className="flex flex-col gap-7 lg:sticky lg:top-4">
+            <div className="border-iris border-l-2 pl-4">
+              <div className="ours flex items-center gap-2 text-[12px]">
+                <span aria-hidden>◆</span>
+                <span>Why this ranks</span>
+              </div>
+              <p className="text-text-low mt-2 text-[13px] leading-relaxed">
+                Ranked {cluster.importanceScore}/100 from {cluster.sourceCount}{" "}
+                independent
+                {cluster.sourceCount === 1 ? " source" : " sources"}, source tier,
+                associated market moves and recency. See{" "}
+                <Link href="/methodology" className="ours">
+                  methodology
+                </Link>
+                .
+              </p>
             </div>
-            <p className="text-text-low mt-2 text-[13px] leading-relaxed">
-              Ranked {cluster.importanceScore}/100 from {cluster.sourceCount}{" "}
-              independent
-              {cluster.sourceCount === 1 ? " source" : " sources"}, source tier,
-              associated market moves and recency. See{" "}
-              <Link href="/methodology" className="ours">
-                methodology
-              </Link>
-              .
-            </p>
+
+            {instruments.length > 0 ? (
+              <div>
+                <h2 className="text-text-mid mb-2.5 text-[11px] font-medium tracking-[0.12em] uppercase">
+                  Instruments in this story
+                </h2>
+                <ul className="border-line divide-line divide-y border-t border-b">
+                  {instruments.map(({ symbol, quote }) => {
+                    const dir = directionOf(quote.change);
+                    const dirClass =
+                      dir === "gain"
+                        ? "dir-gain"
+                        : dir === "loss"
+                          ? "dir-loss"
+                          : "text-text-mid";
+                    const barPct = Math.min(
+                      100,
+                      Math.round((Math.abs(quote.changePct) / 5) * 100),
+                    );
+                    const barBg =
+                      dir === "gain"
+                        ? "var(--gain)"
+                        : dir === "loss"
+                          ? "var(--loss)"
+                          : "var(--line)";
+                    return (
+                      <li key={symbol} className="py-2.5">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <Link
+                            href={`/quote/${symbol}`}
+                            className="tnum text-text-hi hover:text-iris text-[13px] font-medium"
+                          >
+                            {symbol}
+                          </Link>
+                          <span className="tnum text-text-mid text-[13px]">
+                            {formatMoney(quote.priceUsd, currency)}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="bg-raised h-1 flex-1 overflow-hidden rounded-full">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${barPct}%`, background: barBg }}
+                            />
+                          </div>
+                          <span
+                            className={`tnum flex items-center gap-0.5 text-[11px] ${dirClass}`}
+                          >
+                            <span aria-hidden>{directionGlyph(quote.change)}</span>
+                            {formatPercent(quote.changePct)}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-text-low mt-2 text-[11px]">
+                  Latest cached price; move vs prior close. Bar scaled to ±5%.
+                </p>
+              </div>
+            ) : null}
+
+            {more.length > 0 ? (
+              <div>
+                <h2 className="text-text-mid mb-2.5 text-[11px] font-medium tracking-[0.12em] uppercase">
+                  More in {sectionMeta(cluster.section).label}
+                </h2>
+                <ul className="border-line divide-line divide-y border-t border-b">
+                  {more.map((c) => (
+                    <li key={c.slug} className="py-2.5">
+                      <Link href={`/news/${c.slug}`} className="group block">
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="ours tnum">◆ {c.importanceScore}</span>
+                          <span className="text-text-low">
+                            {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
+                          </span>
+                        </div>
+                        <h3 className="font-editorial text-text-hi group-hover:text-iris mt-0.5 text-[14px] leading-snug">
+                          {c.title}
+                        </h3>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </aside>
       </div>
