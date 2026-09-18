@@ -203,12 +203,8 @@
           "name": "articles_source_id_sources_id_fk",
           "tableFrom": "articles",
           "tableTo": "sources",
-          "columnsFrom": [
-            "source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -352,12 +348,8 @@
           "name": "candles_daily_symbol_instruments_symbol_fk",
           "tableFrom": "candles_daily",
           "tableTo": "instruments",
-          "columnsFrom": [
-            "symbol"
-          ],
-          "columnsTo": [
-            "symbol"
-          ],
+          "columnsFrom": ["symbol"],
+          "columnsTo": ["symbol"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -365,10 +357,7 @@
       "compositePrimaryKeys": {
         "candles_daily_symbol_date_pk": {
           "name": "candles_daily_symbol_date_pk",
-          "columns": [
-            "symbol",
-            "date"
-          ]
+          "columns": ["symbol", "date"]
         }
       },
       "uniqueConstraints": {},
@@ -412,12 +401,8 @@
           "name": "cluster_articles_cluster_id_clusters_id_fk",
           "tableFrom": "cluster_articles",
           "tableTo": "clusters",
-          "columnsFrom": [
-            "cluster_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cluster_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -425,12 +410,8 @@
           "name": "cluster_articles_article_id_articles_id_fk",
           "tableFrom": "cluster_articles",
           "tableTo": "articles",
-          "columnsFrom": [
-            "article_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["article_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -438,10 +419,7 @@
       "compositePrimaryKeys": {
         "cluster_articles_cluster_id_article_id_pk": {
           "name": "cluster_articles_cluster_id_article_id_pk",
-          "columns": [
-            "cluster_id",
-            "article_id"
-          ]
+          "columns": ["cluster_id", "article_id"]
         }
       },
       "uniqueConstraints": {},
@@ -751,12 +729,8 @@
           "name": "fundamentals_symbol_instruments_symbol_fk",
           "tableFrom": "fundamentals",
           "tableTo": "instruments",
-          "columnsFrom": [
-            "symbol"
-          ],
-          "columnsTo": [
-            "symbol"
-          ],
+          "columnsFrom": ["symbol"],
+          "columnsTo": ["symbol"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -764,10 +738,7 @@
       "compositePrimaryKeys": {
         "fundamentals_symbol_ts_pk": {
           "name": "fundamentals_symbol_ts_pk",
-          "columns": [
-            "symbol",
-            "ts"
-          ]
+          "columns": ["symbol", "ts"]
         }
       },
       "uniqueConstraints": {},
@@ -815,11 +786,7 @@
       "compositePrimaryKeys": {
         "fx_rates_base_quote_date_pk": {
           "name": "fx_rates_base_quote_date_pk",
-          "columns": [
-            "base",
-            "quote",
-            "date"
-          ]
+          "columns": ["base", "quote", "date"]
         }
       },
       "uniqueConstraints": {},
@@ -1028,12 +995,8 @@
           "name": "macro_obs_series_id_macro_series_id_fk",
           "tableFrom": "macro_obs",
           "tableTo": "macro_series",
-          "columnsFrom": [
-            "series_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["series_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1041,10 +1004,7 @@
       "compositePrimaryKeys": {
         "macro_obs_series_id_date_pk": {
           "name": "macro_obs_series_id_date_pk",
-          "columns": [
-            "series_id",
-            "date"
-          ]
+          "columns": ["series_id", "date"]
         }
       },
       "uniqueConstraints": {},
@@ -1219,12 +1179,8 @@
           "name": "quotes_symbol_instruments_symbol_fk",
           "tableFrom": "quotes",
           "tableTo": "instruments",
-          "columnsFrom": [
-            "symbol"
-          ],
-          "columnsTo": [
-            "symbol"
-          ],
+          "columnsFrom": ["symbol"],
+          "columnsTo": ["symbol"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1232,10 +1188,7 @@
       "compositePrimaryKeys": {
         "quotes_symbol_ts_pk": {
           "name": "quotes_symbol_ts_pk",
-          "columns": [
-            "symbol",
-            "ts"
-          ]
+          "columns": ["symbol", "ts"]
         }
       },
       "uniqueConstraints": {},
