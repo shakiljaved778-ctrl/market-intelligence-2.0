@@ -167,41 +167,82 @@ export class FmpProvider implements MarketDataProvider {
     return value;
   }
 
+  /**
+   * TTM ratios from FMP's /ratios-ttm — rich (margins, ROE, leverage, yield) but
+   * often gated on the free plan. Returns null on 402/403/empty so callers can
+   * fall back rather than tripping the breaker.
+   */
+  private async ratiosTtm(sym: string): Promise<Partial<Fundamentals> | null> {
+    const res = await fetch(`${BASE_URL}/ratios-ttm/${sym}?apikey=${this.key()}`, {
+      cache: "no-store",
+    });
+    if (res.status === 402 || res.status === 403) return null;
+    if (!res.ok) throw new Error(`FMP ratios-ttm ${res.status}`);
+    const r = RatiosTtmResponse.parse(await res.json())[0];
+    if (!r) return null;
+    return {
+      peRatio: r.peRatioTTM ?? null,
+      pegRatio: r.pegRatioTTM ?? null,
+      priceToSales: r.priceToSalesRatioTTM ?? null,
+      priceToBook: r.priceToBookRatioTTM ?? null,
+      grossMargin: r.grossProfitMarginTTM ?? null,
+      operatingMargin: r.operatingProfitMarginTTM ?? null,
+      netMargin: r.netProfitMarginTTM ?? null,
+      returnOnEquity: r.returnOnEquityTTM ?? null,
+      returnOnAssets: r.returnOnAssetsTTM ?? null,
+      debtToEquity: r.debtEquityRatioTTM ?? null,
+      currentRatio: r.currentRatioTTM ?? null,
+      // FMP spells the yield field two different ways across plans.
+      dividendYield: r.dividendYieldTTM ?? r.dividendYielPercentageTTM ?? null,
+      payoutRatio: r.payoutRatioTTM ?? null,
+    };
+  }
+
+  /** P/E from FMP's free /quote endpoint — the always-available fallback. */
+  private async quotePe(sym: string): Promise<number | null> {
+    const res = await fetch(`${BASE_URL}/quote/${sym}?apikey=${this.key()}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const row = z
+      .array(z.object({ pe: z.number().nullable().optional() }).passthrough())
+      .parse(await res.json())[0];
+    return row?.pe ?? null;
+  }
+
   async fundamentals(symbol: string): Promise<Fundamentals | null> {
     if (!this.isConfigured()) return null;
     const sym = symbol.toUpperCase();
-    const { value } = await swr(`fmp:ratios-ttm:${sym}`, TTL.fundamentals, async () => {
-      const res = await fetch(`${BASE_URL}/ratios-ttm/${sym}?apikey=${this.key()}`, {
-        cache: "no-store",
-      });
-      // Free tier can 403/402 on some symbols/endpoints — treat as "can't answer"
-      // (return null) rather than a hard failure that trips the breaker.
-      if (res.status === 402 || res.status === 403) return null;
-      if (!res.ok) throw new Error(`FMP ratios-ttm ${res.status}`);
-      const rows = RatiosTtmResponse.parse(await res.json());
-      const r = rows[0];
-      if (!r) return null;
-      const fundamentals: Fundamentals = {
-        symbol: sym,
-        peRatio: r.peRatioTTM ?? null,
-        pegRatio: r.pegRatioTTM ?? null,
-        priceToSales: r.priceToSalesRatioTTM ?? null,
-        priceToBook: r.priceToBookRatioTTM ?? null,
-        grossMargin: r.grossProfitMarginTTM ?? null,
-        operatingMargin: r.operatingProfitMarginTTM ?? null,
-        netMargin: r.netProfitMarginTTM ?? null,
-        returnOnEquity: r.returnOnEquityTTM ?? null,
-        returnOnAssets: r.returnOnAssetsTTM ?? null,
-        debtToEquity: r.debtEquityRatioTTM ?? null,
-        currentRatio: r.currentRatioTTM ?? null,
-        // FMP spells the yield field two different ways across plans.
-        dividendYield: r.dividendYieldTTM ?? r.dividendYielPercentageTTM ?? null,
-        payoutRatio: r.payoutRatioTTM ?? null,
-        provider: this.id,
-        asOf: new Date().toISOString(),
-      };
-      return fundamentals;
-    });
+    const { value } = await swr(
+      `fmp:fundamentals:${sym}`,
+      TTL.fundamentals,
+      async () => {
+        // Rich ratios first (premium-gated), then the free /quote P/E fallback so we
+        // still surface real data — clearly sourced — even on the strict free tier.
+        const rich = await this.ratiosTtm(sym);
+        const pe = rich?.peRatio ?? (await this.quotePe(sym));
+        if (!rich && pe === null) return null;
+        const fundamentals: Fundamentals = {
+          symbol: sym,
+          peRatio: pe,
+          pegRatio: rich?.pegRatio ?? null,
+          priceToSales: rich?.priceToSales ?? null,
+          priceToBook: rich?.priceToBook ?? null,
+          grossMargin: rich?.grossMargin ?? null,
+          operatingMargin: rich?.operatingMargin ?? null,
+          netMargin: rich?.netMargin ?? null,
+          returnOnEquity: rich?.returnOnEquity ?? null,
+          returnOnAssets: rich?.returnOnAssets ?? null,
+          debtToEquity: rich?.debtToEquity ?? null,
+          currentRatio: rich?.currentRatio ?? null,
+          dividendYield: rich?.dividendYield ?? null,
+          payoutRatio: rich?.payoutRatio ?? null,
+          provider: this.id,
+          asOf: new Date().toISOString(),
+        };
+        return fundamentals;
+      },
+    );
     return value;
   }
 
