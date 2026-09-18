@@ -17,8 +17,6 @@ export interface JobSummary {
   itemsIn?: number;
   itemsOut?: number;
   outcome?: JobOutcome;
-  /** Optional human-readable diagnostic, surfaced in the route JSON + logs. */
-  detail?: string;
 }
 
 export interface JobRunResult extends JobSummary {
