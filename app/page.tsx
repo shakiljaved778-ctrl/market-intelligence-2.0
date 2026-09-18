@@ -3,7 +3,9 @@ import { CoverArt } from "@/components/news/CoverArt";
 import { SectionTag } from "@/components/news/SectionTag";
 import { StoryCard } from "@/components/news/StoryCard";
 import { Movers } from "@/components/market/Movers";
+import { HeroPulse } from "@/components/market/HeroPulse";
 import { getDisplayCurrency } from "@/lib/currency/server";
+import { readCandles, readMovers } from "@/lib/market/read";
 import {
   allSections,
   readSectionSummaries,
@@ -57,6 +59,13 @@ export default async function BoardPage() {
   const totalSources = clusters.reduce((n, c) => n + c.sourceCount, 0);
   const sectionsCount = allSections().length;
 
+  // The session's biggest mover + its recent close series — powers the hero's
+  // self-drawing pulse (cache/db/fixture; no vendor call on render).
+  const topMover = (await readMovers(1))[0];
+  const pulseValues = topMover
+    ? (await readCandles(topMover.symbol, "1M")).slice(-30).map((c) => c.c)
+    : [];
+
   const lead = clusters[0];
   const secondary = clusters[1];
   const secondaryRelated = clusters.slice(2, 4);
@@ -72,8 +81,8 @@ export default async function BoardPage() {
   }
   const blocks = allSections()
     .map((s) => ({ section: s, stories: bySection.get(s.id) ?? [] }))
-    .filter((b) => b.stories.length >= 2)
-    .slice(0, 4);
+    .filter((b) => b.stories.length >= 1)
+    .slice(0, 7);
 
   if (!lead) {
     return (
@@ -96,7 +105,7 @@ export default async function BoardPage() {
               </span>
               signal over noise
             </p>
-            <h1 className="display text-text-hi mt-4 text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.03]">
+            <h1 className="display text-text-hi mt-4 text-[clamp(2.35rem,5vw,4rem)] leading-[1.02]">
               Market intelligence, weighted by{" "}
               <span className="ours">what actually moves it.</span>
             </h1>
@@ -136,6 +145,15 @@ export default async function BoardPage() {
             />
           </div>
         </div>
+
+        {topMover ? (
+          <HeroPulse
+            symbol={topMover.symbol}
+            name={topMover.name}
+            changePct={topMover.changePct}
+            values={pulseValues}
+          />
+        ) : null}
       </section>
 
       {/* ============ Masthead ============ */}
@@ -166,7 +184,7 @@ export default async function BoardPage() {
                 </div>
                 <div className="mt-3">
                   <SectionTag section={secondary.section} />
-                  <h2 className="font-editorial text-text-hi group-hover:text-iris mt-2 text-[20px] leading-snug transition-colors">
+                  <h2 className="font-editorial text-text-hi group-hover:text-iris mt-2 text-[20px] leading-snug font-semibold transition-colors">
                     {secondary.title}
                   </h2>
                   {secondary.dek ? (
@@ -215,7 +233,7 @@ export default async function BoardPage() {
                   {relativeTime(lead.eventTime)}
                 </span>
               </div>
-              <h1 className="font-editorial text-text-hi group-hover:text-iris mt-2 text-[30px] leading-[1.1] tracking-[-0.01em] transition-colors sm:text-[38px]">
+              <h1 className="font-editorial text-text-hi group-hover:text-iris mt-2 text-[31px] leading-[1.08] font-semibold tracking-[-0.015em] transition-colors sm:text-[40px]">
                 {lead.title}
               </h1>
               {lead.dek ? (
@@ -296,7 +314,7 @@ export default async function BoardPage() {
                   className="inline-block h-5 w-[3px] rounded-[2px]"
                   style={{ background: section.hue }}
                 />
-                <span className="font-editorial text-text-hi group-hover:text-iris text-[22px] tracking-[-0.01em] transition-colors">
+                <span className="font-editorial text-text-hi group-hover:text-iris text-[23px] font-semibold tracking-[-0.015em] transition-colors">
                   {section.label}
                 </span>
               </Link>
@@ -311,11 +329,24 @@ export default async function BoardPage() {
               <div className="lg:col-span-5">
                 <StoryCard cluster={blockLead} variant="card" />
               </div>
-              <div className="list-card divide-line divide-y px-4 lg:col-span-7">
-                {rest.map((c) => (
-                  <StoryCard key={c.slug} cluster={c} variant="compact" />
-                ))}
-              </div>
+              {rest.length > 0 ? (
+                <div className="list-card divide-line divide-y px-4 lg:col-span-7">
+                  {rest.map((c) => (
+                    <StoryCard key={c.slug} cluster={c} variant="compact" />
+                  ))}
+                </div>
+              ) : (
+                <Link
+                  href={`/news?section=${section.id}`}
+                  className="card group text-text-mid hover:text-text-hi flex items-center justify-center gap-2 px-4 py-10 text-[13px] lg:col-span-7"
+                >
+                  More in{" "}
+                  <span className="text-text-hi font-semibold">{section.label}</span>
+                  <span aria-hidden className="group-hover:text-iris">
+                    →
+                  </span>
+                </Link>
+              )}
             </div>
           </section>
         );
