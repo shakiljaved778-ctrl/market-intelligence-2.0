@@ -5,7 +5,7 @@ import { TTL } from "@/lib/cache/ttl";
 import { persistQuote } from "@/lib/db/queries/quotes";
 import { pruneRetention } from "@/lib/db/queries/retention";
 import { refreshCandles } from "@/lib/market/candles";
-import { TRACKED_MACRO_SERIES, TRACKED_SYMBOLS } from "./tracked";
+import { BACKFILL_SYMBOLS, TRACKED_MACRO_SERIES, TRACKED_SYMBOLS } from "./tracked";
 import type { JobSummary } from "./job-runs";
 
 /**
@@ -43,9 +43,11 @@ export async function macroTask(): Promise<JobSummary> {
 }
 
 export async function eodTask(): Promise<JobSummary> {
-  // EOD candle backfill for tracked symbols across the daily ranges (§13).
+  // EOD candle backfill for the core symbols across the daily ranges (§13).
+  // Scoped to BACKFILL_SYMBOLS, not the full live-quote list, to stay within the
+  // tight free candle budgets (Polygon ~5/min, EODHD ~100/day).
   let backfilled = 0;
-  for (const symbol of TRACKED_SYMBOLS) {
+  for (const symbol of BACKFILL_SYMBOLS) {
     for (const range of BACKFILL_RANGES) {
       const candles = await refreshCandles(symbol, range);
       if (candles.length > 0) backfilled += 1;
