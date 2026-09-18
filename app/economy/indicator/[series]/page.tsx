@@ -30,13 +30,13 @@ export default async function IndicatorPage({ params }: Params) {
       <div className="mt-2 flex items-baseline gap-3">
         <span className="tnum text-text-hi text-[34px]">{last?.value}</span>
         <span className="text-text-low text-[13px]">{s.unit}</span>
-        <span className={`tnum text-[13px] ${delta >= 0 ? "dir-gain" : "dir-loss"}`}>
+        <span className="tnum text-text-mid text-[13px]">
           <span aria-hidden>{delta >= 0 ? "▲" : "▼"}</span> {Math.abs(delta).toFixed(2)}{" "}
           over series
         </span>
       </div>
-      <div className="border-line mt-6 border p-4">
-        <MacroChart data={s.observations} />
+      <div className="card mt-6 p-4">
+        <MacroChart data={s.observations} variant="full" unit={s.unit} />
       </div>
       <p className="text-text-low mt-3 text-[11px]">
         Currency-neutral series — levels and percentages are never converted (§7).
