@@ -8,7 +8,7 @@ import type { SymbolMatch } from "@/lib/providers/types";
  * Symbol search (§13). Debounced, keyboard-operable, hits the cached search
  * API. Enter navigates to the top match's quote page.
  */
-export function SymbolSearch() {
+export function SymbolSearch({ className }: { className?: string } = {}) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [matches, setMatches] = useState<SymbolMatch[]>([]);
@@ -48,7 +48,7 @@ export function SymbolSearch() {
   }
 
   return (
-    <div ref={boxRef} className="relative hidden w-52 sm:block">
+    <div ref={boxRef} className={className ?? "relative hidden w-52 sm:block"}>
       <input
         type="search"
         value={q}
