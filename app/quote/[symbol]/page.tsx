@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/chart/PriceChart";
 import { QuoteProvenance } from "@/components/market/Provenance";
+import { FundamentalsPanel } from "@/components/market/Fundamentals";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { readCandles, readQuote } from "@/lib/market/read";
+import { readCandles, readFundamentals, readQuote } from "@/lib/market/read";
 import { readWire } from "@/lib/news/read";
 import { sectionMeta } from "@/lib/curation/section";
 import { deriveInstrumentRecap } from "@/lib/narrative/derive";
@@ -33,6 +34,9 @@ export default async function QuotePage({ params }: Params) {
 
   const meta = universeBySymbol(sym);
   const session = sessionFor(meta?.exchange ?? null);
+
+  // Fundamentals (equities only; null for crypto/unknown) — cache/db/fixture.
+  const fundamentals = await readFundamentals(sym);
 
   // News clusters bound to this instrument, newest-ranked first.
   const coverage = (await readWire({ ticker: sym })).slice(0, 6);
@@ -140,6 +144,8 @@ export default async function QuotePage({ params }: Params) {
               </div>
             ))}
           </dl>
+
+          {fundamentals ? <FundamentalsPanel data={fundamentals} /> : null}
         </div>
 
         <aside

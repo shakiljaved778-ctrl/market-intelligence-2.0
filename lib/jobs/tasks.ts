@@ -3,6 +3,7 @@ import { getRegistry } from "@/lib/providers";
 import { cachePut } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
 import { persistQuote } from "@/lib/db/queries/quotes";
+import { persistFundamentals } from "@/lib/db/queries/fundamentals";
 import { pruneRetention } from "@/lib/db/queries/retention";
 import { refreshCandles } from "@/lib/market/candles";
 import { BACKFILL_SYMBOLS, TRACKED_MACRO_SERIES, TRACKED_SYMBOLS } from "./tracked";
@@ -53,9 +54,27 @@ export async function eodTask(): Promise<JobSummary> {
       if (candles.length > 0) backfilled += 1;
     }
   }
+  // Refresh fundamentals for the core symbols (§6): low-frequency (daily) and
+  // FMP-only, so it stays well within FMP's ~250/day free budget. Cached +
+  // persisted; the quote page reads from cache, never the vendor (§2).
+  const registry = getRegistry();
+  let fundamentalsOut = 0;
+  for (const symbol of BACKFILL_SYMBOLS) {
+    const f = await registry.fundamentals(symbol);
+    if (f && f.provider !== "fixture") {
+      await cachePut(`market:fundamentals:${f.symbol}`, TTL.fundamentals, f);
+      await persistFundamentals(f);
+      fundamentalsOut += 1;
+    }
+  }
+
   const pruned = await pruneRetention();
   return {
-    itemsOut: backfilled + pruned.articlesDeleted + pruned.intradayCandlesDeleted,
+    itemsOut:
+      backfilled +
+      fundamentalsOut +
+      pruned.articlesDeleted +
+      pruned.intradayCandlesDeleted,
     outcome: pruned.skipped ? "partial" : "ok",
   };
 }

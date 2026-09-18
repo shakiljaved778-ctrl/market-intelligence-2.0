@@ -214,6 +214,34 @@ export const candlesDaily = pgTable(
   (t) => [primaryKey({ columns: [t.symbol, t.date] })],
 );
 
+export const fundamentals = pgTable(
+  "fundamentals",
+  {
+    symbol: text("symbol")
+      .notNull()
+      .references(() => instruments.symbol),
+    ts: timestamp("ts", { withTimezone: true }).notNull(),
+    peRatio: doublePrecision("pe_ratio"),
+    pegRatio: doublePrecision("peg_ratio"),
+    priceToSales: doublePrecision("price_to_sales"),
+    priceToBook: doublePrecision("price_to_book"),
+    grossMargin: doublePrecision("gross_margin"),
+    operatingMargin: doublePrecision("operating_margin"),
+    netMargin: doublePrecision("net_margin"),
+    returnOnEquity: doublePrecision("return_on_equity"),
+    returnOnAssets: doublePrecision("return_on_assets"),
+    debtToEquity: doublePrecision("debt_to_equity"),
+    currentRatio: doublePrecision("current_ratio"),
+    dividendYield: doublePrecision("dividend_yield"),
+    payoutRatio: doublePrecision("payout_ratio"),
+    provider: text("provider").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.symbol, t.ts] }),
+    index("fundamentals_symbol_idx").on(t.symbol),
+  ],
+);
+
 export const fxRates = pgTable(
   "fx_rates",
   {

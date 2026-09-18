@@ -13,6 +13,7 @@ export const CapabilitySchema = z.enum([
   "candles",
   "profile",
   "search",
+  "fundamentals",
   "fx",
   "crypto",
   "macro",
@@ -73,6 +74,32 @@ export const SymbolMatchSchema = z.object({
 });
 export type SymbolMatch = z.infer<typeof SymbolMatchSchema>;
 
+/**
+ * Trailing-twelve-month fundamentals for an instrument (§6). Valuation multiples
+ * and ratios are dimensionless — never converted between currencies (§7).
+ * Margins/yields are stored as decimals (0.25 = 25%). Every field is nullable
+ * so a provider can answer with whatever it actually has.
+ */
+export const FundamentalsSchema = z.object({
+  symbol: z.string(),
+  peRatio: z.number().nullable(),
+  pegRatio: z.number().nullable(),
+  priceToSales: z.number().nullable(),
+  priceToBook: z.number().nullable(),
+  grossMargin: z.number().nullable(),
+  operatingMargin: z.number().nullable(),
+  netMargin: z.number().nullable(),
+  returnOnEquity: z.number().nullable(),
+  returnOnAssets: z.number().nullable(),
+  debtToEquity: z.number().nullable(),
+  currentRatio: z.number().nullable(),
+  dividendYield: z.number().nullable(),
+  payoutRatio: z.number().nullable(),
+  provider: z.string(),
+  asOf: z.string(), // ISO timestamp
+});
+export type Fundamentals = z.infer<typeof FundamentalsSchema>;
+
 export interface ProviderBudget {
   perMinute?: number;
   perDay?: number;
@@ -94,4 +121,9 @@ export interface MarketDataProvider {
   candles(symbol: string, range: Range): Promise<Candle[]>;
   profile(symbol: string): Promise<CompanyProfile | null>;
   search(q: string): Promise<SymbolMatch[]>;
+  /**
+   * Optional — only providers that declare the "fundamentals" capability
+   * implement it. The registry guards on its presence.
+   */
+  fundamentals?(symbol: string): Promise<Fundamentals | null>;
 }
