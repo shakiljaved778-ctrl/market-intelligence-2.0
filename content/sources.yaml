@@ -96,13 +96,13 @@ sources:
   - id: nasa-news
     name: NASA — Breaking News
     homepage: https://www.nasa.gov
-    feed_url: https://www.nasa.gov/rss/dyn/breaking_news.rss
+    feed_url: https://www.nasa.gov/news-release/feed/
     kind: rss
     region: US
     tier: primary
     trust_score: 96
     license_note: U.S. government work, public domain. Attribution + link retained.
-    active: false # verify feed URL before enabling (§6)
+    active: true
 
   - id: mit-news
     name: MIT News
@@ -125,7 +125,7 @@ sources:
     tier: primary
     trust_score: 96
     license_note: WHO content reproducible with attribution to source; headline + link only.
-    active: false # verify feed URL before enabling (§6)
+    active: true
 
   - id: cdc-newsroom
     name: U.S. CDC — Newsroom
@@ -136,7 +136,7 @@ sources:
     tier: regulator
     trust_score: 95
     license_note: U.S. government work, public domain. Attribution + link retained.
-    active: false # verify feed URL before enabling (§6)
+    active: true
 
   # --- Economy / statistics (public domain / open) ---
   - id: bls-news
@@ -148,7 +148,7 @@ sources:
     tier: primary
     trust_score: 98
     license_note: U.S. government work, public domain. Attribution + link retained.
-    active: false # verify feed URL before enabling (§6)
+    active: true
 
   - id: worldbank-news
     name: World Bank — News
@@ -159,7 +159,7 @@ sources:
     tier: primary
     trust_score: 96
     license_note: World Bank content under CC BY 4.0 with attribution; headline + dek + link only.
-    active: false # verify feed URL before enabling (§6)
+    active: true
 
   # --- Sports & culture (commercial outlets — inactive pending terms review) ---
   - id: sports-outlet
