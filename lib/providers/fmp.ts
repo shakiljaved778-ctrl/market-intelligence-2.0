@@ -246,6 +246,28 @@ export class FmpProvider implements MarketDataProvider {
     return value;
   }
 
+  /**
+   * Uncached health probe: raw HTTP status of the two fundamentals endpoints for
+   * one symbol, so the eod job can report *why* fundamentals are empty (key
+   * rejected vs plan-gated). Diagnostic only.
+   */
+  async probeFundamentals(sym = "AAPL"): Promise<string> {
+    if (!this.isConfigured()) return "no-key";
+    try {
+      const [q, r] = await Promise.all([
+        fetch(`${BASE_URL}/quote/${sym}?apikey=${this.key()}`, { cache: "no-store" }),
+        fetch(`${BASE_URL}/ratios-ttm/${sym}?apikey=${this.key()}`, {
+          cache: "no-store",
+        }),
+      ]);
+      const qLen = (await q.text()).length;
+      const rLen = (await r.text()).length;
+      return `quote=${q.status}/${qLen} ratios=${r.status}/${rLen}`;
+    } catch (err) {
+      return `err:${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
   async candles(symbol: string, range: Range): Promise<Candle[]> {
     void symbol;
     void range;

@@ -1,5 +1,6 @@
 import { fredSeries } from "@/lib/providers/fred";
 import { getRegistry } from "@/lib/providers";
+import { FmpProvider } from "@/lib/providers/fmp";
 import { cachePut } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
 import { persistQuote } from "@/lib/db/queries/quotes";
@@ -58,15 +59,25 @@ export async function eodTask(): Promise<JobSummary> {
   // FMP-only, so it stays well within FMP's ~250/day free budget. Cached +
   // persisted; the quote page reads from cache, never the vendor (§2).
   const registry = getRegistry();
+  let fundFmp = 0;
   let fundamentalsOut = 0;
+  let fundErr = "";
   for (const symbol of BACKFILL_SYMBOLS) {
     const f = await registry.fundamentals(symbol);
     if (f && f.provider !== "fixture") {
-      await cachePut(`market:fundamentals:${f.symbol}`, TTL.fundamentals, f);
-      await persistFundamentals(f);
-      fundamentalsOut += 1;
+      fundFmp += 1;
+      try {
+        await cachePut(`market:fundamentals:${f.symbol}`, TTL.fundamentals, f);
+        await persistFundamentals(f);
+        fundamentalsOut += 1;
+      } catch (err) {
+        if (!fundErr) fundErr = err instanceof Error ? err.message : String(err);
+      }
     }
   }
+  // Diagnostic: when nothing came from FMP, probe once so the log says why.
+  let probe = "";
+  if (fundFmp === 0) probe = await new FmpProvider().probeFundamentals();
 
   const pruned = await pruneRetention();
   return {
@@ -75,6 +86,9 @@ export async function eodTask(): Promise<JobSummary> {
       fundamentalsOut +
       pruned.articlesDeleted +
       pruned.intradayCandlesDeleted,
+    detail: `fund fmp=${fundFmp} saved=${fundamentalsOut}${
+      fundErr ? ` persistErr=${fundErr}` : ""
+    }${probe ? ` probe[${probe}]` : ""}`,
     outcome: pruned.skipped ? "partial" : "ok",
   };
 }
