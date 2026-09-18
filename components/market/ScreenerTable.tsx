@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Sparkline } from "@/components/market/Sparkline";
+import { SampleTag } from "@/components/market/Provenance";
 import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
+import { provenanceTitle } from "@/lib/market/provenance";
 import type { DisplayCurrency } from "@/lib/currency/peg";
 import type { MarketRow } from "@/lib/market/read";
 
@@ -57,10 +59,14 @@ export function ScreenerTable({
                     <span className="tnum text-text-hi">{row.symbol}</span>
                     <span className="text-text-low ml-2 text-[12px]">{row.name}</span>
                   </Link>
+                  <SampleTag quote={row.quote} />
                 </td>
                 <td className="text-text-mid px-3 py-2.5">{row.sector ?? "—"}</td>
                 <td className="text-text-mid px-3 py-2.5">{row.exchange}</td>
-                <td className="tnum text-text-hi px-3 py-2.5 text-right">
+                <td
+                  className="tnum text-text-hi px-3 py-2.5 text-right"
+                  title={provenanceTitle(row.quote)}
+                >
                   {formatMoney(row.priceUsd, currency)}
                 </td>
                 <td className={`tnum px-3 py-2.5 text-right ${dirClass}`}>

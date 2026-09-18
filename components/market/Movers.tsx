@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { SampleTag } from "@/components/market/Provenance";
 import { readMovers } from "@/lib/market/read";
 import { formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
+import { provenanceTitle } from "@/lib/market/provenance";
 import type { DisplayCurrency } from "@/lib/currency/peg";
 
 /** Session movers (§13), sorted by absolute move. Cache/fixture-backed. */
 export async function Movers({ currency }: { currency: DisplayCurrency }) {
   const rows = await readMovers(6);
+  const anyLive = rows.some((r) => r.quote.provider.toLowerCase() !== "fixture");
   return (
     <div className="list-card">
       <div className="border-line flex items-center justify-between border-b px-4 py-2.5">
@@ -29,9 +32,13 @@ export async function Movers({ currency }: { currency: DisplayCurrency }) {
                   <span className="text-text-low ml-2 truncate text-[12px]">
                     {row.name}
                   </span>
+                  <SampleTag quote={row.quote} />
                 </span>
                 <span className="flex items-center gap-3">
-                  <span className="tnum text-text-hi text-[13px]">
+                  <span
+                    className="tnum text-text-hi text-[13px]"
+                    title={provenanceTitle(row.quote)}
+                  >
                     {formatMoney(row.priceUsd, currency)}
                   </span>
                   <span
@@ -46,6 +53,11 @@ export async function Movers({ currency }: { currency: DisplayCurrency }) {
           );
         })}
       </ul>
+      <p className="border-line text-text-low border-t px-4 py-2 text-[11px]">
+        {anyLive
+          ? "Live prices are delayed and stamped with source & time; sample rows are illustrative."
+          : "Illustrative sample prices — no live feed configured."}
+      </p>
     </div>
   );
 }
