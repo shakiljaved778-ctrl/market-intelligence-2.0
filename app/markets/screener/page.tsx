@@ -1,7 +1,7 @@
 import { ScreenerTable } from "@/components/market/ScreenerTable";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { readUniverse, type MarketRow } from "@/lib/market/read";
+import { readCandles, readUniverse, type MarketRow } from "@/lib/market/read";
 
 export const metadata = { title: "Screener" };
 
@@ -38,6 +38,16 @@ export default async function ScreenerPage({ searchParams }: SearchParams) {
     return true;
   });
   rows.sort((a, b) => b.changePct - a.changePct);
+
+  // Recent close series per row for the trend sparkline (cache/db/fixture — no
+  // vendor call on render).
+  const sparkEntries = await Promise.all(
+    rows.map(async (r) => {
+      const candles = await readCandles(r.symbol, "1M");
+      return [r.symbol, candles.slice(-30).map((c) => c.c)] as const;
+    }),
+  );
+  const sparks: Record<string, number[]> = Object.fromEntries(sparkEntries);
 
   const exchanges = [...new Set(all.map((r) => r.exchange))].sort();
   const field =
@@ -105,7 +115,7 @@ export default async function ScreenerPage({ searchParams }: SearchParams) {
         <span className="tnum text-text-mid">{rows.length}</span> instruments
       </p>
       <div className="fade-up" style={{ "--d": "140ms" } as React.CSSProperties}>
-        <ScreenerTable rows={rows} currency={currency} />
+        <ScreenerTable rows={rows} currency={currency} sparks={sparks} />
       </div>
     </div>
   );

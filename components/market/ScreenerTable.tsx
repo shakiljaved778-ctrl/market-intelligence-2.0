@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkline } from "@/components/market/Sparkline";
 import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 import type { DisplayCurrency } from "@/lib/currency/peg";
@@ -8,9 +9,12 @@ import type { MarketRow } from "@/lib/market/read";
 export function ScreenerTable({
   rows,
   currency,
+  sparks = {},
 }: {
   rows: MarketRow[];
   currency: DisplayCurrency;
+  /** symbol -> recent close series for the trend sparkline. */
+  sparks?: Record<string, number[]>;
 }) {
   if (rows.length === 0) {
     return (
@@ -29,6 +33,7 @@ export function ScreenerTable({
             <th className="px-3 py-2.5 font-medium">Exchange</th>
             <th className="px-3 py-2.5 text-right font-medium">Price</th>
             <th className="px-3 py-2.5 text-right font-medium">Change</th>
+            <th className="px-3 py-2.5 text-center font-medium">Trend · 30d</th>
             <th className="px-3 py-2.5 text-right font-medium">Mkt cap</th>
             <th className="px-3 py-2.5 text-center font-medium">Shariah</th>
           </tr>
@@ -61,6 +66,11 @@ export function ScreenerTable({
                 <td className={`tnum px-3 py-2.5 text-right ${dirClass}`}>
                   <span aria-hidden>{directionGlyph(row.change)}</span>{" "}
                   {formatPercent(row.changePct)}
+                </td>
+                <td className="px-3 py-2.5">
+                  <div className="flex justify-center">
+                    <Sparkline values={sparks[row.symbol] ?? []} up={row.change >= 0} />
+                  </div>
                 </td>
                 <td className="tnum text-text-mid px-3 py-2.5 text-right">
                   {formatCompactMoney(row.marketCapUsd, currency)}
