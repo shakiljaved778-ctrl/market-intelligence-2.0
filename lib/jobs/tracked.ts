@@ -5,23 +5,49 @@
  * sourced from the `instruments` table once populated.
  */
 export const TRACKED_SYMBOLS: readonly string[] = [
+  // Mega-cap tech / comms
   "AAPL",
   "MSFT",
   "NVDA",
   "GOOGL",
   "AMZN",
   "META",
-  "TSLA",
+  "AVGO",
+  "ORCL",
   "AMD",
   "NFLX",
+  "CRM",
+  "TSLA",
+  // Financials
   "JPM",
   "BAC",
+  "WFC",
   "GS",
-  "XOM",
+  "MS",
+  "V",
+  "MA",
+  // Health care
+  "UNH",
+  "LLY",
+  "JNJ",
+  "PFE",
+  // Consumer
   "WMT",
-  "DIS",
+  "COST",
+  "HD",
+  "MCD",
   "KO",
+  "DIS",
+  // Energy / industrials / materials
+  "XOM",
+  "CVX",
+  "CAT",
+  "BA",
+  "LIN",
+  // Crypto
   "BTC",
+  "ETH",
+  "SOL",
 ];
 
 /** FRED series refreshed by the macro job. */
