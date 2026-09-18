@@ -49,7 +49,7 @@ export function Header({
             <Link
               key={item.href}
               href={item.href}
-              className="pill text-text-mid hover:bg-raised hover:text-text-hi px-3 py-1.5 font-mono text-[12px] transition-colors"
+              className="pill text-text-mid hover:bg-raised hover:text-text-hi px-3 py-1.5 font-mono text-[12px] font-semibold transition-colors"
             >
               {item.label}
             </Link>
