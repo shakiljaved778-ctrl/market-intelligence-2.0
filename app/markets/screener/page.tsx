@@ -1,7 +1,12 @@
 import { ScreenerTable } from "@/components/market/ScreenerTable";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { readCandles, readUniverse, type MarketRow } from "@/lib/market/read";
+import {
+  coverageOf,
+  readCandles,
+  readUniverse,
+  type MarketRow,
+} from "@/lib/market/read";
 
 export const metadata = { title: "Screener" };
 
@@ -28,6 +33,7 @@ export default async function ScreenerPage({ searchParams }: SearchParams) {
   const direction = one(sp.direction); // "gainers" | "losers" | ""
 
   const all = await readUniverse();
+  const coverage = coverageOf(all);
   const rows: MarketRow[] = all.filter((r) => {
     if (assetClass && r.assetClass !== assetClass) return false;
     if (exchange && r.exchange !== exchange) return false;
@@ -111,9 +117,34 @@ export default async function ScreenerPage({ searchParams }: SearchParams) {
         </button>
       </form>
 
-      <p className="text-text-low mt-5 mb-2 text-[12px]">
-        <span className="tnum text-text-mid">{rows.length}</span> instruments
-      </p>
+      <div className="mt-5 mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-text-low text-[12px]">
+          <span className="tnum text-text-mid">{rows.length}</span> instruments
+        </p>
+        <p className="text-text-low text-[12px]">
+          {coverage.live > 0 ? (
+            <>
+              <span className="tnum text-text-mid">{coverage.live}</span> of{" "}
+              <span className="tnum text-text-mid">{coverage.total}</span> show live
+              cached prices (delayed, stamped with source &amp; time); the rest are
+              marked{" "}
+              <span className="border-line text-text-low rounded border px-1 py-px text-[10px]">
+                sample
+              </span>
+              .
+            </>
+          ) : (
+            <>
+              Prices are illustrative{" "}
+              <span className="border-line text-text-low rounded border px-1 py-px text-[10px]">
+                sample
+              </span>{" "}
+              data — no live market feed is configured. Hover any price for its source
+              and time.
+            </>
+          )}
+        </p>
+      </div>
       <div className="fade-up" style={{ "--d": "140ms" } as React.CSSProperties}>
         <ScreenerTable rows={rows} currency={currency} sparks={sparks} />
       </div>

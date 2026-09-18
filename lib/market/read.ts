@@ -42,12 +42,23 @@ function universeToQuote(row: UniverseRow): Quote {
   };
 }
 
-export async function readQuote(symbol: string): Promise<Quote | null> {
+/**
+ * Best *live* quote for a symbol — KV cache, then Postgres — or null when the
+ * scheduled jobs haven't populated one. Deliberately does NOT fall back to
+ * fixtures: callers decide whether to substitute a clearly-labelled sample, so
+ * fixture values never masquerade as live market data.
+ */
+async function liveQuote(symbol: string): Promise<Quote | null> {
   const sym = symbol.toUpperCase();
   const cached = await kvGet<Quote>(`market:quote:${sym}`);
   if (cached) return cached;
-  const fromDb = await dbLatestQuote(sym);
-  if (fromDb) return fromDb;
+  return dbLatestQuote(sym);
+}
+
+export async function readQuote(symbol: string): Promise<Quote | null> {
+  const sym = symbol.toUpperCase();
+  const live = await liveQuote(sym);
+  if (live) return live;
   const row = universeBySymbol(sym);
   return row ? universeToQuote(row) : null;
 }
@@ -65,9 +76,32 @@ export interface MarketRow extends UniverseRow {
   quote: Quote;
 }
 
-/** Instruments + latest quote for movers and the screener (fixtures for now). */
+/**
+ * Instruments + latest quote for movers and the screener. Live cached/DB quotes
+ * are overlaid onto the fixture universe: for any symbol the scheduled quotes
+ * job has populated, the row's numbers come from the *live* quote (and its
+ * `quote.provider` names the real source); symbols without a live quote keep
+ * their illustrative fixture values, clearly marked as a sample in the UI via
+ * `quote.provider === "fixture"`. Reads cache/DB only — no vendor call on render.
+ */
 export async function readUniverse(): Promise<MarketRow[]> {
-  return UNIVERSE.map((row) => ({ ...row, quote: universeToQuote(row) }));
+  return Promise.all(
+    UNIVERSE.map(async (row) => {
+      const live = await liveQuote(row.symbol);
+      if (!live) return { ...row, quote: universeToQuote(row) };
+      // Reflect the live figures in the fields the tables read, so the screener
+      // and movers show real prices — not just the quote page.
+      return {
+        ...row,
+        priceUsd: live.priceUsd,
+        change: live.change,
+        changePct: live.changePct,
+        volume: live.volume ?? row.volume,
+        marketCapUsd: live.marketCapUsd ?? row.marketCapUsd,
+        quote: live,
+      };
+    }),
+  );
 }
 
 export async function readMovers(limit = 6): Promise<MarketRow[]> {
@@ -75,4 +109,10 @@ export async function readMovers(limit = 6): Promise<MarketRow[]> {
   return [...rows]
     .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
     .slice(0, limit);
+}
+
+/** Coverage summary for honest provenance banners: how many rows are live. */
+export function coverageOf(rows: MarketRow[]): { live: number; total: number } {
+  const live = rows.filter((r) => r.quote.provider.toLowerCase() !== "fixture").length;
+  return { live, total: rows.length };
 }

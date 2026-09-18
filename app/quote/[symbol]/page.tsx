@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PriceChart } from "@/components/chart/PriceChart";
+import { QuoteProvenance } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { readCandles, readQuote } from "@/lib/market/read";
 import { readWire } from "@/lib/news/read";
@@ -110,15 +111,7 @@ export default async function QuotePage({ params }: Params) {
                 ) : null}
                 {session.label}
               </span>
-              {quote.dataDelayMinutes > 0 || session.delayed ? (
-                <p className="text-text-low mt-1.5 text-[11px]">
-                  Delayed data · source {quote.provider}
-                </p>
-              ) : (
-                <p className="text-text-low mt-1.5 text-[11px]">
-                  Source {quote.provider}
-                </p>
-              )}
+              <QuoteProvenance quote={quote} className="mt-1.5" />
             </div>
           </div>
         </div>
