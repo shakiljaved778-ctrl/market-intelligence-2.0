@@ -1,8 +1,10 @@
 import { getKvStore } from "@/lib/cache/store";
 import { dbCandles, dbLatestQuote } from "@/lib/db/queries/read";
+import { dbLatestFundamentals } from "@/lib/db/queries/fundamentals";
 import { fixtureCandles } from "@/fixtures/candles";
+import { fixtureFundamentals } from "@/fixtures/fundamentals";
 import { UNIVERSE, universeBySymbol, type UniverseRow } from "@/fixtures/universe";
-import type { Candle, Quote, Range } from "@/lib/providers/types";
+import type { Candle, Fundamentals, Quote, Range } from "@/lib/providers/types";
 
 /**
  * Read-only market layer for page rendering. Order: KV cache → Postgres →
@@ -70,6 +72,20 @@ export async function readCandles(symbol: string, range: Range): Promise<Candle[
   const fromDb = await dbCandles(sym, range);
   if (fromDb.length > 0) return fromDb;
   return fixtureCandles(sym, range);
+}
+
+/**
+ * Latest fundamentals for a symbol: KV cache → Postgres → illustrative fixture.
+ * Reads only — the scheduled job is the sole writer, so no vendor call fires on
+ * render (§2/§6). `provider === "fixture"` marks illustrative sample values.
+ */
+export async function readFundamentals(symbol: string): Promise<Fundamentals | null> {
+  const sym = symbol.toUpperCase();
+  const cached = await kvGet<Fundamentals>(`market:fundamentals:${sym}`);
+  if (cached) return cached;
+  const fromDb = await dbLatestFundamentals(sym);
+  if (fromDb) return fromDb;
+  return fixtureFundamentals(sym);
 }
 
 export interface MarketRow extends UniverseRow {

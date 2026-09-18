@@ -6,6 +6,7 @@ import type {
   Candle,
   Capability,
   CompanyProfile,
+  Fundamentals,
   MarketDataProvider,
   ProviderBudget,
   Quote,
@@ -55,9 +56,37 @@ const SearchResponse = z.array(
   }),
 );
 
+// FMP /ratios-ttm — trailing-twelve-month ratios (free tier). All optional; the
+// vendor omits fields it can't compute. `.passthrough()` tolerates extra keys.
+const RatiosTtmResponse = z.array(
+  z
+    .object({
+      peRatioTTM: z.number().nullable().optional(),
+      pegRatioTTM: z.number().nullable().optional(),
+      priceToSalesRatioTTM: z.number().nullable().optional(),
+      priceToBookRatioTTM: z.number().nullable().optional(),
+      grossProfitMarginTTM: z.number().nullable().optional(),
+      operatingProfitMarginTTM: z.number().nullable().optional(),
+      netProfitMarginTTM: z.number().nullable().optional(),
+      returnOnEquityTTM: z.number().nullable().optional(),
+      returnOnAssetsTTM: z.number().nullable().optional(),
+      debtEquityRatioTTM: z.number().nullable().optional(),
+      currentRatioTTM: z.number().nullable().optional(),
+      dividendYieldTTM: z.number().nullable().optional(),
+      dividendYielPercentageTTM: z.number().nullable().optional(),
+      payoutRatioTTM: z.number().nullable().optional(),
+    })
+    .passthrough(),
+);
+
 export class FmpProvider implements MarketDataProvider {
   readonly id = "fmp";
-  readonly capabilities: readonly Capability[] = ["quote", "profile", "search"];
+  readonly capabilities: readonly Capability[] = [
+    "quote",
+    "profile",
+    "search",
+    "fundamentals",
+  ];
   // Free tier is ~250 req/day; scheduled batching + cache keep us well under.
   readonly budget: ProviderBudget = { perDay: 250 };
 
@@ -134,6 +163,44 @@ export class FmpProvider implements MarketDataProvider {
         marketCapUsd: p.mktCap != null ? p.mktCap * fx : null,
       };
       return profile;
+    });
+    return value;
+  }
+
+  async fundamentals(symbol: string): Promise<Fundamentals | null> {
+    if (!this.isConfigured()) return null;
+    const sym = symbol.toUpperCase();
+    const { value } = await swr(`fmp:ratios-ttm:${sym}`, TTL.fundamentals, async () => {
+      const res = await fetch(`${BASE_URL}/ratios-ttm/${sym}?apikey=${this.key()}`, {
+        cache: "no-store",
+      });
+      // Free tier can 403/402 on some symbols/endpoints — treat as "can't answer"
+      // (return null) rather than a hard failure that trips the breaker.
+      if (res.status === 402 || res.status === 403) return null;
+      if (!res.ok) throw new Error(`FMP ratios-ttm ${res.status}`);
+      const rows = RatiosTtmResponse.parse(await res.json());
+      const r = rows[0];
+      if (!r) return null;
+      const fundamentals: Fundamentals = {
+        symbol: sym,
+        peRatio: r.peRatioTTM ?? null,
+        pegRatio: r.pegRatioTTM ?? null,
+        priceToSales: r.priceToSalesRatioTTM ?? null,
+        priceToBook: r.priceToBookRatioTTM ?? null,
+        grossMargin: r.grossProfitMarginTTM ?? null,
+        operatingMargin: r.operatingProfitMarginTTM ?? null,
+        netMargin: r.netProfitMarginTTM ?? null,
+        returnOnEquity: r.returnOnEquityTTM ?? null,
+        returnOnAssets: r.returnOnAssetsTTM ?? null,
+        debtToEquity: r.debtEquityRatioTTM ?? null,
+        currentRatio: r.currentRatioTTM ?? null,
+        // FMP spells the yield field two different ways across plans.
+        dividendYield: r.dividendYieldTTM ?? r.dividendYielPercentageTTM ?? null,
+        payoutRatio: r.payoutRatioTTM ?? null,
+        provider: this.id,
+        asOf: new Date().toISOString(),
+      };
+      return fundamentals;
     });
     return value;
   }

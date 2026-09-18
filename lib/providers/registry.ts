@@ -2,6 +2,7 @@ import type {
   Candle,
   Capability,
   CompanyProfile,
+  Fundamentals,
   MarketDataProvider,
   Quote,
   Range,
@@ -111,6 +112,14 @@ export class ProviderRegistry {
     return this.resolve<CompanyProfile>(
       "profile",
       (p) => p.profile(symbol),
+      (v) => v !== null,
+    );
+  }
+
+  fundamentals(symbol: string): Promise<Fundamentals | null> {
+    return this.resolve<Fundamentals>(
+      "fundamentals",
+      (p) => (p.fundamentals ? p.fundamentals(symbol) : Promise.resolve(null)),
       (v) => v !== null,
     );
   }

@@ -29,6 +29,13 @@
       "when": 1789682140704,
       "tag": "0003_previous_morph",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789737600821,
+      "tag": "0004_add_fundamentals",
+      "breakpoints": true
     }
   ]
 }

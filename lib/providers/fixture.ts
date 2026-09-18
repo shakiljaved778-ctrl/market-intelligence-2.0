@@ -1,8 +1,10 @@
 import { FIXTURE_QUOTES } from "@/fixtures/quotes";
+import { fixtureFundamentals } from "@/fixtures/fundamentals";
 import type {
   Candle,
   Capability,
   CompanyProfile,
+  Fundamentals,
   MarketDataProvider,
   ProviderBudget,
   Quote,
@@ -17,7 +19,12 @@ import type {
  */
 export class FixtureProvider implements MarketDataProvider {
   readonly id = "fixture";
-  readonly capabilities: readonly Capability[] = ["quote", "profile", "search"];
+  readonly capabilities: readonly Capability[] = [
+    "quote",
+    "profile",
+    "search",
+    "fundamentals",
+  ];
   readonly budget: ProviderBudget = {};
 
   isConfigured(): boolean {
@@ -54,5 +61,9 @@ export class FixtureProvider implements MarketDataProvider {
     return Object.keys(FIXTURE_QUOTES)
       .filter((s) => s.includes(upper))
       .map((s) => ({ symbol: s, name: s, exchange: null, assetClass: "equity" }));
+  }
+
+  async fundamentals(symbol: string): Promise<Fundamentals | null> {
+    return fixtureFundamentals(symbol);
   }
 }
