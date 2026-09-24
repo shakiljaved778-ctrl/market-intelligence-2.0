@@ -489,6 +489,16 @@ body {
   overflow-x: clip;
 }
 
+/* Hide the scrollbar on horizontal data rails (index strip, chip rows) while
+   keeping them scrollable by touch/trackpad. */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* WebKit/Blink */
+}
+
 /* Full-width breakout from a centred container. */
 .bleed {
   width: 100vw;

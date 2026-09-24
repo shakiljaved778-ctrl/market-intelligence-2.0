@@ -66,6 +66,16 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "BA",
   "CAT",
   "GE",
+  "HON",
+  "UPS",
+  // More large-caps (all already in the universe) — widen live-quote coverage
+  // while staying under Finnhub's free 60/min ceiling.
+  "TXN",
+  "IBM",
+  "NOW",
+  "MU",
+  "PEP",
+  "ABT",
   // US-listed ADRs (Finnhub free covers these)
   "TSM",
   "ASML",
