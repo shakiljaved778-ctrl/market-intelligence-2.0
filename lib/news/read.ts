@@ -10,6 +10,7 @@ import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
 import {
   classifySection,
+  evergreenSectionIds,
   loadSections,
   sectionMeta,
   type SectionConfig,
@@ -139,20 +140,8 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
   };
 }
 
-/**
- * Load the whole ranked wire once per request (React `cache` dedupes the calls
- * from readWire / readCluster / readSectionSummaries in a single render). Live
- * clusters from Postgres win; fixtures are the fallback.
- */
-const loadAll = cache(async (): Promise<LoadedCluster[]> => {
-  if (isDbConfigured()) {
-    try {
-      const rows = await dbReadWire();
-      if (rows.length > 0) return rows.map(dbLoaded);
-    } catch (err) {
-      console.error("[wire] DB read failed, falling back to fixtures:", err);
-    }
-  }
+/** Compute the ranked wire deterministically from the fixture articles. */
+async function computeFixtureClusters(): Promise<LoadedCluster[]> {
   const ranked = await runPipeline(
     FIXTURE_ARTICLES.map((a) => ({
       id: a.id,
@@ -166,6 +155,40 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
     new HashEmbedder(),
   );
   return ranked.map(fixtureLoaded);
+}
+
+/**
+ * Load the whole ranked wire once per request (React `cache` dedupes the calls
+ * from readWire / readCluster / readSectionSummaries in a single render). Live
+ * clusters from Postgres win for wire news; fixtures are the fallback.
+ *
+ * Evergreen editorial sections (e.g. Eureka's Nobel explainers) are our own
+ * authored content — never ingested from the wire, so they never reach Postgres.
+ * We always merge those in from fixtures, otherwise they'd disappear the moment
+ * the DB is configured. They rank into the wire by their computed importance.
+ */
+const loadAll = cache(async (): Promise<LoadedCluster[]> => {
+  if (isDbConfigured()) {
+    try {
+      const rows = await dbReadWire();
+      if (rows.length > 0) {
+        const live = rows.map(dbLoaded);
+        const evergreen = evergreenSectionIds();
+        if (evergreen.size === 0) return live;
+        const liveSlugs = new Set(live.map((l) => l.cluster.slug));
+        const editorial = (await computeFixtureClusters()).filter(
+          (l) => evergreen.has(l.cluster.section) && !liveSlugs.has(l.cluster.slug),
+        );
+        if (editorial.length === 0) return live;
+        return [...live, ...editorial].sort(
+          (a, b) => b.cluster.importanceScore - a.cluster.importanceScore,
+        );
+      }
+    } catch (err) {
+      console.error("[wire] DB read failed, falling back to fixtures:", err);
+    }
+  }
+  return computeFixtureClusters();
 });
 
 async function allClusters(): Promise<WireCluster[]> {
