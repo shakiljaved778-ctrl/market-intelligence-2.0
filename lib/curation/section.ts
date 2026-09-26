@@ -25,6 +25,13 @@ const SectionSchema = z.object({
   hue: z.string(),
   glyph: z.string(),
   keywords: z.array(z.string()).default([]),
+  /**
+   * Evergreen editorial sections carry our OWN authored pieces (e.g. Eureka's
+   * Nobel explainers), not wire-ingested news. They never land in Postgres via
+   * ingest, so the read layer always merges them in from fixtures — otherwise
+   * they'd vanish the moment the DB is configured (see lib/news/read.ts).
+   */
+  evergreen: z.boolean().default(false),
 });
 export type SectionConfig = z.infer<typeof SectionSchema>;
 
@@ -97,4 +104,17 @@ export function sectionMeta(id: string): SectionConfig {
 
 export function isFinancialSection(id: string): boolean {
   return sectionMeta(id).financial;
+}
+
+/**
+ * Ids of evergreen editorial sections — our own authored content that is never
+ * ingested from the wire, so the read layer merges it in from fixtures even when
+ * live DB clusters are present.
+ */
+export function evergreenSectionIds(): Set<string> {
+  return new Set(
+    loadSections()
+      .filter((s) => s.evergreen)
+      .map((s) => s.id),
+  );
 }

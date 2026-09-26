@@ -77,6 +77,9 @@ sections:
     label: Eureka
     blurb: Nobel laureates and the ideas that reshaped how we understand the world.
     financial: false
+    # Evergreen: our own authored explainers, not wire-ingested — always merged
+    # in from fixtures so they show even when the live DB wire is served.
+    evergreen: true
     hue: "#8e7cc3"
     glyph: bulb
     keywords: [nobel, laureate, "nobel prize", "nobel laureate", "nobel memorial"]
