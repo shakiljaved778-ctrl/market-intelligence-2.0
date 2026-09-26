@@ -76,6 +76,9 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "MU",
   "PEP",
   "ABT",
+  "TMO",
+  "LIN",
+  "LMT",
   // US-listed ADRs (Finnhub free covers these)
   "TSM",
   "ASML",

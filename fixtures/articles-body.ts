@@ -166,4 +166,56 @@ A resilient jobs market supports consumer spending but keeps upward pressure on 
 
 **Why it matters:** Jobs and inflation are the two dials the Fed watches — and a firm labour market argues for patience on cuts.`,
   },
+
+  // --- Eureka: Nobel laureates and their theories (original explainers) ---
+  101: {
+    model: "editorial-demo",
+    md: `John Nash was awarded the 1994 Nobel Memorial Prize in Economic Sciences for an idea he first set out as a young mathematician: the **Nash equilibrium**. It describes a stable point in any game of strategy where no player can do better by changing their move alone, given what everyone else is doing.
+
+Before Nash, game theory largely handled head-to-head, zero-sum contests. His insight generalised the field to situations where players cooperate or compete in complex ways — from arms races and auctions to market competition and evolutionary biology.
+
+The concept became one of the most widely used tools in modern economics precisely because it makes strategic behaviour predictable: find the equilibrium, and you have a good guess at where rational players will end up.
+
+**Why it matters:** The Nash equilibrium turned "what will everyone do?" into a question you can actually solve — the foundation of modern game theory.`,
+  },
+  102: {
+    model: "editorial-demo",
+    md: `Marie Curie remains the only person to win Nobel Prizes in two different sciences — Physics in 1903, shared for research into radiation, and Chemistry in 1911 for isolating the elements **polonium** and **radium**.
+
+Working with painstaking chemistry, she and her collaborators showed that certain elements spontaneously emit energy from within their atoms — a property she named **radioactivity**. The discovery overturned the idea of the atom as indivisible and unchanging, opening the door to modern nuclear physics.
+
+Her methods for measuring and separating radioactive materials also laid groundwork for later medical uses, including cancer treatment.
+
+**Why it matters:** Curie's work revealed that atoms have an inner life — energy locked inside matter itself — reshaping both physics and medicine.`,
+  },
+  103: {
+    model: "editorial-demo",
+    md: `Richard Feynman shared the 1965 Nobel Prize in Physics for **quantum electrodynamics** (QED), the theory of how light and charged particles such as electrons interact.
+
+QED is among the most precisely tested theories in all of science, its predictions matching experiment to many decimal places. Feynman's lasting contribution was a way of *picturing* the maths: **Feynman diagrams**, simple sketches that track how particles exchange energy, turning fearsome calculations into something physicists can reason about visually.
+
+Beyond QED, he became one of the great explainers of science, insisting that if you can't explain an idea simply, you don't yet understand it.
+
+**Why it matters:** Feynman gave physicists both a supremely accurate theory of light and matter and an intuitive language to work in it.`,
+  },
+  104: {
+    model: "editorial-demo",
+    md: `Daniel Kahneman, a psychologist, won the 2002 Nobel Memorial Prize in Economic Sciences for work that challenged a core assumption of economics: that people are consistently rational.
+
+With Amos Tversky, he developed **prospect theory**, which showed that people value gains and losses differently — a loss hurts more than an equivalent gain feels good — and that we lean on mental shortcuts that produce predictable errors of judgement.
+
+The findings helped launch **behavioural economics**, which folds real human psychology into models of saving, spending, investing and risk.
+
+**Why it matters:** Kahneman showed that decisions under uncertainty follow patterns — irrational, but predictably so — that markets and policymakers ignore at their peril.`,
+  },
+  105: {
+    model: "editorial-demo",
+    md: `Albert Einstein's 1921 Nobel Prize in Physics was awarded not for relativity but for his explanation of the **photoelectric effect** — why shining light on a metal knocks electrons loose.
+
+Einstein proposed that light itself comes in discrete packets of energy, later called **photons**. Only light above a certain frequency frees electrons, no matter how bright — exactly what his quantum picture predicted and classical wave theory could not.
+
+The idea that light is both wave and particle became a cornerstone of **quantum mechanics**, the theory underpinning modern electronics, from solar cells to the sensors in a phone camera.
+
+**Why it matters:** Einstein's quanta helped launch quantum physics — the science behind much of the technology we now take for granted.`,
+  },
 };

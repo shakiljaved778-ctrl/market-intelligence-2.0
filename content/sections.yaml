@@ -73,6 +73,14 @@ sections:
         oecd,
       ]
 
+  - id: eureka
+    label: Eureka
+    blurb: Nobel laureates and the ideas that reshaped how we understand the world.
+    financial: false
+    hue: "#8e7cc3"
+    glyph: bulb
+    keywords: [nobel, laureate, "nobel prize", "nobel laureate", "nobel memorial"]
+
   - id: technology
     label: Tech & AI
     blurb: Artificial intelligence, chips, software and the platforms shaping them.
