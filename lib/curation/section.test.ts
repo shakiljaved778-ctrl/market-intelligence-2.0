@@ -27,6 +27,12 @@ describe("section classifier (deterministic, dictionary-driven)", () => {
     expect(classifySection({ title: "NASA telescope captures a distant galaxy" })).toBe(
       "science",
     );
+    expect(
+      classifySection({
+        title: "John Nash and the equilibrium that reshaped economics",
+        dek: "The mathematician shared the 1994 Nobel in economics for the Nash equilibrium.",
+      }),
+    ).toBe("eureka");
   });
 
   it("routes macro topics to economy and instrument news to markets", () => {
