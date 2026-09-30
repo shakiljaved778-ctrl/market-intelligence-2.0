@@ -86,13 +86,20 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "TM",
   "SONY",
   "NVO",
-  // Crypto (CoinGecko, keyless)
+  // Crypto (CoinGecko, keyless ~30/min — separate budget from Finnhub, so we can
+  // widen crypto coverage without touching the equities ceiling).
   "BTC",
   "ETH",
   "SOL",
   "XRP",
   "ADA",
   "DOGE",
+  "BNB",
+  "TRX",
+  "LINK",
+  "DOT",
+  "AVAX",
+  "LTC",
 ];
 
 /**

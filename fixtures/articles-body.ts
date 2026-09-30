@@ -218,4 +218,24 @@ The idea that light is both wave and particle became a cornerstone of **quantum 
 
 **Why it matters:** Einstein's quanta helped launch quantum physics — the science behind much of the technology we now take for granted.`,
   },
+  113: {
+    model: "editorial-demo",
+    md: `Niels Bohr received the 1922 Nobel Prize in Physics for a model of the atom that broke sharply with classical physics. He proposed that electrons orbit the nucleus only at **fixed energy levels**, and that they jump between them by absorbing or emitting a precise packet of light.
+
+That single idea explained a puzzle that had defeated earlier physicists: why atoms give off light only at sharp, characteristic colours rather than a smooth spectrum. Each colour corresponds to a specific jump between levels.
+
+Bohr's model was later absorbed into full **quantum mechanics**, but its core picture — quantised energy states — remains one of the most useful mental images in all of science, taught to every student of chemistry and physics.
+
+**Why it matters:** Bohr turned the atom from a vague cloud into a system with rules, giving quantum theory one of its first concrete, testable pictures.`,
+  },
+  114: {
+    model: "editorial-demo",
+    md: `Alexander Fleming shared the 1945 Nobel Prize in Physiology or Medicine for a discovery that began with an accident. In 1928 he noticed that a mould contaminating one of his bacterial cultures had killed the bacteria around it. The mould produced a substance he named **penicillin**.
+
+For years the finding sat largely unused until other scientists — Howard Florey and Ernst Chain, who shared the prize — found ways to purify and mass-produce it. By the 1940s penicillin was saving wounded soldiers and civilians from once-fatal infections.
+
+Penicillin opened the **antibiotic era**, transforming medicine and making routine what had been deadly. Its story is also a caution: overuse has since driven resistance, a challenge modern medicine still works to manage.
+
+**Why it matters:** Fleming's chance observation launched antibiotics — arguably the single greatest life-saving advance in the history of medicine.`,
+  },
 };
