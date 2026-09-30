@@ -27,6 +27,12 @@ const ID_MAP: Record<string, string> = {
   XRP: "ripple",
   ADA: "cardano",
   DOGE: "dogecoin",
+  BNB: "binancecoin",
+  TRX: "tron",
+  LINK: "chainlink",
+  DOT: "polkadot",
+  AVAX: "avalanche-2",
+  LTC: "litecoin",
 };
 
 const PriceResponse = z.record(
