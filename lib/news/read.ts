@@ -10,7 +10,6 @@ import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
 import {
   classifySection,
-  evergreenSectionIds,
   loadSections,
   sectionMeta,
   type SectionConfig,
@@ -159,13 +158,15 @@ async function computeFixtureClusters(): Promise<LoadedCluster[]> {
 
 /**
  * Load the whole ranked wire once per request (React `cache` dedupes the calls
- * from readWire / readCluster / readSectionSummaries in a single render). Live
- * clusters from Postgres win for wire news; fixtures are the fallback.
+ * from readWire / readCluster / readSectionSummaries in a single render).
  *
- * Evergreen editorial sections (e.g. Eureka's Nobel explainers) are our own
- * authored content — never ingested from the wire, so they never reach Postgres.
- * We always merge those in from fixtures, otherwise they'd disappear the moment
- * the DB is configured. They rank into the wire by their computed importance.
+ * Both sources are merged: the live clusters the ingest/cluster jobs persist to
+ * Postgres AND our curated fixture wire (the Eureka explainers plus the wider
+ * editorial stories). The fixtures are our own authored content and are never
+ * ingested, so without this merge they'd vanish the moment `POSTGRES_URL` is
+ * set — which is exactly why added stories weren't showing on the live site.
+ * Fixtures are deduped against the live wire by slug and everything is ranked
+ * together by importance. With no DB (§2) the fixture wire renders on its own.
  */
 const loadAll = cache(async (): Promise<LoadedCluster[]> => {
   if (isDbConfigured()) {
@@ -173,14 +174,12 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
       const rows = await dbReadWire();
       if (rows.length > 0) {
         const live = rows.map(dbLoaded);
-        const evergreen = evergreenSectionIds();
-        if (evergreen.size === 0) return live;
         const liveSlugs = new Set(live.map((l) => l.cluster.slug));
-        const editorial = (await computeFixtureClusters()).filter(
-          (l) => evergreen.has(l.cluster.section) && !liveSlugs.has(l.cluster.slug),
+        const curated = (await computeFixtureClusters()).filter(
+          (l) => !liveSlugs.has(l.cluster.slug),
         );
-        if (editorial.length === 0) return live;
-        return [...live, ...editorial].sort(
+        if (curated.length === 0) return live;
+        return [...live, ...curated].sort(
           (a, b) => b.cluster.importanceScore - a.cluster.importanceScore,
         );
       }

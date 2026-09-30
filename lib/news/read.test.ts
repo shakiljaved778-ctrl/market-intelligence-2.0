@@ -1,20 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Regression: evergreen editorial sections (e.g. Eureka's Nobel explainers) are
- * our own authored content and are never ingested into Postgres. When the live
- * DB wire is served they must still be merged in from fixtures — otherwise the
- * section shows "0 stories" the moment POSTGRES_URL is configured (the bug this
- * covers). See lib/news/read.ts + the `evergreen` flag in content/sections.yaml.
+ * Regression: our curated fixture wire (the Eureka Nobel explainers AND the
+ * wider editorial stories) is our own authored content, never ingested into
+ * Postgres. When the live DB wire is served it must still be merged in from
+ * fixtures — otherwise added stories vanish the moment POSTGRES_URL is set (the
+ * bug this covers). See lib/news/read.ts (loadAll merges both, deduped by slug).
  */
-describe("wire read — evergreen editorial merge", () => {
+describe("wire read — curated fixture merge into the live DB wire", () => {
   afterEach(() => {
     vi.resetModules();
     vi.doUnmock("@/lib/db/client");
     vi.doUnmock("@/lib/db/queries/wire");
   });
 
-  it("merges evergreen sections into the live DB wire", async () => {
+  it("merges the curated fixture wire into the live DB wire", async () => {
     vi.resetModules();
     vi.doMock("@/lib/db/client", () => ({
       isDbConfigured: () => true,
@@ -53,13 +53,19 @@ describe("wire read — evergreen editorial merge", () => {
 
     const { readWire } = await import("./read");
 
-    // The live wire story is served...
+    // The live DB wire story is served...
     const all = await readWire();
     expect(all.some((c) => c.slug === "live-markets-story")).toBe(true);
+    // ...alongside the curated fixture wire (many more stories than the 1 in DB).
+    expect(all.length).toBeGreaterThan(1);
 
-    // ...and the evergreen Eureka pieces (never in the DB) are merged in.
+    // The Eureka explainers (never in the DB) are merged in...
     const eureka = await readWire({ section: "eureka" });
     expect(eureka.length).toBeGreaterThan(0);
     expect(eureka.some((c) => /nash/i.test(c.title))).toBe(true);
+
+    // ...and so are the wider curated markets stories (not just Eureka).
+    const markets = await readWire({ section: "markets" });
+    expect(markets.length).toBeGreaterThan(1);
   });
 });
