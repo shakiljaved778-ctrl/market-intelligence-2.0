@@ -130,4 +130,14 @@ export const BACKFILL_SYMBOLS: readonly string[] = [
 ];
 
 /** FRED series refreshed by the macro job. */
-export const TRACKED_MACRO_SERIES: readonly string[] = ["CPIAUCSL", "UNRATE", "DGS10"];
+export const TRACKED_MACRO_SERIES: readonly string[] = [
+  "CPIAUCSL",
+  "UNRATE",
+  "DGS10",
+  // Widen macro coverage — all FRED (free, generous limits), refreshed by the
+  // 6-hourly macro job and rendered on /economy.
+  "FEDFUNDS",
+  "DGS2",
+  "DGS30",
+  "MORTGAGE30US",
+];

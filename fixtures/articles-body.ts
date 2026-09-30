@@ -238,4 +238,24 @@ Penicillin opened the **antibiotic era**, transforming medicine and making routi
 
 **Why it matters:** Fleming's chance observation launched antibiotics — arguably the single greatest life-saving advance in the history of medicine.`,
   },
+  133: {
+    model: "editorial-demo",
+    md: `Werner Heisenberg received the 1932 Nobel Prize in Physics for creating **quantum mechanics** in its matrix form — and for one of the most famous ideas in all of science, the **uncertainty principle**.
+
+The principle states a hard limit built into nature: the more precisely you know a particle's position, the less precisely you can know its momentum, and vice versa. It is not a flaw in our instruments but a property of reality at the smallest scales.
+
+That insight forced physicists to abandon the comfortable idea of particles moving along definite paths, replacing it with probabilities. It remains central to how we understand atoms, chemistry and the behaviour of matter.
+
+**Why it matters:** Heisenberg showed that uncertainty is woven into the fabric of nature — reshaping physics and philosophy alike.`,
+  },
+  134: {
+    model: "editorial-demo",
+    md: `Barbara McClintock won the 1983 Nobel Prize in Physiology or Medicine for discovering **transposons** — stretches of DNA that can move from one place in the genome to another. The press called them "jumping genes."
+
+Working with maize in the 1940s and 1950s, she showed that the genome is not a fixed string of instructions but a dynamic system that can rearrange itself. Her ideas were so far ahead of their time that many colleagues doubted them for decades.
+
+Molecular biology eventually caught up, confirming that transposable elements are widespread — shaping evolution, disease and the very structure of genomes across living things.
+
+**Why it matters:** McClintock revealed that the genome can rewrite itself, a discovery that reshaped genetics and rewarded decades of patient, unfashionable science.`,
+  },
 };
