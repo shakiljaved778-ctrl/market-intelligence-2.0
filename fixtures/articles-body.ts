@@ -258,4 +258,14 @@ Molecular biology eventually caught up, confirming that transposable elements ar
 
 **Why it matters:** McClintock revealed that the genome can rewrite itself, a discovery that reshaped genetics and rewarded decades of patient, unfashionable science.`,
   },
+  151: {
+    model: "editorial-demo",
+    md: `Linus Pauling holds a distinction no one else shares: two **unshared** Nobel Prizes. He won the 1954 Nobel Prize in Chemistry for his work on **the nature of the chemical bond** — explaining how atoms hold together to form molecules — and the 1962 Nobel Peace Prize for campaigning against nuclear weapons testing.
+
+His chemistry work applied quantum mechanics to real molecules, introducing ideas like hybrid orbitals and electronegativity that remain in every introductory textbook. He also did pioneering work on the structure of proteins.
+
+Later in life his scientific claims grew more contested, but his influence on how chemists picture molecules is foundational — and his willingness to turn a scientist's authority toward public causes made him a model of engaged science.
+
+**Why it matters:** Pauling connected quantum physics to everyday chemistry, and showed that a scientist's voice can carry beyond the lab — twice honoured, in two very different arenas.`,
+  },
 };
