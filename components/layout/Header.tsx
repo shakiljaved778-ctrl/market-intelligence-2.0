@@ -10,6 +10,7 @@ const NAV = [
   { href: "/news", label: "Wire" },
   { href: "/sections", label: "Sections" },
   { href: "/economy", label: "Economy" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/methodology", label: "Methodology" },
 ];
 

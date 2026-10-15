@@ -17,6 +17,9 @@ export function Footer() {
           <span className="eyebrow ml-0.5 tracking-[0.28em]">INTELLIGENCE</span>
         </div>
         <div className="text-text-mid mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+          <Link href="/pricing" className="hover:text-text-hi">
+            Pricing
+          </Link>
           <Link href="/methodology" className="hover:text-text-hi">
             Methodology
           </Link>
