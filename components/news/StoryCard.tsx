@@ -70,7 +70,7 @@ export function StoryCard({
           seed={cluster.slug}
           imageUrl={cluster.imageUrl}
           label={!cluster.imageUrl}
-          className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]"
+          className="h-full w-full transition duration-500 group-hover:scale-[1.03] group-hover:brightness-[1.04]"
         />
       </div>
       <div className={`flex flex-1 flex-col ${isLead ? "p-6" : "p-5"}`}>

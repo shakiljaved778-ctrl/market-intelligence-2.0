@@ -18,8 +18,9 @@ import { relativeTime } from "@/lib/format/relative-time";
 /** A YureCorp-style stat tile — a big REAL number + a quiet label. */
 function StatTile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="card p-5">
-      <div className="tnum text-text-hi flex items-baseline gap-0.5 text-[34px] leading-none">
+    <div className="card card-hover p-5">
+      {/* These are our OWN computed figures, so the iris accent is on-brand (§12). */}
+      <div className="ours tnum flex items-baseline gap-0.5 text-[34px] leading-none">
         {value}
       </div>
       <p className="text-text-low mt-2.5 text-[12px] leading-snug">{label}</p>
@@ -179,7 +180,7 @@ export default async function BoardPage() {
                     seed={secondary.slug}
                     imageUrl={secondary.imageUrl}
                     label={false}
-                    className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]"
+                    className="h-full w-full transition duration-500 group-hover:scale-[1.03] group-hover:brightness-[1.04]"
                   />
                 </div>
                 <div className="mt-3">
@@ -218,7 +219,7 @@ export default async function BoardPage() {
                   section={lead.section}
                   seed={lead.slug}
                   imageUrl={lead.imageUrl}
-                  className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]"
+                  className="h-full w-full transition duration-500 group-hover:scale-[1.03] group-hover:brightness-[1.04]"
                 />
               </div>
               <div className="mt-4 flex items-center gap-3 text-[12px]">
