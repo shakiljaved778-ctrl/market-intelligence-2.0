@@ -268,4 +268,24 @@ Later in life his scientific claims grew more contested, but his influence on ho
 
 **Why it matters:** Pauling connected quantum physics to everyday chemistry, and showed that a scientist's voice can carry beyond the lab — twice honoured, in two very different arenas.`,
   },
+  161: {
+    model: "editorial-demo",
+    md: `Subrahmanyan Chandrasekhar shared the 1983 Nobel Prize in Physics for a calculation he made as a young man on a long sea voyage: there is a **maximum mass** a white dwarf star can support against its own gravity. Above roughly 1.4 times the mass of the Sun — the **Chandrasekhar limit** — the star can no longer hold itself up and collapses.
+
+The idea was met with fierce resistance at first, including from leading astronomers of the day. But it proved exactly right, and it underpins our modern understanding of how stars die, giving rise to neutron stars, supernovae and black holes.
+
+His broader work brought mathematical rigour to astrophysics across a remarkably long career, from stellar structure to the theory of black holes.
+
+**Why it matters:** The Chandrasekhar limit tells us which stars fade quietly and which die in catastrophe — a single number at the heart of how the universe recycles matter.`,
+  },
+  162: {
+    model: "editorial-demo",
+    md: `Rosalyn Yalow won the 1977 Nobel Prize in Physiology or Medicine for **radioimmunoassay** (RIA) — a method she co-developed to measure vanishingly small amounts of hormones and other substances in the blood using radioactive tracers.
+
+Before RIA, such tiny concentrations were simply invisible to medicine. Her technique made it possible to track insulin, thyroid hormones and countless other markers with precision, transforming both diagnosis and research. Notably, she and her collaborator declined to patent it, so it spread freely.
+
+A physicist by training, Yalow was only the second woman to win the Nobel in medicine — and a determined advocate for women in science throughout her career.
+
+**Why it matters:** Radioimmunoassay let doctors measure the previously unmeasurable, reshaping diagnostics for hormones, diseases and drugs across all of medicine.`,
+  },
 };

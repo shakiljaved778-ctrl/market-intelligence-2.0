@@ -26,7 +26,16 @@ import {
  * demo is stable. Each cluster is tagged with a section (deterministic,
  * keyword-driven) and an optional image reference.
  */
-const DEMO_NOW = new Date("2026-09-16T20:00:00.000Z");
+// Rank the fixture wire against a clock pinned just after the newest fixture
+// story, so the most recently dated batch always surfaces at the top of the
+// wire (older stories age down to the recency floor, exactly like a live wire).
+// Previously this was frozen at 2026-09-16, so freshly dated stories got no
+// recency credit and ranked far down — added content never reached the
+// homepage or the top of /news.
+const DEMO_NOW = new Date(
+  Math.max(...FIXTURE_ARTICLES.map((a) => new Date(a.publishedAt).getTime())) +
+    60 * 60 * 1000,
+);
 
 /** A ranked cluster enriched with its editorial section + cover image. */
 export interface WireCluster extends SluggedCluster {

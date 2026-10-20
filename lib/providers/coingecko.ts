@@ -33,6 +33,9 @@ const ID_MAP: Record<string, string> = {
   DOT: "polkadot",
   AVAX: "avalanche-2",
   LTC: "litecoin",
+  BCH: "bitcoin-cash",
+  ATOM: "cosmos",
+  UNI: "uniswap",
 };
 
 const PriceResponse = z.record(
