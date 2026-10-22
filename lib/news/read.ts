@@ -188,9 +188,29 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
           (l) => !liveSlugs.has(l.cluster.slug),
         );
         if (curated.length === 0) return live;
-        return [...live, ...curated].sort(
-          (a, b) => b.cluster.importanceScore - a.cluster.importanceScore,
+        const byImportance = (a: LoadedCluster, b: LoadedCluster) =>
+          b.cluster.importanceScore - a.cluster.importanceScore;
+        // Lead with the freshest curated stories (last 7 days of the fixture
+        // wire). Otherwise the live DB clusters — recent, multi-source, high
+        // importance — out-rank every fixture and bury newly added content far
+        // down the list, so added stories never reach the homepage or the top
+        // of /news. Everything else (older curated + the live wire) follows,
+        // ranked by importance as before.
+        const FRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+        const newest = Math.max(
+          ...curated.map((l) => new Date(l.cluster.eventTime).getTime()),
         );
+        const fresh = curated
+          .filter(
+            (l) => newest - new Date(l.cluster.eventTime).getTime() <= FRESH_WINDOW_MS,
+          )
+          .sort(byImportance);
+        const freshSlugs = new Set(fresh.map((l) => l.cluster.slug));
+        const rest = [
+          ...live,
+          ...curated.filter((l) => !freshSlugs.has(l.cluster.slug)),
+        ].sort(byImportance);
+        return [...fresh, ...rest];
       }
     } catch (err) {
       console.error("[wire] DB read failed, falling back to fixtures:", err);

@@ -31,7 +31,9 @@ describe("wire read — curated fixture merge into the live DB wire", () => {
           sourceIds: ["reuters"],
           sourceCount: 3,
           eventTime: "2026-09-26T12:00:00.000Z",
-          importanceScore: 0.95,
+          // Deliberately high importance — a recent, well-sourced live story.
+          // The fresh curated batch must still lead it (see assertion below).
+          importanceScore: 99,
           articleIds: [9001],
           primaryId: 9001,
           primaryDek: "Equities climbed as traders priced in easier policy.",
@@ -58,6 +60,12 @@ describe("wire read — curated fixture merge into the live DB wire", () => {
     expect(all.some((c) => c.slug === "live-markets-story")).toBe(true);
     // ...alongside the curated fixture wire (many more stories than the 1 in DB).
     expect(all.length).toBeGreaterThan(1);
+
+    // The freshest curated stories LEAD, even over a high-importance live story,
+    // so newly added content is visible at the top instead of being buried.
+    const liveIdx = all.findIndex((c) => c.slug === "live-markets-story");
+    expect(all[0]!.slug).not.toBe("live-markets-story");
+    expect(liveIdx).toBeGreaterThan(5);
 
     // The Eureka explainers (never in the DB) are merged in...
     const eureka = await readWire({ section: "eureka" });
