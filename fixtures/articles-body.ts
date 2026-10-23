@@ -288,4 +288,14 @@ A physicist by training, Yalow was only the second woman to win the Nobel in med
 
 **Why it matters:** Radioimmunoassay let doctors measure the previously unmeasurable, reshaping diagnostics for hormones, diseases and drugs across all of medicine.`,
   },
+  173: {
+    model: "editorial-demo",
+    md: `Guglielmo Marconi shared the 1909 Nobel Prize in Physics for turning the physics of radio waves into a working communication system. Where others had demonstrated the waves in the lab, Marconi built the antennas, transmitters and receivers that sent messages over ever-greater distances — and, in 1901, reportedly across the Atlantic.
+
+His work launched **wireless telegraphy**, freeing long-distance communication from cables for the first time. It quickly proved its worth at sea, where radio let ships call for help far from shore.
+
+The technology he commercialised became the foundation of all later radio, television and mobile communication — an invention whose descendants are now in every pocket.
+
+**Why it matters:** Marconi made wireless communication practical, and the industry he started still underpins how the world stays connected today.`,
+  },
 };
