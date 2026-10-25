@@ -36,6 +36,9 @@ const ID_MAP: Record<string, string> = {
   BCH: "bitcoin-cash",
   ATOM: "cosmos",
   UNI: "uniswap",
+  NEAR: "near",
+  APT: "aptos",
+  ARB: "arbitrum",
 };
 
 const PriceResponse = z.record(
