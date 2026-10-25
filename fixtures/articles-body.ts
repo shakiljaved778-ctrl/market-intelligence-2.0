@@ -298,4 +298,14 @@ The technology he commercialised became the foundation of all later radio, telev
 
 **Why it matters:** Marconi made wireless communication practical, and the industry he started still underpins how the world stays connected today.`,
   },
+  185: {
+    model: "editorial-demo",
+    md: `Dorothy Hodgkin won the 1964 Nobel Prize in Chemistry for pioneering the use of **X-ray crystallography** to reveal the three-dimensional structures of important biological molecules. By firing X-rays at crystals and decoding the patterns they scattered, she mapped the atoms of substances that had resisted all other methods.
+
+Among her landmark achievements were the structures of **penicillin**, **vitamin B12** — a famously complex molecule — and later **insulin**, which took decades of painstaking work. Knowing a molecule's exact shape is the first step to understanding how it works and how to make or modify it.
+
+She remains the only British woman to win a Nobel in the sciences, and she trained and inspired generations of crystallographers.
+
+**Why it matters:** Hodgkin let chemists *see* the machinery of life atom by atom — the foundation of modern structural biology and rational drug design.`,
+  },
 };

@@ -103,6 +103,9 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "BCH",
   "ATOM",
   "UNI",
+  "NEAR",
+  "APT",
+  "ARB",
 ];
 
 /**
@@ -145,4 +148,6 @@ export const TRACKED_MACRO_SERIES: readonly string[] = [
   "MORTGAGE30US",
   "DGS5",
   "T10Y2Y",
+  "DGS1",
+  "T10Y3M",
 ];
