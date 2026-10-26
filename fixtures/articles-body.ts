@@ -308,4 +308,14 @@ She remains the only British woman to win a Nobel in the sciences, and she train
 
 **Why it matters:** Hodgkin let chemists *see* the machinery of life atom by atom — the foundation of modern structural biology and rational drug design.`,
   },
+  197: {
+    model: "editorial-demo",
+    md: `Anthropic, the artificial-intelligence company behind the Claude assistant, has filed to go public — one of the most closely watched market debuts in a year dominated by AI.
+
+A listing would give public investors their first direct stake in a leading frontier-AI developer, and a market test of how Wall Street values a fast-growing but heavily investing AI business. Demand for the offering was strong enough to price it at the top of its expected range, and the shares rose sharply on their first day of trading.
+
+The debut lands amid intense investor appetite for AI exposure, which has lifted chipmakers, cloud providers and software firms. It also sharpens scrutiny of the economics of frontier AI — the enormous cost of training and running large models against rapidly growing revenue.
+
+**Why it matters:** A public Anthropic puts one of the AI race's front-runners under the market's full glare, giving everyday investors a way in and a clearer read on what the industry is really worth.`,
+  },
 };
