@@ -40,6 +40,7 @@ const T7 = "2026-10-15T12:";
 const T8 = "2026-10-20T12:";
 const T9 = "2026-10-23T12:";
 const T10 = "2026-10-25T12:";
+const T11 = "2026-10-26T12:";
 
 export const FIXTURE_ARTICLES: RawArticle[] = [
   // --- Fed decision: one event, four sources → one cluster ---
@@ -2320,5 +2321,40 @@ export const FIXTURE_ARTICLES: RawArticle[] = [
     dek: "A closely watched sentiment gauge rose more than expected as households grew more upbeat about jobs and income.",
     url: "https://www.conference-board.org/consumer-confidence",
     publishedAt: `${T10}50:00.000Z`,
+  },
+
+  // --- Anthropic IPO: one event, three sources → one leading cluster ---
+  {
+    id: 197,
+    sourceId: "sec-edgar",
+    sourceName: "SEC EDGAR",
+    tier: "regulator",
+    trustScore: 100,
+    headline: "Anthropic files for a landmark IPO",
+    dek: "The maker of the Claude assistant filed registration paperwork to go public, setting up one of the most closely watched market debuts of the year.",
+    url: "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany",
+    publishedAt: `${T11}00:00.000Z`,
+  },
+  {
+    id: 198,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Anthropic's IPO prices at the top of its range",
+    dek: "Strong investor demand pushed the offering to the upper end of its expected range, valuing the AI company among the sector's most valuable newcomers.",
+    url: "https://outlet-a.example/anthropic-ipo-pricing",
+    publishedAt: `${T11}02:00.000Z`,
+  },
+  {
+    id: 199,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Anthropic shares jump in market debut",
+    dek: "The stock rose sharply on its first day of trading as investors rushed to buy into one of the year's highest-profile technology listings.",
+    url: "https://outlet-b.example/anthropic-debut",
+    publishedAt: `${T11}04:00.000Z`,
   },
 ];
