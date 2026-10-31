@@ -6,6 +6,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { ColorblindToggle } from "./ColorblindToggle";
 import { CommandPalette } from "./CommandPalette";
 import { MarketStatus } from "./MarketStatus";
+import { HeaderShrink } from "./HeaderShrink";
 import { Wordmark } from "@/components/ui/Wordmark";
 
 const NAV = [
@@ -26,8 +27,9 @@ export function Header({
   colorblind: boolean;
 }) {
   return (
-    <header className="border-line bg-canvas/95 sticky top-0 z-40 border-b backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4">
+    <header className="border-hairline bg-bg/85 sticky top-0 z-40 border-b backdrop-blur">
+      <HeaderShrink />
+      <div className="header-bar mx-auto flex max-w-[1320px] items-center gap-4 px-4">
         {/* Wordmark: balance-beam mark (◆ pivot) + serif name + small-caps tag. */}
         <Link href="/" aria-label="Mizaan Intelligence home" className="shrink-0">
           <Wordmark />
