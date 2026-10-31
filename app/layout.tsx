@@ -3,7 +3,7 @@ import "./globals.css";
 import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { MarketStrip } from "@/components/market/MarketStrip";
+import { TickerTape } from "@/components/market/TickerTape";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { getThemePref, getColorblind } from "@/lib/theme/server";
 import { SITE_URL } from "@/lib/site";
@@ -109,7 +109,7 @@ export default async function RootLayout({
           Skip to content
         </a>
         <Header currency={currency} themePref={themePref} colorblind={colorblind} />
-        <MarketStrip />
+        <TickerTape />
         <main id="main" className="mx-auto max-w-[1280px] px-4">
           {children}
         </main>

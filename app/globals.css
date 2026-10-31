@@ -1128,3 +1128,44 @@ body {
     animation: none;
   }
 }
+
+/* ============================================================
+   Ticker tape — a smooth CSS marquee. Pauses on hover/focus; under
+   reduced motion it becomes a static, horizontally scrollable rail.
+   ============================================================ */
+.ticker-tape {
+  overflow: hidden;
+  position: relative;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-marquee 70s linear infinite;
+  will-change: transform;
+}
+.ticker-tape:hover .ticker-track,
+.ticker-tape:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+@keyframes ticker-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-tape {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ticker-tape::-webkit-scrollbar {
+    display: none;
+  }
+  .ticker-track {
+    animation: none;
+    width: auto;
+  }
+  /* Drop the duplicated loop copy when static. */
+  .ticker-track > [data-ticker-dup] {
+    display: none;
+  }
+}
