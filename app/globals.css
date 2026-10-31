@@ -251,11 +251,29 @@
   --color-accent-soft: var(--brand-soft);
   --color-accent-line: var(--hairline-strong);
 
-  /* Fonts are injected as CSS variables by next/font in the root layout. */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Fonts are injected as CSS variables by next/font in the root layout.
+     Inter = UI/body, Newsreader = display/editorial serif, JetBrains Mono =
+     figures/tickers, IBM Plex Sans Arabic = :lang(ar). */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
-  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+  --font-arabic: var(--font-plex-arabic), var(--font-inter), sans-serif;
+}
+
+/* ===== Fluid type scale (Phase 2) — clamp() between the stated bounds ===== */
+:root {
+  --fs-display: clamp(2.5rem, 1.6rem + 3.6vw, 3.5rem); /* 40 → 56 */
+  --fs-h1: clamp(1.875rem, 1.35rem + 2.1vw, 2.5rem); /* 30 → 40 */
+  --fs-h2: clamp(1.375rem, 1.07rem + 1.2vw, 1.75rem); /* 22 → 28 */
+  --fs-h3: clamp(1.125rem, 1.02rem + 0.42vw, 1.25rem); /* 18 → 20 */
+  --fs-body: 1.0625rem; /* 17 — article body */
+  --fs-ui: 0.9375rem; /* 15 — UI/body */
+  --fs-small: 0.8125rem; /* 13 */
+  --fs-micro: 0.6875rem; /* 11 — uppercase labels */
+  --lh-tight: 1.15;
+  --lh-body: 1.6;
+  --lh-ui: 1.5;
 }
 
 * {
@@ -267,13 +285,20 @@ html {
 }
 
 body {
-  background: var(--canvas);
-  color: var(--text-hi);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-sans);
-  font-size: var(--step-2);
-  line-height: 1.5;
+  font-size: var(--fs-ui);
+  line-height: var(--lh-ui);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Inter stylistic sets: cv11 (single-storey a), ss01, ss03. */
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+/* Arabic (GCC-ready) switches to IBM Plex Sans Arabic. */
+:lang(ar) {
+  font-family: var(--font-arabic);
 }
 
 /* Editorial display gets tighter tracking + optical weight. */
@@ -281,10 +306,64 @@ body {
   letter-spacing: -0.011em;
 }
 
-/* Every price, percentage and table figure: mono + tabular-nums (§12). */
+/* Every price, percentage and table figure: mono + tabular, slashed zero, so
+   digits never jitter when a value updates. */
 .tnum {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum", "zero";
+}
+/* Figures inside dense tables may use Inter with tabular/slashed-zero. */
+.tnum-sans {
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum", "zero";
+}
+
+/* ===== Type utilities (fluid scale) ===== */
+.t-display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: 1.18;
+  letter-spacing: -0.014em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+.t-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  text-wrap: pretty;
+}
+.t-small {
+  font-size: var(--fs-small);
+}
+.t-micro {
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
 }
 
 /* Editorial voice: Newsreader for headlines and recap body. */
@@ -340,21 +419,27 @@ body {
   border-radius: 999px;
 }
 
-/* Editorial prose for the written pages (§12). */
+/* Editorial prose for the written pages. 17px/1.6, 68ch measure, pretty wrap
+   and hanging punctuation where supported. */
 .prose-body {
-  color: var(--text-mid);
-  font-size: var(--step-2);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  max-width: var(--measure);
+  hanging-punctuation: first last;
 }
 .prose-body p {
   margin: 0 0 1rem;
-  line-height: 1.6;
+  line-height: var(--lh-body);
+  text-wrap: pretty;
 }
 .prose-body h2 {
   font-family: var(--font-serif);
-  color: var(--text-hi);
-  font-size: var(--step-4);
+  color: var(--ink);
+  font-size: var(--fs-h2);
   line-height: 1.2;
+  letter-spacing: -0.012em;
   margin: 1.75rem 0 0.5rem;
+  text-wrap: balance;
 }
 .prose-body ul {
   margin: 0 0 1rem;
@@ -619,19 +704,20 @@ body {
   margin-right: -50vw;
 }
 
-/* Display type for marketing headlines — a bold, modern sans with tight
-   tracking and heavy weight. */
+/* Display type for marketing headlines — the editorial serif (Newsreader),
+   balanced wrap, optical tracking. */
 .display {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.028em;
-  line-height: 1;
-  font-size: clamp(2.75rem, 7vw, 5.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-size: var(--fs-display);
+  text-wrap: balance;
 }
-/* Optional tighter, heavier variant for the biggest masthead moments. */
+/* Optional tighter variant for the biggest masthead moments. */
 .display-caps {
-  letter-spacing: -0.035em;
-  font-weight: 800;
+  letter-spacing: -0.024em;
+  font-weight: 700;
 }
 
 /* Uppercase tracked sub-line, kept restrained. */

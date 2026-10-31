@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { geistMono, geistSans, newsreader } from "./fonts";
+import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MarketStrip } from "@/components/market/MarketStrip";
@@ -93,7 +93,7 @@ export default async function RootLayout({
       lang="en"
       data-theme={dataTheme}
       data-cb={colorblind ? "1" : undefined}
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable}`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${newsreader.variable} ${plexArabic.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh">
