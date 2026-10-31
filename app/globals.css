@@ -1095,3 +1095,36 @@ body {
   color: var(--iris-strong);
   border-radius: 999px;
 }
+
+/* ============================================================
+   States — shimmer skeletons that match layout shape; never a blank box.
+   ============================================================ */
+.mi-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: var(--r-2);
+}
+.mi-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ink) 7%, transparent),
+    transparent
+  );
+  animation: mi-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes mi-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mi-skeleton::after {
+    animation: none;
+  }
+}
