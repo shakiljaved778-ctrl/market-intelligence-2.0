@@ -1,7 +1,8 @@
 /**
- * Mizaan mark — a minimal balance beam ("mizaan" = scale / balance) whose
- * pivot is the ◆ signal glyph. Structure is currentColor; the ◆ is --signal.
- * Decorative, so aria-hidden; the accessible name lives on the wordmark link.
+ * Mizaan mark — a geometric capital "M". The two legs and the central valley
+ * are drawn in currentColor; the valley vertex carries the ◆ signal glyph, so
+ * the mark keeps the brand's "signal as the pivot" idea. Decorative, so
+ * aria-hidden; the accessible name lives on the wordmark link.
  */
 export function BrandMark({
   size = 24,
@@ -19,48 +20,23 @@ export function BrandMark({
       className={className}
       aria-hidden
     >
-      {/* ◆ pivot (signal) */}
+      {/* capital M: left leg → valley → right leg */}
+      <path
+        d="M4.4 20 V5 L12 12.6 L19.6 5 V20"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* ◆ signal pivot at the valley vertex */}
       <rect
-        x="9.5"
-        y="1.9"
-        width="5"
-        height="5"
-        rx="0.6"
-        transform="rotate(45 12 4.4)"
+        x="9.8"
+        y="10.4"
+        width="4.4"
+        height="4.4"
+        rx="0.5"
+        transform="rotate(45 12 12.6)"
         fill="var(--signal)"
-      />
-      {/* beam */}
-      <path
-        d="M3 9.4 H21"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      {/* hangers */}
-      <path d="M5 9.4 V12" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M19 9.4 V12" stroke="currentColor" strokeWidth="1.3" />
-      {/* pans */}
-      <path
-        d="M2.6 12 a2.4 1.6 0 0 0 4.8 0"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M16.6 12 a2.4 1.6 0 0 0 4.8 0"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* post + base */}
-      <path d="M12 6.6 V19" stroke="currentColor" strokeWidth="1.6" />
-      <path
-        d="M8.5 20.5 H15.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
       />
     </svg>
   );

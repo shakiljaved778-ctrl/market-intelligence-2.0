@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
-// Dynamic OG image. Terminal-Night canvas, balance-beam ◆ mark, editorial
-// title. Brand system, not a stock photo. Title + kicker come from the query.
+// Dynamic OG image. Terminal-Night canvas, capital-M mark (◆ signal vertex),
+// editorial title. Brand system, not a stock photo. Title + kicker from query.
 export const runtime = "edge";
 
 export function GET(request: Request) {
@@ -25,16 +25,25 @@ export function GET(request: Request) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {/* ◆ pivot */}
-          <div
-            style={{
-              width: 22,
-              height: 22,
-              background: "#e8a93b",
-              transform: "rotate(45deg)",
-              borderRadius: 3,
-            }}
-          />
+          {/* capital-M mark with ◆ signal vertex */}
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M4.4 20 V5 L12 12.6 L19.6 5 V20"
+              stroke="#eceef1"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <rect
+              x="9.8"
+              y="10.4"
+              width="4.4"
+              height="4.4"
+              rx="0.5"
+              transform="rotate(45 12 12.6)"
+              fill="#e8a93b"
+            />
+          </svg>
           <div
             style={{
               display: "flex",
