@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { DisplayCurrency } from "@/lib/currency/peg";
-import type { Theme } from "@/lib/theme/theme";
+import type { ThemePref } from "@/lib/theme/theme";
 import { CurrencyToggle } from "./CurrencyToggle";
 import { ThemeToggle } from "./ThemeToggle";
+import { ColorblindToggle } from "./ColorblindToggle";
 import { SymbolSearch } from "@/components/market/SymbolSearch";
 
 const NAV = [
@@ -15,10 +16,12 @@ const NAV = [
 
 export function Header({
   currency,
-  theme,
+  themePref,
+  colorblind,
 }: {
   currency: DisplayCurrency;
-  theme: Theme;
+  themePref: ThemePref;
+  colorblind: boolean;
 }) {
   return (
     <header className="border-line bg-canvas/95 sticky top-0 z-40 border-b backdrop-blur">
@@ -59,7 +62,8 @@ export function Header({
         <div className="ml-auto flex items-center gap-2">
           <SymbolSearch />
           <CurrencyToggle current={currency} />
-          <ThemeToggle initial={theme} />
+          <ColorblindToggle on={colorblind} />
+          <ThemeToggle pref={themePref} />
         </div>
       </div>
 

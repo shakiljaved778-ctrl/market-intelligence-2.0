@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MarketStrip } from "@/components/market/MarketStrip";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { getTheme } from "@/lib/theme/server";
+import { getThemePref, getColorblind } from "@/lib/theme/server";
 import { SITE_URL } from "@/lib/site";
 
 const siteUrl = SITE_URL;
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0d12" },
     { media: "(prefers-color-scheme: light)", color: "#f6f1e9" },
   ],
 };
@@ -56,7 +56,13 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [currency, theme] = await Promise.all([getDisplayCurrency(), getTheme()]);
+  const [currency, themePref, colorblind] = await Promise.all([
+    getDisplayCurrency(),
+    getThemePref(),
+    getColorblind(),
+  ]);
+  // "system" sets no data-theme attribute, so CSS resolves via prefers-color-scheme.
+  const dataTheme = themePref === "system" ? undefined : themePref;
 
   // Organization + WebSite JSON-LD (§6 SEO). SearchAction points at our search API.
   const jsonLd = {
@@ -85,7 +91,8 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      data-theme={theme}
+      data-theme={dataTheme}
+      data-cb={colorblind ? "1" : undefined}
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable}`}
       suppressHydrationWarning
     >
@@ -101,7 +108,7 @@ export default async function RootLayout({
         >
           Skip to content
         </a>
-        <Header currency={currency} theme={theme} />
+        <Header currency={currency} themePref={themePref} colorblind={colorblind} />
         <MarketStrip />
         <main id="main" className="mx-auto max-w-[1280px] px-4">
           {children}
