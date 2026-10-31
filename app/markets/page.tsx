@@ -5,10 +5,24 @@ import {
   type HeatGroup,
   type HeatTile,
 } from "@/components/market/SectorHeatmap";
+import { AssetTabs } from "@/components/market/AssetTabs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { sessionFor } from "@/lib/format/session";
 import { UNIVERSE } from "@/fixtures/universe";
+import { COMMODITY_ROWS, FX_ROWS, type MarketQuoteRow } from "@/fixtures/markets-extra";
+
+function cryptoRows(): MarketQuoteRow[] {
+  return UNIVERSE.filter((u) => u.assetClass === "crypto")
+    .sort((a, b) => (b.marketCapUsd ?? 0) - (a.marketCapUsd ?? 0))
+    .slice(0, 6)
+    .map((u) => ({
+      symbol: u.symbol,
+      name: u.name,
+      price: u.priceUsd,
+      changePct: u.changePct,
+    }));
+}
 
 export const metadata = { title: "Markets" };
 
@@ -112,6 +126,12 @@ export default async function MarketsPage() {
             </Link>
           </div>
           <Movers currency={currency} />
+        </div>
+        <div className="lg:col-span-5">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="t-h3 font-editorial text-ink">FX · Commodities · Crypto</h2>
+          </div>
+          <AssetTabs fx={FX_ROWS} commodities={COMMODITY_ROWS} crypto={cryptoRows()} />
         </div>
       </section>
     </div>
