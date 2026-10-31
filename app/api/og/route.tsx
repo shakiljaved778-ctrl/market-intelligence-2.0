@@ -19,7 +19,7 @@ export function GET(request: Request) {
           flexDirection: "column",
           justifyContent: "space-between",
           background:
-            "radial-gradient(70% 90% at 78% 4%, #16255e 0%, transparent 60%), #0a0a0e",
+            "radial-gradient(70% 90% at 78% 4%, #3a2616 0%, transparent 60%), #0b0a09",
           padding: "72px",
           fontFamily: "sans-serif",
         }}
@@ -30,7 +30,7 @@ export function GET(request: Request) {
               width: 40,
               height: 40,
               borderRadius: 999,
-              border: "2px solid #f3f5fb",
+              border: "2px solid #f5f1ea",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -41,30 +41,30 @@ export function GET(request: Request) {
                 width: 14,
                 height: 14,
                 borderRadius: 999,
-                background: "#3f6dff",
+                background: "#c0875a",
               }}
             />
           </div>
           <div
             style={{
               display: "flex",
-              color: "#f3f5fb",
+              color: "#f5f1ea",
               fontSize: 34,
               letterSpacing: 6,
               fontFamily: "sans-serif",
             }}
           >
             <span>MIZAA</span>
-            <span style={{ color: "#6a90ff" }}>N</span>
+            <span style={{ color: "#d9a877" }}>N</span>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ color: "#6a90ff", fontSize: 22, letterSpacing: 1 }}>
+          <div style={{ color: "#d9a877", fontSize: 22, letterSpacing: 1 }}>
             {kicker}
           </div>
           <div
             style={{
-              color: "#f3f5fb",
+              color: "#f5f1ea",
               fontSize: 62,
               lineHeight: 1.08,
               maxWidth: 960,
@@ -75,7 +75,7 @@ export function GET(request: Request) {
             {title}
           </div>
         </div>
-        <div style={{ color: "#a4aabc", fontSize: 20 }}>
+        <div style={{ color: "#ada492", fontSize: 20 }}>
           A trusted source for market news & data · computed rankings, cited sources.
         </div>
       </div>

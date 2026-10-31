@@ -6,46 +6,49 @@
  * The only saturated colour on a page comes from (a) price direction and
  * (b) --iris, reserved exclusively for OUR OWN computed content.
  *
- * Theme (ref: the Abyss crypto-exchange landing): DARK default is a near-black
- * canvas lit by a deep ELECTRIC-BLUE glow with fine grain; bold modern sans
- * display. Light is a cool near-white with navy ink. The accent is that electric
- * blue, still named --iris across the codebase (= "the accent"), reserved for OUR
- * OWN computed content — distinct from the monochrome chrome and from
- * price-direction green. Overrides live under [data-theme] and prefers-color-scheme
- * so a cookie-driven theme renders without a flash. Data colour (gain/loss) stays
- * for price only, always with a glyph + sign.
+ * Theme: DARK default is a warm CHARCOAL-BLACK canvas (no blue cast) with a
+ * restrained WARM-BROWN / caramel accent and fine grain; bold modern sans
+ * display. Light is a warm cream with near-black ink. The accent is that brown,
+ * still named --iris across the codebase (= "the accent"), reserved for OUR OWN
+ * computed content — distinct from the monochrome chrome and from price-direction
+ * green. Overrides live under [data-theme] and prefers-color-scheme so a
+ * cookie-driven theme renders without a flash. Data colour (gain/loss) stays for
+ * price only, always with a glyph + sign.
  */
 
 :root {
-  /* Chrome — DARK default. Rebrand (ref: Abyss crypto-exchange landing): a
-     near-black canvas with a deep ELECTRIC-BLUE glow and fine grain; bold modern
-     sans display. The accent is that electric blue (--iris = "the accent"),
-     reserved for OUR OWN computed content. Price direction keeps gain/loss,
+  /* Chrome — DARK default. A warm CHARCOAL-BLACK canvas (no blue cast) with a
+     restrained WARM-BROWN / caramel accent (--iris = "the accent"), reserved for
+     OUR OWN computed content. Surfaces are near-black so the hero blends into the
+     page rather than reading as a coloured wash. Price direction keeps gain/loss,
      always paired with ▲/▼ and a sign (§12). */
-  --canvas: #0a0a0e;
-  --surface: #101017;
-  --raised: #14141d;
-  --raised-2: #1b1b27;
-  --line: #242431;
-  --line-strong: #343444;
+  --canvas: #0b0a09;
+  --surface: #141210;
+  --raised: #171512;
+  --raised-2: #201c17;
+  --line: #2b261f;
+  --line-strong: #3b342a;
 
-  --text-hi: #f3f5fb;
-  --text-mid: #a4aabc;
-  --text-low: #6b7082;
+  --text-hi: #f5f1ea;
+  --text-mid: #ada492;
+  --text-low: #776f62;
 
   /* Data colour — price direction only, always with ▲/▼ + sign. */
   --gain: #34d399;
   --loss: #fb6a63;
 
-  /* Electric-blue accent — brand + "ours". A deep-blue panel pairs with it. */
-  --iris: #3f6dff;
-  --iris-strong: #6a90ff;
-  --accent-soft: #0e1730;
-  --accent-line: #22386b;
+  /* Warm-brown accent — brand + "ours". Light caramel so it reads on near-black;
+     a near-black warm panel pairs with it. --on-iris is text that sits ON the
+     accent (dark here, since the accent itself is light). */
+  --iris: #c0875a;
+  --iris-strong: #d9a877;
+  --on-iris: #1b1206;
+  --accent-soft: #15110c;
+  --accent-line: #3a2d1f;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 16px 40px -18px rgba(5, 10, 30, 0.7);
-  --shadow-lg: 0 34px 80px -26px rgba(5, 10, 30, 0.8);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 16px 40px -18px rgba(0, 0, 0, 0.72);
+  --shadow-lg: 0 34px 80px -26px rgba(0, 0, 0, 0.82);
   --r-card: 20px;
   --r-sm: 12px;
   --glow: radial-gradient(
@@ -72,29 +75,30 @@
   color-scheme: dark;
 }
 
-/* LIGHT — a cool near-white with navy ink and the same electric-blue accent. */
+/* LIGHT — a warm cream with near-black ink and a rich brown accent. */
 :root[data-theme="light"] {
-  --canvas: #f5f6fb;
-  --surface: #ffffff;
-  --raised: #ffffff;
-  --raised-2: #eef1f8;
-  --line: #e3e6ef;
-  --line-strong: #cfd4e3;
+  --canvas: #f6f1e9;
+  --surface: #fffdf9;
+  --raised: #fffdf9;
+  --raised-2: #efe8dc;
+  --line: #e5ddcf;
+  --line-strong: #d2c6b2;
 
-  --text-hi: #0d1020;
-  --text-mid: #51566a;
-  --text-low: #8b90a2;
+  --text-hi: #17130d;
+  --text-mid: #5a5245;
+  --text-low: #8a8070;
 
   --gain: #0f9d6c;
   --loss: #e0484d;
-  --iris: #1d4ed8;
-  --iris-strong: #1e40af;
-  --accent-soft: #eaf0ff;
-  --accent-line: #cbd9ff;
+  --iris: #8a5a30;
+  --iris-strong: #6f4824;
+  --on-iris: #fff8f0;
+  --accent-soft: #f1e8d9;
+  --accent-line: #e0d2bb;
 
-  --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.06);
-  --shadow-md: 0 16px 40px -18px rgba(20, 30, 70, 0.16);
-  --shadow-lg: 0 34px 78px -26px rgba(20, 30, 70, 0.2);
+  --shadow-sm: 0 1px 2px rgba(60, 45, 25, 0.06);
+  --shadow-md: 0 16px 40px -18px rgba(60, 45, 25, 0.16);
+  --shadow-lg: 0 34px 78px -26px rgba(60, 45, 25, 0.2);
   --card-top: linear-gradient(
     180deg,
     color-mix(in srgb, #ffffff 72%, transparent),
@@ -107,27 +111,28 @@
 /* Respect OS light preference only when the user has not set an explicit theme. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --canvas: #f5f6fb;
-    --surface: #ffffff;
-    --raised: #ffffff;
-    --raised-2: #eef1f8;
-    --line: #e3e6ef;
-    --line-strong: #cfd4e3;
+    --canvas: #f6f1e9;
+    --surface: #fffdf9;
+    --raised: #fffdf9;
+    --raised-2: #efe8dc;
+    --line: #e5ddcf;
+    --line-strong: #d2c6b2;
 
-    --text-hi: #0d1020;
-    --text-mid: #51566a;
-    --text-low: #8b90a2;
+    --text-hi: #17130d;
+    --text-mid: #5a5245;
+    --text-low: #8a8070;
 
     --gain: #0f9d6c;
     --loss: #e0484d;
-    --iris: #1d4ed8;
-    --iris-strong: #1e40af;
-    --accent-soft: #eaf0ff;
-    --accent-line: #cbd9ff;
+    --iris: #8a5a30;
+    --iris-strong: #6f4824;
+    --on-iris: #fff8f0;
+    --accent-soft: #f1e8d9;
+    --accent-line: #e0d2bb;
 
-    --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.06);
-    --shadow-md: 0 16px 40px -18px rgba(20, 30, 70, 0.16);
-    --shadow-lg: 0 34px 78px -26px rgba(20, 30, 70, 0.2);
+    --shadow-sm: 0 1px 2px rgba(60, 45, 25, 0.06);
+    --shadow-md: 0 16px 40px -18px rgba(60, 45, 25, 0.16);
+    --shadow-lg: 0 34px 78px -26px rgba(60, 45, 25, 0.2);
 
     color-scheme: light;
   }
@@ -214,7 +219,7 @@ body {
   color: var(--text-mid);
 }
 
-/* Brand mark: a hairline ring with an electric-blue accent dot. */
+/* Brand mark: a hairline ring with a warm-brown accent dot. */
 .mark {
   display: inline-flex;
   align-items: center;
@@ -361,7 +366,7 @@ body {
   transform: translateY(1px);
 }
 .btn-primary {
-  color: #fff;
+  color: var(--on-iris);
   background: linear-gradient(180deg, var(--iris-strong), var(--iris));
   box-shadow:
     0 6px 18px -6px color-mix(in srgb, var(--iris) 65%, transparent),
@@ -382,9 +387,9 @@ body {
   border-color: var(--text-low);
 }
 
-/* Iris gradient text — used sparingly on the hero accent. */
+/* Accent gradient text — used sparingly on the hero accent. */
 .ours-grad {
-  background: linear-gradient(120deg, var(--iris-strong), var(--iris) 55%, #9b7cff);
+  background: linear-gradient(120deg, var(--iris-strong), var(--iris) 60%, #8a5a30);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -513,7 +518,7 @@ body {
 }
 
 /* Display type for marketing headlines — a bold, modern sans with tight
-   tracking (ref: the Abyss landing's heavy masthead). */
+   tracking and heavy weight. */
 .display {
   font-family: var(--font-display);
   font-weight: 700;
@@ -656,16 +661,16 @@ body {
    ============================================================ */
 
 :root {
-  /* Decorative band hues — the electric-blue glow of the Abyss backdrop. */
-  --aurora-1: #2a52ff; /* electric blue */
-  --aurora-2: #4d7bff; /* lifted blue */
-  --aurora-3: #6f4dff; /* violet edge */
+  /* Decorative band hues — a warm brown/amber wash, kept very subtle. */
+  --aurora-1: #6b4a2c; /* deep brown */
+  --aurora-2: #8a5f38; /* amber brown */
+  --aurora-3: #a9793f; /* warm ochre */
   --node-line: color-mix(in srgb, var(--iris) 45%, var(--line-strong));
 }
 :root[data-theme="light"] {
-  --aurora-1: #5c84ff;
-  --aurora-2: #8aa7ff;
-  --aurora-3: #a08cff;
+  --aurora-1: #b89368;
+  --aurora-2: #cbae82;
+  --aurora-3: #d9c08c;
   --node-line: color-mix(in srgb, var(--iris) 30%, var(--line-strong));
 }
 
@@ -855,31 +860,32 @@ body {
 }
 
 /* ============================================================
-   Accent surface (ref: Abyss) — a deep electric-blue panel with a
-   grainy glow for the masthead, feature cards and CTAs. Chrome, not data.
+   Accent surface — a near-black warm panel with just a hint of amber
+   glow for the masthead, feature cards and CTAs. Kept subtle so it reads
+   as part of the dark page, not a coloured wash. Chrome, not data.
    ============================================================ */
 .accent-panel {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   background: radial-gradient(
-      120% 140% at 100% 0%,
-      color-mix(in srgb, var(--iris) 24%, transparent),
-      transparent 55%
+      110% 130% at 100% 0%,
+      color-mix(in srgb, var(--iris) 9%, transparent),
+      transparent 52%
     ),
     radial-gradient(
-      90% 120% at 0% 100%,
-      color-mix(in srgb, var(--iris) 12%, transparent),
-      transparent 60%
+      80% 110% at 0% 100%,
+      color-mix(in srgb, var(--iris) 5%, transparent),
+      transparent 58%
     ),
     var(--accent-soft);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-card);
   /* A faint inner top highlight for a premium, lit-from-above surface. */
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 6%, transparent);
 }
-/* Fine film grain over the blue glow (ref: Abyss). Decorative only; sits
-   behind content and never touches data. */
+/* Fine film grain over the warm glow. Decorative only; sits behind content
+   and never touches data. */
 .grain::after,
 .accent-panel::after {
   content: "";

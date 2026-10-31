@@ -1,16 +1,17 @@
 # CLAUDE.md — Mizaan Intelligence (MarketIntelligence 2.0)
 
 > Brand: **Mizaan** (wordmark MIZAAN + "intelligence"), domain **mizaan.tech**.
-> Theme (rebrand, ref: the Abyss crypto-exchange landing): **dark default** is a
-> near-black canvas (`#0a0a0e`) lit by a deep **electric-blue** glow with fine film
-> grain; light is a cool near-white with navy ink. Bold modern sans display (Geist,
+> Theme (rebrand): **dark default** is a warm **charcoal-black** canvas (`#0b0a09`,
+> no blue cast) with a restrained **warm-brown / caramel** accent and fine film
+> grain; light is a warm cream with near-black ink. Bold modern sans display (Geist,
 > `.display`, weight 700/800, tight tracking), Newsreader for editorial body, Geist
-> Sans UI, Geist Mono figures. The accent is that **electric blue** (`--iris` =
-> "the accent"), reserved for OUR OWN computed content — naturally distinct from the
-> monochrome chrome and from price-direction green. Large rounded cards (`--r-card`
-> 20px) + soft, blue-tinted shadows; `.accent-panel` (grainy blue glow) / `.glass`
-> are the soft surfaces. Data colour (gain/loss) stays reserved for price direction,
-> always with a glyph + sign.
+> Sans UI, Geist Mono figures. The accent is that **brown** (`--iris` = "the
+> accent", caramel `#c0875a` on dark / rich brown `#8a5a30` on light; `--on-iris` is
+> the text that sits on it), reserved for OUR OWN computed content — distinct from
+> the monochrome chrome and from price-direction green. Large rounded cards
+> (`--r-card` 20px) + soft, warm shadows; `.accent-panel` is a near-black warm panel
+> with a faint amber glow (kept subtle, not a coloured wash). Data colour (gain/loss)
+> stays reserved for price direction, always with a glyph + sign.
 
 Standing rules for this repository. Condensed from the master prompt (§2, §3, §4,
 §10, §17). These are non-negotiable; read them before writing code.
