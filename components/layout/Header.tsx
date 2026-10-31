@@ -4,7 +4,7 @@ import type { ThemePref } from "@/lib/theme/theme";
 import { CurrencyToggle } from "./CurrencyToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { ColorblindToggle } from "./ColorblindToggle";
-import { SymbolSearch } from "@/components/market/SymbolSearch";
+import { CommandPalette } from "./CommandPalette";
 import { Wordmark } from "@/components/ui/Wordmark";
 
 const NAV = [
@@ -49,7 +49,7 @@ export function Header({
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <SymbolSearch />
+          <CommandPalette />
           <CurrencyToggle current={currency} />
           <ColorblindToggle on={colorblind} />
           <ThemeToggle pref={themePref} />
