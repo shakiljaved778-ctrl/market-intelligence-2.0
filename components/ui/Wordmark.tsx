@@ -1,7 +1,7 @@
 import { BrandMark } from "./BrandMark";
 
 /**
- * Mizaan wordmark: the balance-beam mark + "MIZAAN" in the editorial serif with
+ * Mizaan wordmark: the capital-M mark + "MIZAAN" in the editorial serif with
  * wide tracking, and "Intelligence" in Inter small-caps (--ink-3). The ◆ in the
  * mark is the only saffron here; the type is monochrome chrome.
  */
