@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { geistMono, geistSans, newsreader, playfair } from "./fonts";
+import { geistMono, geistSans, newsreader } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MarketStrip } from "@/components/market/MarketStrip";
@@ -48,8 +48,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b1510" },
-    { media: "(prefers-color-scheme: light)", color: "#eef1ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0e" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f6fb" },
   ],
 };
 
@@ -86,7 +86,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${playfair.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh">

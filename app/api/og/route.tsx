@@ -18,9 +18,10 @@ export function GET(request: Request) {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#0b1510",
+          background:
+            "radial-gradient(70% 90% at 78% 4%, #16255e 0%, transparent 60%), #0a0a0e",
           padding: "72px",
-          fontFamily: "serif",
+          fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -29,7 +30,7 @@ export function GET(request: Request) {
               width: 40,
               height: 40,
               borderRadius: 999,
-              border: "2px solid #eef2ea",
+              border: "2px solid #f3f5fb",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -40,34 +41,41 @@ export function GET(request: Request) {
                 width: 14,
                 height: 14,
                 borderRadius: 999,
-                background: "#d8b45e",
+                background: "#3f6dff",
               }}
             />
           </div>
           <div
             style={{
               display: "flex",
-              color: "#eef2ea",
+              color: "#f3f5fb",
               fontSize: 34,
               letterSpacing: 6,
               fontFamily: "sans-serif",
             }}
           >
             <span>MIZAA</span>
-            <span style={{ color: "#d8b45e" }}>N</span>
+            <span style={{ color: "#6a90ff" }}>N</span>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ color: "#8fa497", fontSize: 22, letterSpacing: 1 }}>
+          <div style={{ color: "#6a90ff", fontSize: 22, letterSpacing: 1 }}>
             {kicker}
           </div>
           <div
-            style={{ color: "#eef2ea", fontSize: 60, lineHeight: 1.1, maxWidth: 960 }}
+            style={{
+              color: "#f3f5fb",
+              fontSize: 62,
+              lineHeight: 1.08,
+              maxWidth: 960,
+              fontWeight: 700,
+              letterSpacing: -1.5,
+            }}
           >
             {title}
           </div>
         </div>
-        <div style={{ color: "#8fa497", fontSize: 20 }}>
+        <div style={{ color: "#a4aabc", fontSize: 20 }}>
           A trusted source for market news & data · computed rankings, cited sources.
         </div>
       </div>

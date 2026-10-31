@@ -1,9 +1,10 @@
 export type Theme = "dark" | "light";
 
 export const THEME_COOKIE = "mi_theme" as const;
-// Light is the default: a warm cream-sage UI with deep forest-green ink (rebrand,
-// ref: the golf landing). Dark (deep forest green) remains first-class via the toggle.
-export const DEFAULT_THEME: Theme = "light";
+// Dark is the default: a near-black canvas lit by an electric-blue glow (rebrand,
+// ref: the Abyss landing). Light (cool near-white, navy ink) stays first-class via
+// the toggle.
+export const DEFAULT_THEME: Theme = "dark";
 
 export function isTheme(value: unknown): value is Theme {
   return value === "dark" || value === "light";

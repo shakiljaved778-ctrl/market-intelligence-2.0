@@ -6,55 +6,56 @@
  * The only saturated colour on a page comes from (a) price direction and
  * (b) --iris, reserved exclusively for OUR OWN computed content.
  *
- * Theme (ref: Masterful Swing golf landing): LIGHT default is a warm cream-sage
- * off-white with deep FOREST-GREEN ink; dark is a deep forest green with cream
- * ink. The accent is a restrained GOLD, still named --iris across the codebase
- * (= "the accent"), reserved for OUR OWN computed content — distinct from the
- * green chrome and from price-direction green. Overrides live under [data-theme]
- * and prefers-color-scheme so a cookie-driven theme renders without a flash.
- * Data colour (gain/loss) stays for price only, always with a glyph + sign.
+ * Theme (ref: the Abyss crypto-exchange landing): DARK default is a near-black
+ * canvas lit by a deep ELECTRIC-BLUE glow with fine grain; bold modern sans
+ * display. Light is a cool near-white with navy ink. The accent is that electric
+ * blue, still named --iris across the codebase (= "the accent"), reserved for OUR
+ * OWN computed content — distinct from the monochrome chrome and from
+ * price-direction green. Overrides live under [data-theme] and prefers-color-scheme
+ * so a cookie-driven theme renders without a flash. Data colour (gain/loss) stays
+ * for price only, always with a glyph + sign.
  */
 
 :root {
-  /* Chrome — LIGHT default. Rebrand (ref: Masterful Swing golf landing): a warm
-     cream-sage off-white with deep FOREST-GREEN ink; the accent is a restrained
-     GOLD, reserved for OUR OWN computed content (--iris = "the accent"). Price
-     direction keeps gain/loss, always paired with ▲/▼ and a sign (§12). */
-  --canvas: #eef1ec;
-  --surface: #ffffff;
-  --raised: #ffffff;
-  --raised-2: #e6ece1;
-  --line: #d9e0d4;
-  --line-strong: #c3ccbc;
+  /* Chrome — DARK default. Rebrand (ref: Abyss crypto-exchange landing): a
+     near-black canvas with a deep ELECTRIC-BLUE glow and fine grain; bold modern
+     sans display. The accent is that electric blue (--iris = "the accent"),
+     reserved for OUR OWN computed content. Price direction keeps gain/loss,
+     always paired with ▲/▼ and a sign (§12). */
+  --canvas: #0a0a0e;
+  --surface: #101017;
+  --raised: #14141d;
+  --raised-2: #1b1b27;
+  --line: #242431;
+  --line-strong: #343444;
 
-  --text-hi: #15352a;
-  --text-mid: #4b5c52;
-  --text-low: #8a978c;
+  --text-hi: #f3f5fb;
+  --text-mid: #a4aabc;
+  --text-low: #6b7082;
 
   /* Data colour — price direction only, always with ▲/▼ + sign. */
-  --gain: #1f9d57;
-  --loss: #cf4b43;
+  --gain: #34d399;
+  --loss: #fb6a63;
 
-  /* Gold accent — brand + "ours" (distinct from the green chrome and from the
-     price-direction green). A soft sage panel pairs with it. */
-  --iris: #96781d;
-  --iris-strong: #b8922f;
-  --accent-soft: #e7eee1;
-  --accent-line: #ccd8c4;
+  /* Electric-blue accent — brand + "ours". A deep-blue panel pairs with it. */
+  --iris: #3f6dff;
+  --iris-strong: #6a90ff;
+  --accent-soft: #0e1730;
+  --accent-line: #22386b;
 
-  --shadow-sm: 0 1px 2px rgba(20, 50, 38, 0.06);
-  --shadow-md: 0 14px 34px -16px rgba(20, 50, 38, 0.18);
-  --shadow-lg: 0 30px 72px -26px rgba(20, 50, 38, 0.26);
-  --r-card: 22px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 16px 40px -18px rgba(5, 10, 30, 0.7);
+  --shadow-lg: 0 34px 80px -26px rgba(5, 10, 30, 0.8);
+  --r-card: 20px;
   --r-sm: 12px;
   --glow: radial-gradient(
     60% 60% at 50% 0%,
-    color-mix(in srgb, var(--text-hi) 9%, transparent),
+    color-mix(in srgb, var(--iris) 30%, transparent),
     transparent 70%
   );
   --card-top: linear-gradient(
     180deg,
-    color-mix(in srgb, #ffffff 72%, transparent),
+    color-mix(in srgb, #ffffff 6%, transparent),
     transparent 42%
   );
 
@@ -68,67 +69,67 @@
   --step-6: 2.125rem;
   --step-7: 2.75rem;
 
-  color-scheme: light;
-}
-
-/* DARK — a deep forest green with cream ink and a warm gold accent. */
-:root[data-theme="dark"] {
-  --canvas: #0b1510;
-  --surface: #10201a;
-  --raised: #12241c;
-  --raised-2: #182d23;
-  --line: #233a30;
-  --line-strong: #32513f;
-
-  --text-hi: #eef2ea;
-  --text-mid: #a6b7ab;
-  --text-low: #6f8077;
-
-  --gain: #34d399;
-  --loss: #f26a63;
-  --iris: #d8b45e;
-  --iris-strong: #e7cb85;
-  --accent-soft: #11241b;
-  --accent-line: #294635;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 14px 34px -14px rgba(0, 0, 0, 0.62);
-  --shadow-lg: 0 30px 72px -24px rgba(0, 0, 0, 0.72);
-  --card-top: linear-gradient(
-    180deg,
-    color-mix(in srgb, #ffffff 6%, transparent),
-    transparent 42%
-  );
-
   color-scheme: dark;
 }
 
-/* Respect OS dark preference only when the user has not set an explicit theme. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --canvas: #0b1510;
-    --surface: #10201a;
-    --raised: #12241c;
-    --raised-2: #182d23;
-    --line: #233a30;
-    --line-strong: #32513f;
+/* LIGHT — a cool near-white with navy ink and the same electric-blue accent. */
+:root[data-theme="light"] {
+  --canvas: #f5f6fb;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --raised-2: #eef1f8;
+  --line: #e3e6ef;
+  --line-strong: #cfd4e3;
 
-    --text-hi: #eef2ea;
-    --text-mid: #a6b7ab;
-    --text-low: #6f8077;
+  --text-hi: #0d1020;
+  --text-mid: #51566a;
+  --text-low: #8b90a2;
 
-    --gain: #34d399;
-    --loss: #f26a63;
-    --iris: #d8b45e;
-    --iris-strong: #e7cb85;
-    --accent-soft: #11241b;
-    --accent-line: #294635;
+  --gain: #0f9d6c;
+  --loss: #e0484d;
+  --iris: #1d4ed8;
+  --iris-strong: #1e40af;
+  --accent-soft: #eaf0ff;
+  --accent-line: #cbd9ff;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 14px 34px -14px rgba(0, 0, 0, 0.62);
-    --shadow-lg: 0 30px 72px -24px rgba(0, 0, 0, 0.72);
+  --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.06);
+  --shadow-md: 0 16px 40px -18px rgba(20, 30, 70, 0.16);
+  --shadow-lg: 0 34px 78px -26px rgba(20, 30, 70, 0.2);
+  --card-top: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 72%, transparent),
+    transparent 42%
+  );
 
-    color-scheme: dark;
+  color-scheme: light;
+}
+
+/* Respect OS light preference only when the user has not set an explicit theme. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --canvas: #f5f6fb;
+    --surface: #ffffff;
+    --raised: #ffffff;
+    --raised-2: #eef1f8;
+    --line: #e3e6ef;
+    --line-strong: #cfd4e3;
+
+    --text-hi: #0d1020;
+    --text-mid: #51566a;
+    --text-low: #8b90a2;
+
+    --gain: #0f9d6c;
+    --loss: #e0484d;
+    --iris: #1d4ed8;
+    --iris-strong: #1e40af;
+    --accent-soft: #eaf0ff;
+    --accent-line: #cbd9ff;
+
+    --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.06);
+    --shadow-md: 0 16px 40px -18px rgba(20, 30, 70, 0.16);
+    --shadow-lg: 0 34px 78px -26px rgba(20, 30, 70, 0.2);
+
+    color-scheme: light;
   }
 }
 
@@ -154,7 +155,7 @@
   /* Fonts are injected as CSS variables by next/font in the root layout. */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
-  --font-display: var(--font-playfair), var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 }
 
@@ -213,8 +214,7 @@ body {
   color: var(--text-mid);
 }
 
-/* Brand mark: a hairline ring with a gold dot (ref: the golf landing's circular
-   monogram). */
+/* Brand mark: a hairline ring with an electric-blue accent dot. */
 .mark {
   display: inline-flex;
   align-items: center;
@@ -512,20 +512,19 @@ body {
   margin-right: -50vw;
 }
 
-/* Display type for marketing headlines — an elegant high-contrast serif
-   (ref: the golf landing's editorial masthead). */
+/* Display type for marketing headlines — a bold, modern sans with tight
+   tracking (ref: the Abyss landing's heavy masthead). */
 .display {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.028em;
   line-height: 1;
   font-size: clamp(2.75rem, 7vw, 5.25rem);
 }
-/* Uppercase, tracked-out serif for the hero masthead. */
+/* Optional tighter, heavier variant for the biggest masthead moments. */
 .display-caps {
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-  font-weight: 500;
+  letter-spacing: -0.035em;
+  font-weight: 800;
 }
 
 /* Uppercase tracked sub-line, kept restrained. */
@@ -657,16 +656,16 @@ body {
    ============================================================ */
 
 :root {
-  /* Decorative band hues — forest green with a warm gold wash (rebrand). */
-  --aurora-1: #1f7a52; /* emerald */
-  --aurora-2: #3f9269; /* sage green */
-  --aurora-3: #d8b45e; /* gold */
+  /* Decorative band hues — the electric-blue glow of the Abyss backdrop. */
+  --aurora-1: #2a52ff; /* electric blue */
+  --aurora-2: #4d7bff; /* lifted blue */
+  --aurora-3: #6f4dff; /* violet edge */
   --node-line: color-mix(in srgb, var(--iris) 45%, var(--line-strong));
 }
 :root[data-theme="light"] {
-  --aurora-1: #74ad8c;
-  --aurora-2: #9fc6ad;
-  --aurora-3: #cdb56c;
+  --aurora-1: #5c84ff;
+  --aurora-2: #8aa7ff;
+  --aurora-3: #a08cff;
   --node-line: color-mix(in srgb, var(--iris) 30%, var(--line-strong));
 }
 
@@ -856,26 +855,45 @@ body {
 }
 
 /* ============================================================
-   Accent surface (ref: Biofix) — a soft lavender panel for the
-   masthead, feature cards and CTAs. Chrome, not data.
+   Accent surface (ref: Abyss) — a deep electric-blue panel with a
+   grainy glow for the masthead, feature cards and CTAs. Chrome, not data.
    ============================================================ */
 .accent-panel {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background: radial-gradient(
       120% 140% at 100% 0%,
-      color-mix(in srgb, var(--iris) 14%, transparent),
+      color-mix(in srgb, var(--iris) 24%, transparent),
       transparent 55%
     ),
     radial-gradient(
       90% 120% at 0% 100%,
-      color-mix(in srgb, var(--iris) 7%, transparent),
+      color-mix(in srgb, var(--iris) 12%, transparent),
       transparent 60%
     ),
     var(--accent-soft);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-card);
   /* A faint inner top highlight for a premium, lit-from-above surface. */
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 6%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent);
+}
+/* Fine film grain over the blue glow (ref: Abyss). Decorative only; sits
+   behind content and never touches data. */
+.grain::after,
+.accent-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.grain {
+  position: relative;
+  isolation: isolate;
 }
 .accent-chip {
   background: color-mix(in srgb, var(--iris) 12%, transparent);
