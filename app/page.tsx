@@ -97,7 +97,7 @@ export default async function BoardPage() {
     <div>
       {/* ============ Hero band (ref: YureCorp) ============ */}
       <section className="accent-panel mt-6 overflow-hidden p-6 sm:p-9 lg:p-11">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Left: pitch + CTA + trusted-by. */}
           <div>
             <p className="eyebrow inline-flex items-center gap-2">
@@ -134,15 +134,21 @@ export default async function BoardPage() {
             </div>
           </div>
 
-          {/* Right: REAL computed stat tiles (no fabricated numbers). */}
-          <div className="grid grid-cols-2 gap-4">
-            <StatTile value={String(summary.total)} label="stories ranked today" />
-            <StatTile value={String(totalSources)} label="source reports clustered" />
-            <StatTile value={String(sectionsCount)} label="sections covered" />
-            <StatTile
-              value={`${summary.nonFinancialPct}%`}
-              label="beyond markets & economy"
-            />
+          {/* Right: REAL computed figures + a live markets panel, so the hero
+              carries data (it's a financial news site) rather than empty space. */}
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <StatTile value={String(summary.total)} label="stories ranked today" />
+              <StatTile value={String(totalSources)} label="source reports clustered" />
+              <StatTile value={String(sectionsCount)} label="sections covered" />
+              <StatTile
+                value={`${summary.nonFinancialPct}%`}
+                label="beyond markets & economy"
+              />
+            </div>
+            {/* Live session movers — real quotes (cache/fixture), direction by
+                glyph + sign (§12). Fills the hero with market data. */}
+            <Movers currency={currency} />
           </div>
         </div>
 
