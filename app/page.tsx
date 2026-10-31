@@ -97,23 +97,22 @@ export default async function BoardPage() {
     <div>
       {/* ============ Hero band (ref: YureCorp) ============ */}
       <section className="accent-panel mt-6 overflow-hidden p-6 sm:p-9 lg:p-11">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Left: pitch + CTA + trusted-by. */}
           <div>
             <p className="eyebrow inline-flex items-center gap-2">
               <span className="ours" aria-hidden>
                 ◆
               </span>
-              signal over noise
+              a trusted market read
             </p>
-            <h1 className="display text-text-hi mt-4 text-[clamp(2.35rem,5vw,4rem)] leading-[1.02]">
-              Market intelligence, weighted by{" "}
-              <span className="ours">what actually moves it.</span>
+            <h1 className="display display-caps text-text-hi mt-4 text-[clamp(2.1rem,4.8vw,3.9rem)] leading-[1.03]">
+              Market news &amp; data, <span className="ours">ranked by signal.</span>
             </h1>
             <p className="text-text-mid mt-5 max-w-[52ch] text-[15px] leading-relaxed">
               Mizaan ranks which stories matter, binds them to the instruments they
-              move, and writes an AI summary from cited sources — computed
-              deterministically, in USD or QAR.
+              move, pairs them with live quotes, and writes an AI summary from cited
+              sources — computed deterministically, in USD or QAR.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/news" className="btn btn-primary">
@@ -135,15 +134,21 @@ export default async function BoardPage() {
             </div>
           </div>
 
-          {/* Right: REAL computed stat tiles (no fabricated numbers). */}
-          <div className="grid grid-cols-2 gap-4">
-            <StatTile value={String(summary.total)} label="stories ranked today" />
-            <StatTile value={String(totalSources)} label="source reports clustered" />
-            <StatTile value={String(sectionsCount)} label="sections covered" />
-            <StatTile
-              value={`${summary.nonFinancialPct}%`}
-              label="beyond markets & economy"
-            />
+          {/* Right: REAL computed figures + a live markets panel, so the hero
+              carries data (it's a financial news site) rather than empty space. */}
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <StatTile value={String(summary.total)} label="stories ranked today" />
+              <StatTile value={String(totalSources)} label="source reports clustered" />
+              <StatTile value={String(sectionsCount)} label="sections covered" />
+              <StatTile
+                value={`${summary.nonFinancialPct}%`}
+                label="beyond markets & economy"
+              />
+            </div>
+            {/* Live session movers — real quotes (cache/fixture), direction by
+                glyph + sign (§12). Fills the hero with market data. */}
+            <Movers currency={currency} />
           </div>
         </div>
 

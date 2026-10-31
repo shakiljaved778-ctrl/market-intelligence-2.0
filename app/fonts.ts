@@ -14,7 +14,7 @@ export const geistMono = Geist_Mono({
   display: "swap",
 });
 
-/** Newsreader — headlines and recap body; editorial weight without pastiche (§12). */
+/** Newsreader — recap body and inner-page editorial serif (§12). */
 export const newsreader = Newsreader({
   subsets: ["latin"],
   variable: "--font-newsreader",
