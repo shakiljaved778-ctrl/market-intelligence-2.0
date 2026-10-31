@@ -62,9 +62,11 @@ export interface SectionInput {
  *   1. An explicit NON-FINANCIAL keyword match wins (in file order) — a genuine
  *      tech/health/sports/culture/science story is never buried under markets.
  *   2. A macro/economy topic → economy.
- *   3. Any instrument or financial topic present → markets.
- *   4. A financial-section keyword match (in file order).
- *   5. Default to markets.
+ *   3. A specific financial vertical keyword (crypto, real estate, … — any
+ *      financial section other than markets/economy), before the markets fallback.
+ *   4. Any instrument or financial topic present → markets.
+ *   5. A financial-section keyword match (in file order).
+ *   6. Default to markets.
  */
 export function classifySection(input: SectionInput): string {
   const text = `${input.title} ${input.dek ?? ""}`;
@@ -78,6 +80,14 @@ export function classifySection(input: SectionInput): string {
   }
 
   if (topics.some((t) => ECONOMY_TOPICS.has(t))) return "economy";
+
+  // Specific financial verticals (crypto, real estate, …) are checked BEFORE the
+  // generic "any instrument → markets" fallback, so a crypto or property story
+  // isn't buried under markets just because it carries a ticker.
+  for (const s of sections) {
+    if (!s.financial || s.id === "markets" || s.id === "economy") continue;
+    if (s.keywords.some((k) => mentions(text, k))) return s.id;
+  }
 
   if (tickers.length > 0 || topics.length > 0) return DEFAULT_SECTION;
 

@@ -2535,4 +2535,154 @@ export const FIXTURE_ARTICLES: RawArticle[] = [
     url: "https://www.reuters.com/markets/commodities/oil-steadies",
     publishedAt: `${T12}00:00.000Z`,
   },
+
+  // === New sections + more content (Crypto, Real Estate, World) =============
+
+  // --- Crypto: Bitcoin recovery, two sources → one cluster ---
+  {
+    id: 215,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Bitcoin climbs back above $100,000",
+    dek: "Bitcoin rallied past a symbolic threshold as risk appetite returned and spot ETF inflows picked up.",
+    url: "https://outlet-a.example/bitcoin-100k",
+    publishedAt: `${T15}06:00.000Z`,
+  },
+  {
+    id: 216,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Bitcoin extends gains as inflows accelerate",
+    dek: "The largest cryptocurrency built on its advance, with demand led by spot ETF buying and easing macro worries.",
+    url: "https://outlet-b.example/bitcoin-inflows",
+    publishedAt: `${T15}07:00.000Z`,
+  },
+  // --- Crypto: Ethereum upgrade (singleton) ---
+  {
+    id: 217,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Ethereum leads altcoins higher after a network upgrade",
+    dek: "Ether outperformed as a long-awaited blockchain upgrade cut transaction costs and lifted activity.",
+    url: "https://outlet-a.example/ethereum-upgrade",
+    publishedAt: `${T14}06:00.000Z`,
+  },
+
+  // --- Real Estate: US home sales ---
+  {
+    id: 218,
+    sourceId: "census",
+    sourceName: "U.S. Census Bureau",
+    tier: "primary",
+    trustScore: 100,
+    headline: "US home sales rebound as mortgage rates ease",
+    dek: "Existing-home sales rose as lower mortgage rates drew buyers back into the housing market.",
+    url: "https://www.census.gov/construction/nrs",
+    publishedAt: `${T15}08:00.000Z`,
+  },
+  // --- Real Estate: homebuilder confidence ---
+  {
+    id: 219,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Homebuilder confidence rises on improving demand",
+    dek: "A closely watched gauge of homebuilder sentiment climbed as falling rates lifted buyer traffic.",
+    url: "https://outlet-b.example/homebuilder-confidence",
+    publishedAt: `${T14}08:00.000Z`,
+  },
+
+  // --- World (non-financial): diplomatic summit ---
+  {
+    id: 220,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Leaders gather for a major diplomatic summit",
+    dek: "Heads of state convened for talks on trade and security, seeking to ease tensions across several regions.",
+    url: "https://outlet-a.example/diplomatic-summit",
+    publishedAt: `${T13}06:00.000Z`,
+  },
+  // --- World: peace deal ---
+  {
+    id: 221,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Historic peace deal signed to end a regional conflict",
+    dek: "Two governments signed a peace agreement after months of negotiations, easing a long-running dispute.",
+    url: "https://outlet-b.example/peace-deal",
+    publishedAt: `${T12}06:00.000Z`,
+  },
+  // --- World: national election ---
+  {
+    id: 222,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Voters head to the polls in a pivotal national election",
+    dek: "A closely watched election could reshape the country's policy direction for years to come.",
+    url: "https://outlet-a.example/national-election",
+    publishedAt: `${T13}07:00.000Z`,
+  },
+
+  // --- Markets: megacap earnings (distinct tickers; no S&P-cluster overlap) ---
+  {
+    id: 223,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Tech megacaps extend rally on strong earnings",
+    dek: "Microsoft and Alphabet jumped after results beat expectations, powering the technology sector higher.",
+    url: "https://outlet-b.example/megacap-earnings",
+    publishedAt: `${T14}02:00.000Z`,
+  },
+  // --- Economy: jobless claims ---
+  {
+    id: 224,
+    sourceId: "bls",
+    sourceName: "U.S. Bureau of Labor Statistics",
+    tier: "primary",
+    trustScore: 100,
+    headline: "US jobless claims decline again",
+    dek: "Weekly filings for unemployment benefits fell, pointing to a still-resilient labour market.",
+    url: "https://www.bls.gov/news.release/claims",
+    publishedAt: `${T15}01:00.000Z`,
+  },
+
+  // --- Technology (non-financial): OpenAI model ---
+  {
+    id: 225,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "OpenAI releases a faster, cheaper AI model",
+    dek: "The new artificial intelligence model cuts cost and latency while improving reasoning, the company said.",
+    url: "https://outlet-a.example/openai-new-model",
+    publishedAt: `${T13}02:00.000Z`,
+  },
+  // --- Health (non-financial): Alzheimer's trial ---
+  {
+    id: 226,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "New Alzheimer's drug shows promise in a late-stage trial",
+    dek: "A clinical trial reported slower cognitive decline, raising hopes for a new treatment.",
+    url: "https://outlet-b.example/alzheimers-trial",
+    publishedAt: `${T12}03:00.000Z`,
+  },
 ];

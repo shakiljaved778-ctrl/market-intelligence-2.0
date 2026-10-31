@@ -158,9 +158,13 @@ Every cluster gets a **section** — the top-level editorial vertical — assign
 **deterministically** by keyword rules in `content/sections.yaml`
 (`lib/curation/section.ts`), exactly like topics/entities. No model.
 
-- Financial verticals (`financial: true`): **markets**, **economy**. Everything
-  else — **technology** (Tech & AI), **health**, **sports**, **entertainment**
-  (Culture), **science** — is non-financial.
+- Financial verticals (`financial: true`): **markets**, **economy**, **crypto**
+  (digital assets) and **realestate** (housing/property). Crypto & real estate are
+  checked ahead of the generic "any instrument → markets" fallback in
+  `classifySection` so a ticker-bearing story isn't swallowed by markets.
+  Everything else — **technology** (Tech & AI), **health**, **sports**,
+  **entertainment** (Culture), **science**, **world** (geopolitics) and **eureka**
+  (Nobel ideas) — is non-financial.
 - **Product rule:** Mizan is markets-first, but at least **~30%** of the live wire
   is deliberately non-financial to keep a broad audience engaged. Guarded by
   `lib/curation/section.test.ts` (currently 33%). Non-financial stays a minority.
