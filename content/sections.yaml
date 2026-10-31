@@ -73,6 +73,70 @@ sections:
         oecd,
       ]
 
+  - id: crypto
+    label: Crypto
+    blurb: Bitcoin, Ethereum and the digital-asset market — prices, flows and rules.
+    financial: true
+    hue: "#9a7bd0"
+    glyph: circuit
+    keywords:
+      [
+        bitcoin,
+        ethereum,
+        crypto,
+        cryptocurrency,
+        blockchain,
+        stablecoin,
+        digital asset,
+        ether,
+        solana,
+        altcoin,
+        defi,
+        tokenized,
+      ]
+
+  - id: realestate
+    label: Real Estate
+    blurb: Housing, commercial property and the rates that move them.
+    financial: true
+    hue: "#5c9ea8"
+    glyph: bars
+    keywords:
+      [
+        real estate,
+        housing,
+        property market,
+        mortgage,
+        home sales,
+        homebuilder,
+        reit,
+        commercial property,
+        house prices,
+        rents,
+      ]
+
+  - id: world
+    label: World
+    blurb: Geopolitics, diplomacy and the events reshaping the global order.
+    financial: false
+    hue: "#9c8f7a"
+    glyph: wave
+    keywords:
+      [
+        election,
+        parliament,
+        diplomatic,
+        diplomacy,
+        summit,
+        treaty,
+        ceasefire,
+        referendum,
+        geopolitics,
+        united nations,
+        peace deal,
+        coup,
+      ]
+
   - id: eureka
     label: Eureka
     blurb: Nobel laureates and the ideas that reshaped how we understand the world.

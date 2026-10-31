@@ -358,4 +358,36 @@ Sample-return missions are rare and technically demanding: the payoff is materia
 
 **Why it matters:** Hands-on asteroid material is a direct window into the solar system's formation, and a proof point for the precision needed in future deep-space missions.`,
   },
+  215: {
+    model: "editorial-demo",
+    md: `Bitcoin climbed back above a closely watched threshold as risk appetite returned to markets and inflows into spot exchange-traded funds picked up. The move extended a recovery from earlier weakness, with traders pointing to easing macro worries and steady institutional demand.
+
+Round numbers carry little fundamental meaning, but they shape sentiment and draw attention — and in crypto, momentum and flows often feed on each other. The durability of the move depends on whether ETF demand holds and whether broader risk assets stay bid.
+
+**Why it matters:** Bitcoin remains the market's clearest risk barometer for digital assets, so a decisive move resets expectations across the whole crypto complex.`,
+  },
+  218: {
+    model: "editorial-demo",
+    md: `US home sales rebounded as a pullback in mortgage rates coaxed buyers back into a market that had been frozen by high borrowing costs. The improvement suggests pent-up demand is ready to return whenever affordability eases, even modestly.
+
+Housing is one of the most rate-sensitive corners of the economy, so it both reflects and amplifies shifts in monetary policy. A sustained recovery would support construction, jobs and consumer spending; a renewed rise in rates would just as quickly stall it.
+
+**Why it matters:** Housing turns on the cost of money, so this rebound is an early read on how the broader economy will respond if rate relief arrives.`,
+  },
+  220: {
+    model: "editorial-demo",
+    md: `Heads of state gathered for a major diplomatic summit, opening talks aimed at easing tensions and finding common ground on trade and security. Officials framed the meeting as a chance to lower the temperature after a stretch of strained relations.
+
+Summits rarely resolve deep disputes on their own, but they set the tone for what follows — the communiqués, the side deals and the signals about where cooperation is still possible. Markets watch them for anything that shifts the outlook for trade, energy or supply chains.
+
+**Why it matters:** The direction set at gatherings like this shapes the geopolitical backdrop that, in turn, moves commodity prices, trade flows and risk appetite.`,
+  },
+  225: {
+    model: "editorial-demo",
+    md: `OpenAI released a new model it says is faster and cheaper to run while improving on reasoning, a combination aimed at making capable AI more practical to deploy at scale. Lower cost and latency matter as much as raw capability for the businesses building on top of these systems.
+
+Each release resets expectations for what assistants and agents can do affordably, and pressures rivals to match the price-performance bar. The economics — cost per query against the value delivered — increasingly decide which use cases actually ship.
+
+**Why it matters:** Cheaper, faster models widen where AI is worth using, accelerating adoption and sharpening the competition among the big model providers.`,
+  },
 };
