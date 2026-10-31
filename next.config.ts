@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     // Local embedding + heavy jobs run in GitHub Actions, not here.
     // Keep the serving surface lean.
     optimizePackageImports: ["lucide-react"],
+    // Cross-route View Transitions for client navigations (progressive
+    // enhancement; respects prefers-reduced-motion).
+    viewTransition: true,
   },
 };
 

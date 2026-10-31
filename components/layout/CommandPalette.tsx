@@ -83,6 +83,13 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Allow other UI (e.g. the mobile tab bar) to open the palette.
+  useEffect(() => {
+    const openIt = () => setOpen(true);
+    window.addEventListener("mi:open-command", openIt);
+    return () => window.removeEventListener("mi:open-command", openIt);
+  }, []);
+
   useEffect(() => {
     if (open) {
       setRecents(loadRecents());

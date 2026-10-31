@@ -1169,3 +1169,20 @@ body {
     display: none;
   }
 }
+
+/* ============================================================
+   View Transitions — a gentle cross-fade between routes (320ms page
+   transition per the motion spec). Fully disabled under reduced motion.
+   ============================================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

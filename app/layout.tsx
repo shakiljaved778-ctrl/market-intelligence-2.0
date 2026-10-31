@@ -4,6 +4,7 @@ import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { TickerTape } from "@/components/market/TickerTape";
+import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { getThemePref, getColorblind } from "@/lib/theme/server";
 import { SITE_URL } from "@/lib/site";
@@ -110,10 +111,11 @@ export default async function RootLayout({
         </a>
         <Header currency={currency} themePref={themePref} colorblind={colorblind} />
         <TickerTape />
-        <main id="main" className="mx-auto max-w-[1280px] px-4">
+        <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
           {children}
         </main>
         <Footer />
+        <MobileTabBar />
       </body>
     </html>
   );
