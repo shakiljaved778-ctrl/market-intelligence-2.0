@@ -3,9 +3,11 @@ import { CoverArt } from "@/components/news/CoverArt";
 import { SectionTag } from "@/components/news/SectionTag";
 import { StoryCard } from "@/components/news/StoryCard";
 import { Movers } from "@/components/market/Movers";
-import { HeroPulse } from "@/components/market/HeroPulse";
+import { SignalScore } from "@/components/ui/SignalScore";
+import { InstrumentChip } from "@/components/ui/InstrumentChip";
+import { CountUp } from "@/components/ui/CountUp";
+import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { readCandles, readMovers } from "@/lib/market/read";
 import {
   allSections,
   readSectionSummaries,
@@ -14,40 +16,77 @@ import {
 } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
+import { INDEX_STRIP } from "@/fixtures/indices";
+import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 
-/** A YureCorp-style stat tile — a big REAL number + a quiet label. */
-function StatTile({ value, label }: { value: string; label: string }) {
+function StatTile({
+  value,
+  suffix,
+  label,
+}: {
+  value: number;
+  suffix?: string;
+  label: string;
+}) {
   return (
-    <div className="card card-hover p-5">
-      {/* These are our OWN computed figures, so the iris accent is on-brand (§12). */}
-      <div className="ours tnum flex items-baseline gap-0.5 text-[34px] leading-none">
-        {value}
+    <div className="border-hairline bg-surface rounded-[8px] border p-4">
+      <div className="text-signal-strong text-[30px] leading-none font-medium">
+        <CountUp value={value} suffix={suffix} />
       </div>
-      <p className="text-text-low mt-2.5 text-[12px] leading-snug">{label}</p>
+      <p className="text-ink-3 mt-2 text-[12px] leading-snug">{label}</p>
     </div>
   );
 }
 
-/**
- * The front page (§13). An editorial masthead in the pattern of a real news
- * front — a dominant lead, a secondary column, a "Latest" rail and In Focus —
- * then dense per-section blocks, a markets snapshot and the computed recap.
- * Distinct from the references: monochrome chrome, the iris accent marks our own
- * computed content, and story colour comes only from price direction.
- */
-
-/** A quiet timestamped headline row for the Latest rail. */
 function LatestRow({ c }: { c: WireCluster }) {
   return (
-    <Link href={`/news/${c.slug}`} className="group block py-3">
+    <Link
+      href={`/news/${c.slug}`}
+      className="group hover:bg-surface-2 -mx-2 block rounded-[6px] px-2 py-3 transition-colors"
+    >
       <div className="flex items-center gap-2 text-[11px]">
-        <span className="text-text-low tnum">{relativeTime(c.eventTime)}</span>
+        <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
         <SectionTag section={c.section} />
       </div>
-      <h3 className="font-editorial text-text-hi group-hover:text-iris mt-1 text-[15px] leading-snug transition-colors">
+      <h3 className="font-editorial text-ink mt-1 text-[15px] leading-snug underline-offset-2 group-hover:underline">
         {c.title}
       </h3>
     </Link>
+  );
+}
+
+function GccCard({ item }: { item: (typeof INDEX_STRIP)[number] }) {
+  const dir = directionOf(item.change);
+  const sd = dir === "gain" ? "up" : dir === "loss" ? "down" : "flat";
+  const color = sd === "up" ? "text-up" : sd === "down" ? "text-down" : "text-ink-3";
+  return (
+    <div className="border-hairline bg-surface rounded-[8px] border p-4">
+      <div className="flex items-baseline justify-between">
+        <span className="text-ink text-[14px] font-medium">{item.name}</span>
+        <span className="tnum text-ink-4 text-[10px]">{item.symbol}</span>
+      </div>
+      <div className="mt-2 flex items-end justify-between gap-2">
+        <span className="tnum text-ink text-[20px] leading-none">
+          {item.level.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
+        <Sparkline
+          values={sparkSeries(item.symbol, item.changePct)}
+          dir={sd}
+          width={56}
+          height={20}
+        />
+      </div>
+      <div className="mt-2 flex items-center justify-between">
+        <span className={`tnum inline-flex items-center gap-0.5 text-[12px] ${color}`}>
+          <span aria-hidden>{directionGlyph(item.change)}</span>
+          {formatPercent(item.changePct)}
+        </span>
+        <span className="t-micro text-ink-4">{item.delayLabel}</span>
+      </div>
+    </div>
   );
 }
 
@@ -60,19 +99,15 @@ export default async function BoardPage() {
   const totalSources = clusters.reduce((n, c) => n + c.sourceCount, 0);
   const sectionsCount = allSections().length;
 
-  // The session's biggest mover + its recent close series — powers the hero's
-  // self-drawing pulse (cache/db/fixture; no vendor call on render).
-  const topMover = (await readMovers(1))[0];
-  const pulseValues = topMover
-    ? (await readCandles(topMover.symbol, "1M")).slice(-30).map((c) => c.c)
-    : [];
-
   const lead = clusters[0];
-  const secondary = clusters[1];
-  const secondaryRelated = clusters.slice(2, 4);
-  const leadRelated = clusters[4];
-  const latest = clusters.slice(1, 9);
-  const sessionRecap = listRecaps(currency).find((r) => r.kind === "session_close");
+  const heroSide = clusters.slice(1, 4); // secondary stories in the hero rail
+  const threeUp = clusters.slice(4, 7);
+  // Latest rail is TIME-ordered (newest first), not rank-ordered.
+  const latest = [...clusters]
+    .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime())
+    .slice(0, 8);
+  const sessionRecap = listRecaps().find((r) => r.kind === "session_close");
+  const gcc = INDEX_STRIP.filter((i) => i.region === "GCC");
 
   const bySection = new Map<string, WireCluster[]>();
   for (const c of clusters) {
@@ -87,7 +122,7 @@ export default async function BoardPage() {
 
   if (!lead) {
     return (
-      <div className="section-y text-text-mid text-center text-[14px]">
+      <div className="text-ink-3 py-24 text-center text-[14px]">
         The wire is quiet right now.
       </div>
     );
@@ -95,319 +130,217 @@ export default async function BoardPage() {
 
   return (
     <div>
-      {/* ============ Hero band (ref: YureCorp) ============ */}
-      <section className="accent-panel mt-6 overflow-hidden p-6 sm:p-9 lg:p-11">
-        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Left: pitch + CTA + trusted-by. */}
-          <div>
-            <p className="eyebrow inline-flex items-center gap-2">
-              <span className="ours" aria-hidden>
-                ◆
-              </span>
-              a trusted market read
-            </p>
-            <h1 className="display display-caps text-text-hi mt-4 text-[clamp(2.1rem,4.8vw,3.9rem)] leading-[1.03]">
-              Market news &amp; data, <span className="ours">ranked by signal.</span>
-            </h1>
-            <p className="text-text-mid mt-5 max-w-[52ch] text-[15px] leading-relaxed">
-              Mizaan ranks which stories matter, binds them to the instruments they
-              move, pairs them with live quotes, and writes an AI summary from cited
-              sources — computed deterministically, in USD or QAR.
-            </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link href="/news" className="btn btn-primary">
-                Explore the wire <span aria-hidden>→</span>
-              </Link>
-              <Link href="/methodology" className="btn btn-ghost">
-                How it works
-              </Link>
-            </div>
-            <div className="mt-8">
-              <span className="eyebrow">Market &amp; macro data from</span>
-              <div className="trust-strip mt-2.5">
-                {["FMP", "Finnhub", "FRED", "World Bank", "Pexels"].map((p) => (
-                  <span key={p} className="trust-logo">
-                    {p}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right: REAL computed figures + a live markets panel, so the hero
-              carries data (it's a financial news site) rather than empty space. */}
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <StatTile value={String(summary.total)} label="stories ranked today" />
-              <StatTile value={String(totalSources)} label="source reports clustered" />
-              <StatTile value={String(sectionsCount)} label="sections covered" />
-              <StatTile
-                value={`${summary.nonFinancialPct}%`}
-                label="beyond markets & economy"
-              />
-            </div>
-            {/* Live session movers — real quotes (cache/fixture), direction by
-                glyph + sign (§12). Fills the hero with market data. */}
-            <Movers currency={currency} />
-          </div>
-        </div>
-
-        {topMover ? (
-          <HeroPulse
-            symbol={topMover.symbol}
-            name={topMover.name}
-            changePct={topMover.changePct}
-            values={pulseValues}
-          />
-        ) : null}
-      </section>
-
-      {/* ============ Masthead ============ */}
-      <section className="mt-10 pt-2">
-        <div className="flex items-baseline justify-between">
-          <p className="eyebrow">
-            <span className="live-dot mr-2 inline-block align-middle" aria-hidden />
-            Today on Mizaan · {new Date(lead.eventTime).toUTCString().slice(0, 16)}
+      {/* ============ Today on Mizaan (hero + lead) ============ */}
+      <section className="pt-8">
+        <div className="mb-5 flex items-baseline justify-between">
+          <p className="t-micro text-ink-3 inline-flex items-center gap-2">
+            <span className="live-dot inline-block align-middle" aria-hidden />
+            Today on Mizaan · {new Date(lead.eventTime).toUTCString().slice(5, 16)}
           </p>
-          <Link href="/news" className="ours text-[12px]">
+          <Link href="/news" className="text-brand text-[12px]">
             The wire <span aria-hidden>→</span>
           </Link>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Secondary (left on desktop). */}
-          {secondary ? (
-            <div className="order-2 lg:order-1 lg:col-span-3">
-              <Link href={`/news/${secondary.slug}`} className="group block">
-                <div className="border-line bg-surface aspect-[16/10] w-full overflow-hidden rounded-[10px] border">
-                  <CoverArt
-                    section={secondary.section}
-                    seed={secondary.slug}
-                    imageUrl={secondary.imageUrl}
-                    label={false}
-                    className="h-full w-full transition duration-500 group-hover:scale-[1.03] group-hover:brightness-[1.04]"
-                  />
-                </div>
-                <div className="mt-3">
-                  <SectionTag section={secondary.section} />
-                  <h2 className="font-editorial text-text-hi group-hover:text-iris mt-2 text-[20px] leading-snug font-semibold transition-colors">
-                    {secondary.title}
-                  </h2>
-                  {secondary.dek ? (
-                    <p className="text-text-mid mt-1.5 text-[13px] leading-relaxed">
-                      {secondary.dek}
-                    </p>
-                  ) : null}
-                </div>
-              </Link>
-              <div className="border-line mt-4 border-t">
-                {secondaryRelated.map((c) => (
-                  <Link
-                    key={c.slug}
-                    href={`/news/${c.slug}`}
-                    className="group border-line block border-b py-3"
-                  >
-                    <h3 className="font-editorial text-text-hi group-hover:text-iris text-[15px] leading-snug transition-colors">
-                      {c.title}
-                    </h3>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Lead (centre, dominant). */}
-          <div className="lg:border-line order-1 lg:order-2 lg:col-span-6 lg:border-x lg:px-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          {/* Lead */}
+          <div className="lg:col-span-8">
             <Link href={`/news/${lead.slug}`} className="group block">
-              <div className="border-line bg-surface aspect-[16/9] w-full overflow-hidden rounded-[12px] border">
+              <div className="border-hairline bg-surface aspect-[16/9] w-full overflow-hidden rounded-[8px] border">
                 <CoverArt
                   section={lead.section}
                   seed={lead.slug}
                   imageUrl={lead.imageUrl}
-                  className="h-full w-full transition duration-500 group-hover:scale-[1.03] group-hover:brightness-[1.04]"
+                  className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
                 />
               </div>
               <div className="mt-4 flex items-center gap-3 text-[12px]">
                 <SectionTag section={lead.section} />
-                <span className="ours tnum" title="Importance score">
-                  ◆ {lead.importanceScore}
-                </span>
-                <span className="ours tnum">
+                <SignalScore score={lead.importanceScore} />
+                <span className="text-signal-strong tnum">
                   {lead.sourceCount} {lead.sourceCount === 1 ? "source" : "sources"}
                 </span>
-                <span className="text-text-low ml-auto">
+                <span className="text-ink-3 ml-auto">
                   {relativeTime(lead.eventTime)}
                 </span>
               </div>
-              <h1 className="font-editorial text-text-hi group-hover:text-iris mt-2 text-[31px] leading-[1.08] font-semibold tracking-[-0.015em] transition-colors sm:text-[40px]">
+              <h1 className="t-h1 font-editorial text-ink mt-2 underline-offset-2 group-hover:underline">
                 {lead.title}
               </h1>
               {lead.dek ? (
-                <p className="text-text-mid mt-3 max-w-[60ch] text-[16px] leading-relaxed">
+                <p className="text-ink-2 mt-3 max-w-[68ch] text-[16px] leading-relaxed">
                   {lead.dek}
                 </p>
               ) : null}
+            </Link>
+            {lead.tickers.length ? (
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                {lead.tickers.slice(0, 5).map((t) => (
-                  <span
-                    key={t}
-                    className="tnum border-line text-text-mid rounded-[4px] border px-1.5 py-0.5 text-[11px]"
-                  >
-                    {t}
-                  </span>
+                {lead.tickers.slice(0, 6).map((t) => (
+                  <InstrumentChip key={t} symbol={t} />
                 ))}
               </div>
-            </Link>
-            {leadRelated ? (
-              <Link
-                href={`/news/${leadRelated.slug}`}
-                className="border-line hover:border-line-strong mt-5 block rounded-[10px] border px-4 py-3"
-              >
-                <span className="eyebrow">Related</span>
-                <p className="font-editorial text-text-hi mt-1 text-[15px] leading-snug">
-                  {leadRelated.title}
-                </p>
-              </Link>
             ) : null}
           </div>
 
-          {/* Latest rail (right). */}
-          <div className="order-3 lg:col-span-3">
-            <div className="border-line mb-1 flex items-center gap-2 border-b pb-2">
-              <span className="rail-title !text-[15px]">Latest</span>
+          {/* Right rail: computed counters + secondary stories. */}
+          <div className="lg:col-span-4">
+            <div className="grid grid-cols-2 gap-3">
+              <StatTile value={summary.total} label="stories ranked today" />
+              <StatTile value={totalSources} label="source reports across the wire" />
+              <StatTile value={sectionsCount} label="sections covered" />
+              <StatTile
+                value={summary.nonFinancialPct}
+                suffix="%"
+                label="beyond markets & economy"
+              />
             </div>
-            <div className="border-line divide-line divide-y">
-              {latest.map((c) => (
+            <div className="border-hairline divide-hairline mt-5 divide-y border-t">
+              {heroSide.map((c) => (
                 <LatestRow key={c.slug} c={c} />
               ))}
             </div>
-            <div className="mt-5">
-              <p className="eyebrow mb-2">In focus</p>
-              <div className="flex flex-wrap gap-2">
-                {allSections().map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/news?section=${s.id}`}
-                    className="border-line text-text-mid hover:border-line-strong hover:text-text-hi inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] transition-colors"
-                  >
-                    <span
-                      aria-hidden
-                      className="inline-block h-1.5 w-1.5 rounded-full"
-                      style={{ background: s.hue }}
-                    />
-                    {s.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
+
+        {/* 3-up row. */}
+        {threeUp.length ? (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {threeUp.map((c) => (
+              <StoryCard key={c.slug} cluster={c} variant="card" />
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      {/* ============ Movers + Session recap (side by side) ============ */}
+      <section className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="t-h3 font-editorial text-ink">Movers</h2>
+            <Link href="/markets" className="text-brand text-[12px]">
+              All markets <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <Movers currency={currency} />
+        </div>
+        {sessionRecap ? (
+          <div className="lg:col-span-5">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="t-h3 font-editorial text-ink">Session recap</h2>
+              <span className="t-micro text-ink-3">computed</span>
+            </div>
+            <Link
+              href={`/recap/${sessionRecap.slug}`}
+              className="border-hairline bg-surface hover:bg-surface-2 block h-[calc(100%-2.25rem)] rounded-[8px] border p-5 transition-colors"
+            >
+              <div className="text-signal-strong flex items-center gap-2 text-[12px]">
+                <span aria-hidden>◆</span>
+                <span>From today&rsquo;s market data</span>
+              </div>
+              <p className="font-editorial text-ink mt-3 text-[17px] leading-[1.6]">
+                {sessionRecap.output.bodyMd}
+              </p>
+              <span className="text-brand mt-3 inline-flex items-center gap-1 text-[13px]">
+                Read the full recap <span aria-hidden>→</span>
+              </span>
+            </Link>
+          </div>
+        ) : null}
       </section>
 
       {/* ============ Section blocks ============ */}
-      {blocks.map(({ section, stories }) => {
-        const blockLead = stories[0]!;
-        const rest = stories.slice(1, 5);
-        return (
-          <section key={section.id} className="border-line border-b py-8">
-            <div className="mb-5 flex items-baseline justify-between">
-              <Link
-                href={`/news?section=${section.id}`}
-                className="group inline-flex items-center gap-2.5"
-              >
-                <span
-                  aria-hidden
-                  className="inline-block h-5 w-[3px] rounded-[2px]"
-                  style={{ background: section.hue }}
-                />
-                <span className="font-editorial text-text-hi group-hover:text-iris text-[23px] font-semibold tracking-[-0.015em] transition-colors">
-                  {section.label}
-                </span>
-              </Link>
-              <Link
-                href={`/news?section=${section.id}`}
-                className="text-text-low hover:text-iris text-[12px]"
-              >
-                View all <span aria-hidden>→</span>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-              <div className="lg:col-span-5">
-                <StoryCard cluster={blockLead} variant="card" />
-              </div>
-              {rest.length > 0 ? (
-                <div className="list-card divide-line divide-y px-4 lg:col-span-7">
-                  {rest.map((c) => (
-                    <StoryCard key={c.slug} cluster={c} variant="compact" />
-                  ))}
-                </div>
-              ) : (
+      <div className="mt-12">
+        {blocks.map(({ section, stories }) => {
+          const blockLead = stories[0]!;
+          const rest = stories.slice(1, 5);
+          return (
+            <section key={section.id} className="border-hairline border-t py-8">
+              <div className="mb-5 flex items-baseline justify-between">
                 <Link
                   href={`/news?section=${section.id}`}
-                  className="card group text-text-mid hover:text-text-hi flex items-center justify-center gap-2 px-4 py-10 text-[13px] lg:col-span-7"
+                  className="group inline-flex items-center gap-2.5"
                 >
-                  More in{" "}
-                  <span className="text-text-hi font-semibold">{section.label}</span>
-                  <span aria-hidden className="group-hover:text-iris">
-                    →
+                  <span
+                    aria-hidden
+                    className="inline-block h-5 w-[3px] rounded-[2px]"
+                    style={{ background: section.hue }}
+                  />
+                  <span className="t-h3 font-editorial text-ink group-hover:underline">
+                    {section.label}
                   </span>
                 </Link>
-              )}
-            </div>
-          </section>
-        );
-      })}
+                <Link
+                  href={`/news?section=${section.id}`}
+                  className="text-ink-3 hover:text-brand text-[12px]"
+                >
+                  View all <span aria-hidden>→</span>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                <div className="lg:col-span-5">
+                  <StoryCard cluster={blockLead} variant="card" />
+                </div>
+                {rest.length > 0 ? (
+                  <div className="border-hairline bg-surface divide-hairline rounded-[8px] border px-4 lg:col-span-7">
+                    {rest.map((c) => (
+                      <div
+                        key={c.slug}
+                        className="divide-hairline [&:not(:last-child)]:border-hairline [&:not(:last-child)]:border-b"
+                      >
+                        <StoryCard cluster={c} variant="compact" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Link
+                    href={`/news?section=${section.id}`}
+                    className="border-hairline text-ink-2 hover:text-ink flex items-center justify-center gap-2 rounded-[8px] border px-4 py-10 text-[13px] lg:col-span-7"
+                  >
+                    More in{" "}
+                    <span className="text-ink font-medium">{section.label}</span>
+                    <span aria-hidden>→</span>
+                  </Link>
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
 
-      {/* ============ Markets snapshot ============ */}
-      <section className="border-line border-b py-8">
-        <div className="mb-5 flex items-baseline justify-between">
-          <span className="rail-title">Markets snapshot</span>
-          <Link href="/markets" className="ours text-[12px]">
-            All markets <span aria-hidden>→</span>
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-7">
-            <Movers currency={currency} />
+      {/* ============ GCC spotlight ============ */}
+      {gcc.length ? (
+        <section className="border-hairline border-t py-8">
+          <div className="mb-5 flex items-baseline justify-between">
+            <h2 className="t-h3 font-editorial text-ink">GCC spotlight</h2>
+            <Link href="/markets" className="text-ink-3 hover:text-brand text-[12px]">
+              All markets <span aria-hidden>→</span>
+            </Link>
           </div>
-          <div className="accent-panel flex flex-col justify-center p-6 lg:col-span-5">
-            <p className="eyebrow">news-to-price</p>
-            <p className="font-editorial text-text-hi mt-3 text-[20px] leading-snug">
-              Every story is bound to the instruments it concerns — the move sits next
-              to the coverage, not in a separate tab.
-            </p>
-            <div className="mt-5 flex gap-3">
-              <Link href="/markets/screener" className="btn btn-ghost text-[13px]">
-                Screener
-              </Link>
-              <Link href="/economy" className="btn btn-ghost text-[13px]">
-                Economy
-              </Link>
-            </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {gcc.map((item) => (
+              <GccCard key={item.symbol} item={item} />
+            ))}
           </div>
-        </div>
-      </section>
-
-      {/* ============ Computed recap ============ */}
-      {sessionRecap ? (
-        <section className="py-8">
-          <Link
-            href={`/recap/${sessionRecap.slug}`}
-            className="accent-panel block p-6 sm:p-8"
-          >
-            <div className="ours flex items-center gap-2 text-[12px]">
-              <span aria-hidden>◆</span>
-              <span>Session recap · computed from market data</span>
-            </div>
-            <p className="font-editorial text-text-hi mt-3 max-w-[72ch] text-[21px] leading-[1.6]">
-              {sessionRecap.output.bodyMd}
-            </p>
-            <span className="ours mt-3 inline-flex items-center gap-1 text-[13px]">
-              Read the full recap <span aria-hidden>→</span>
-            </span>
-          </Link>
+          <p className="text-ink-4 t-micro mt-3">
+            GCC indices are EOD-only (no free intraday feed) · illustrative sample
+          </p>
         </section>
       ) : null}
+
+      {/* ============ Latest (time-ordered) ============ */}
+      <section className="border-hairline border-t py-8">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="t-h3 font-editorial text-ink">Latest</h2>
+          <Link href="/news" className="text-ink-3 hover:text-brand text-[12px]">
+            The wire <span aria-hidden>→</span>
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
+          {latest.map((c) => (
+            <LatestRow key={c.slug} c={c} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

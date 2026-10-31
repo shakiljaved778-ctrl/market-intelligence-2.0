@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
-// Dynamic OG image (§6). Monochrome canvas, iris dot, editorial title — the
-// brand system, not a stock photo. Title comes from ?title=.
+// Dynamic OG image. Terminal-Night canvas, balance-beam ◆ mark, editorial
+// title. Brand system, not a stock photo. Title + kicker come from the query.
 export const runtime = "edge";
 
 export function GET(request: Request) {
@@ -19,64 +19,74 @@ export function GET(request: Request) {
           flexDirection: "column",
           justifyContent: "space-between",
           background:
-            "radial-gradient(70% 90% at 78% 4%, #3a2616 0%, transparent 60%), #0b0a09",
+            "radial-gradient(60% 80% at 82% 2%, #16213a 0%, transparent 60%), #0a0d12",
           padding: "72px",
-          fontFamily: "sans-serif",
+          fontFamily: "serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* ◆ pivot */}
           <div
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 999,
-              border: "2px solid #f5f1ea",
+              width: 22,
+              height: 22,
+              background: "#e8a93b",
+              transform: "rotate(45deg)",
+              borderRadius: 3,
+            }}
+          />
+          <div
+            style={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              color: "#eceef1",
+              fontSize: 34,
+              letterSpacing: 8,
+              fontFamily: "serif",
+              fontWeight: 600,
             }}
           >
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: 999,
-                background: "#c0875a",
-              }}
-            />
+            MIZAAN
           </div>
           <div
             style={{
-              display: "flex",
-              color: "#f5f1ea",
-              fontSize: 34,
-              letterSpacing: 6,
+              color: "#868d98",
+              fontSize: 18,
+              letterSpacing: 3,
+              marginLeft: 4,
               fontFamily: "sans-serif",
+              textTransform: "uppercase",
             }}
           >
-            <span>MIZAA</span>
-            <span style={{ color: "#d9a877" }}>N</span>
+            Intelligence
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ color: "#d9a877", fontSize: 22, letterSpacing: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div
+            style={{
+              color: "#7fa6ff",
+              fontSize: 22,
+              letterSpacing: 1,
+              fontFamily: "sans-serif",
+              textTransform: "uppercase",
+            }}
+          >
             {kicker}
           </div>
           <div
             style={{
-              color: "#f5f1ea",
+              color: "#eceef1",
               fontSize: 62,
               lineHeight: 1.08,
-              maxWidth: 960,
-              fontWeight: 700,
-              letterSpacing: -1.5,
+              maxWidth: 980,
+              fontWeight: 600,
+              letterSpacing: -1,
             }}
           >
             {title}
           </div>
         </div>
-        <div style={{ color: "#ada492", fontSize: 20 }}>
-          A trusted source for market news & data · computed rankings, cited sources.
+        <div style={{ color: "#868d98", fontSize: 20, fontFamily: "sans-serif" }}>
+          Signal-ranked market intelligence · computed rankings, cited sources.
         </div>
       </div>
     ),

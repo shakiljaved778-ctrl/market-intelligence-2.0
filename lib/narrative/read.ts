@@ -1,3 +1,4 @@
+import { FIXTURE_ARTICLES } from "@/fixtures/articles";
 import { INDEX_STRIP } from "@/fixtures/indices";
 import { UNIVERSE } from "@/fixtures/universe";
 import type { DisplayCurrency } from "@/lib/currency/peg";
@@ -8,8 +9,17 @@ import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
  * fixture numbers (§9 Stage 5). In production these come from the cluster/eod
  * jobs writing to the `recaps` table; the generators and inputs are identical,
  * so each recap stays reproducible from its stored inputs.
+ *
+ * The demo date tracks the NEWEST story in the wire, so the "latest session
+ * recap" link always resolves to the current recap rather than a frozen date.
  */
-const DEMO_DATE = "2026-09-16";
+const DEMO_DATE = (() => {
+  const newest = FIXTURE_ARTICLES.reduce(
+    (max, a) => (a.publishedAt > max ? a.publishedAt : max),
+    "2000-01-01",
+  );
+  return newest.slice(0, 10); // YYYY-MM-DD
+})();
 
 export interface NamedRecap {
   slug: string;

@@ -18,7 +18,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "job:ingest": "tsx jobs/ingest.ts",
     "job:cluster": "tsx jobs/cluster.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:colors": "node scripts/check-colors.mjs"
   },
   "dependencies": {
     "@xenova/transformers": "2.17.2",

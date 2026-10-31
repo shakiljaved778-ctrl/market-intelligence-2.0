@@ -40,3 +40,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Design-audit screenshots (large binaries; kept in working dir, not committed)
+design-audit/before/
+design-audit/after/

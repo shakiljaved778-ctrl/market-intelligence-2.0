@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { geistMono, geistSans, newsreader } from "./fonts";
+import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { MarketStrip } from "@/components/market/MarketStrip";
+import { TickerTape } from "@/components/market/TickerTape";
+import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { getTheme } from "@/lib/theme/server";
+import { getThemePref, getColorblind } from "@/lib/theme/server";
 import { SITE_URL } from "@/lib/site";
 
 const siteUrl = SITE_URL;
@@ -48,7 +49,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0d12" },
     { media: "(prefers-color-scheme: light)", color: "#f6f1e9" },
   ],
 };
@@ -56,7 +57,13 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [currency, theme] = await Promise.all([getDisplayCurrency(), getTheme()]);
+  const [currency, themePref, colorblind] = await Promise.all([
+    getDisplayCurrency(),
+    getThemePref(),
+    getColorblind(),
+  ]);
+  // "system" sets no data-theme attribute, so CSS resolves via prefers-color-scheme.
+  const dataTheme = themePref === "system" ? undefined : themePref;
 
   // Organization + WebSite JSON-LD (§6 SEO). SearchAction points at our search API.
   const jsonLd = {
@@ -85,8 +92,9 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      data-theme={theme}
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable}`}
+      data-theme={dataTheme}
+      data-cb={colorblind ? "1" : undefined}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${newsreader.variable} ${plexArabic.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh">
@@ -101,12 +109,13 @@ export default async function RootLayout({
         >
           Skip to content
         </a>
-        <Header currency={currency} theme={theme} />
-        <MarketStrip />
-        <main id="main" className="mx-auto max-w-[1280px] px-4">
+        <Header currency={currency} themePref={themePref} colorblind={colorblind} />
+        <TickerTape />
+        <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
           {children}
         </main>
         <Footer />
+        <MobileTabBar />
       </body>
     </html>
   );

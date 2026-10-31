@@ -11,7 +11,11 @@ import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent
 import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
-import { SectionTag } from "@/components/news/SectionTag";
+import { ReadingProgress } from "@/components/news/ReadingProgress";
+import { ShareButtons } from "@/components/ui/ShareButtons";
+import { SignalScore } from "@/components/ui/SignalScore";
+import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
+import { SITE_URL } from "@/lib/site";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -45,8 +49,28 @@ export default async function ClusterPage({ params }: Params) {
   ).filter((x): x is { symbol: string; quote: Quote } => x !== null);
   const more = sectionWire.filter((c) => c.slug !== cluster.slug).slice(0, 4);
 
+  // NewsArticle structured data (§6 SEO) — built from our own fields.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: cluster.title,
+    description: cluster.dek ?? undefined,
+    datePublished: cluster.eventTime,
+    dateModified: cluster.eventTime,
+    articleSection: sectionMeta(cluster.section).label,
+    url: `${SITE_URL}/news/${cluster.slug}`,
+    isAccessibleForFree: true,
+    author: { "@type": "Organization", name: "Mizaan Intelligence" },
+    publisher: { "@type": "Organization", name: "Mizaan Intelligence" },
+  };
+
   return (
     <div className="py-8">
+      <ReadingProgress />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Cover hero. */}
       <figure className="mb-6">
         <div className="border-line bg-surface aspect-[16/6] w-full overflow-hidden rounded-[14px] border">
@@ -73,36 +97,47 @@ export default async function ClusterPage({ params }: Params) {
         ) : null}
       </figure>
 
-      <div className="flex items-center gap-3 text-[12px]">
-        <SectionTag
-          section={cluster.section}
-          href={`/news?section=${cluster.section}`}
-        />
-        <span className="ours tnum" title="Importance score">
-          ◆ {cluster.importanceScore}
-        </span>
-        <span className="ours tnum">
-          {cluster.sourceCount} {cluster.sourceCount === 1 ? "source" : "sources"}
-        </span>
-        <span className="text-text-low">{relativeTime(cluster.eventTime)}</span>
-      </div>
+      {/* Kicker. */}
+      <Link
+        href={`/news?section=${cluster.section}`}
+        className="t-micro text-ink-3 hover:text-brand"
+      >
+        {sectionMeta(cluster.section).label}
+      </Link>
 
-      <h1 className="font-editorial text-text-hi mt-2 max-w-[68ch] text-[27px] leading-tight">
+      <h1 className="t-h1 font-editorial text-ink mt-1 max-w-[20ch]">
         {cluster.title}
       </h1>
+
+      {cluster.dek ? (
+        <p className="text-ink-2 mt-3 max-w-[68ch] text-[18px] leading-relaxed">
+          {cluster.dek}
+        </p>
+      ) : null}
+
+      <div className="border-hairline mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-y py-3 text-[12px]">
+        <SignalScore score={cluster.importanceScore} asLink />
+        <span className="text-signal-strong tnum">
+          {cluster.sourceCount} {cluster.sourceCount === 1 ? "source" : "sources"}
+        </span>
+        <span className="text-ink-3">{relativeTime(cluster.eventTime)}</span>
+        <div className="ml-auto">
+          <ShareButtons title={cluster.title} />
+        </div>
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {cluster.tickers.map((t) => (
           <Link
             key={t}
             href={`/quote/${t}`}
-            className="tnum border-line text-text-mid hover:text-iris rounded-[4px] border px-1.5 py-0.5 text-[12px]"
+            className="tnum border-hairline text-ink-2 hover:text-brand rounded-[4px] border px-1.5 py-0.5 text-[12px]"
           >
             {t}
           </Link>
         ))}
         {cluster.topics.map((t) => (
-          <Link key={t} href={`/news?topic=${t}`} className="text-text-low text-[12px]">
+          <Link key={t} href={`/news?topic=${t}`} className="text-ink-3 text-[12px]">
             #{t.replace(/_/g, " ")}
           </Link>
         ))}
@@ -112,49 +147,57 @@ export default async function ClusterPage({ params }: Params) {
         <section className="lg:col-span-8">
           {/* AI-written original brief — our content, synthesised from the facts. */}
           {body ? (
-            <article className="border-line mb-8 border-b pb-8">
-              <div className="ours border-iris/25 bg-iris/10 mb-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px]">
+            <article className="bg-surface-2 border-hairline mb-8 rounded-[8px] border p-5">
+              <div className="text-signal-strong mb-3 inline-flex items-center gap-2 text-[11px] font-medium">
                 <span aria-hidden>◆</span>
-                AI-written summary · from {cluster.sourceCount}{" "}
-                {cluster.sourceCount === 1 ? "source" : "sources"}
+                AI-written · from {cluster.sourceCount}{" "}
+                {cluster.sourceCount === 1 ? "cited source" : "cited sources"}
               </div>
               <ArticleBody md={body.md} />
-              <p className="text-text-low mt-5 text-[11px] leading-relaxed">
-                Written by AI from the linked reports below — original text, not copied
+              <p className="text-ink-3 mt-5 text-[11px] leading-relaxed">
+                Written by AI from the cited reports below — original text, not copied
                 from any source. Informational only, not investment advice; verify
                 against the originals.
               </p>
             </article>
           ) : null}
 
-          <h2 className="text-text-mid mb-2 text-[13px] font-medium">
+          <h2 className="t-micro text-ink-3 mb-3">
             Sources · {members.length} {members.length === 1 ? "report" : "reports"}
           </h2>
-          <ol className="border-line border-t">
+          <ol className="border-hairline border-t">
             {members.map((m, i) => (
-              <li key={`${m.url}-${i}`} className="border-line border-b py-3">
-                <div className="flex items-center gap-2 text-[12px]">
-                  <span className="text-text-mid">{m.sourceName}</span>
-                  <span className="text-text-low">· {relativeTime(m.publishedAt)}</span>
+              <li
+                key={`${m.url}-${i}`}
+                className="border-hairline flex gap-3 border-b py-3"
+              >
+                <span className="tnum text-signal-strong mt-0.5 shrink-0 text-[12px]">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-[12px]">
+                    <span className="text-ink-2 font-medium">{m.sourceName}</span>
+                    <span className="text-ink-3">· {relativeTime(m.publishedAt)}</span>
+                  </div>
+                  <h3 className="font-editorial text-ink mt-1 max-w-[68ch] text-[17px] leading-snug">
+                    {m.headline}
+                  </h3>
+                  {m.dek ? (
+                    <p className="text-ink-2 mt-1 max-w-[68ch] text-[13px]">{m.dek}</p>
+                  ) : null}
+                  <a
+                    href={m.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-ink-3 hover:text-brand mt-1 inline-block text-[12px]"
+                  >
+                    Read at source <span aria-hidden>↗</span>
+                  </a>
                 </div>
-                <h3 className="font-editorial text-text-hi mt-1 max-w-[68ch] text-[17px] leading-snug">
-                  {m.headline}
-                </h3>
-                {m.dek ? (
-                  <p className="text-text-mid mt-1 max-w-[68ch] text-[13px]">{m.dek}</p>
-                ) : null}
-                <a
-                  href={m.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-text-low hover:text-iris mt-1 inline-block text-[12px]"
-                >
-                  Read at source
-                </a>
               </li>
             ))}
           </ol>
-          <p className="text-text-low mt-3 text-[11px]">
+          <p className="text-ink-3 mt-3 text-[11px]">
             Headlines and short deks only, each linked to its source. We never republish
             article text.
           </p>
@@ -162,17 +205,17 @@ export default async function ClusterPage({ params }: Params) {
 
         <aside className="lg:col-span-4">
           <div className="flex flex-col gap-7 lg:sticky lg:top-4">
-            <div className="border-iris border-l-2 pl-4">
-              <div className="ours flex items-center gap-2 text-[12px]">
+            <div className="border-brand border-l-2 pl-4">
+              <div className="text-signal-strong flex items-center gap-2 text-[12px]">
                 <span aria-hidden>◆</span>
                 <span>Why this ranks</span>
               </div>
-              <p className="text-text-low mt-2 text-[13px] leading-relaxed">
+              <p className="text-ink-3 mt-2 text-[13px] leading-relaxed">
                 Ranked {cluster.importanceScore}/100 from {cluster.sourceCount}{" "}
                 independent
                 {cluster.sourceCount === 1 ? " source" : " sources"}, source tier,
                 associated market moves and recency. See{" "}
-                <Link href="/methodology" className="ours">
+                <Link href="/methodology" className="text-brand">
                   methodology
                 </Link>
                 .
@@ -184,78 +227,73 @@ export default async function ClusterPage({ params }: Params) {
                 <h2 className="text-text-mid mb-2.5 text-[11px] font-medium tracking-[0.12em] uppercase">
                   Instruments in this story
                 </h2>
-                <ul className="border-line divide-line divide-y border-t border-b">
+                <ul className="border-hairline divide-hairline divide-y border-t border-b">
                   {instruments.map(({ symbol, quote }) => {
                     const dir = directionOf(quote.change);
+                    const sd = dir === "gain" ? "up" : dir === "loss" ? "down" : "flat";
                     const dirClass =
                       dir === "gain"
-                        ? "dir-gain"
+                        ? "text-up"
                         : dir === "loss"
-                          ? "dir-loss"
-                          : "text-text-mid";
-                    const barPct = Math.min(
-                      100,
-                      Math.round((Math.abs(quote.changePct) / 5) * 100),
-                    );
-                    const barBg =
-                      dir === "gain"
-                        ? "var(--gain)"
-                        : dir === "loss"
-                          ? "var(--loss)"
-                          : "var(--line)";
+                          ? "text-down"
+                          : "text-ink-3";
                     return (
-                      <li key={symbol} className="py-2.5">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <Link
-                            href={`/quote/${symbol}`}
-                            className="tnum text-text-hi hover:text-iris text-[13px] font-medium"
-                          >
-                            {symbol}
-                          </Link>
-                          <span className="tnum text-text-mid text-[13px]">
-                            {formatMoney(quote.priceUsd, currency)}
-                          </span>
-                        </div>
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <div className="bg-raised h-1 flex-1 overflow-hidden rounded-full">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${barPct}%`, background: barBg }}
-                            />
+                      <li key={symbol} className="flex items-center gap-3 py-2.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <Link
+                              href={`/quote/${symbol}`}
+                              className="tnum text-ink hover:text-brand text-[13px] font-medium"
+                            >
+                              {symbol}
+                            </Link>
+                            <span className="tnum text-ink-2 text-[13px]">
+                              {formatMoney(quote.priceUsd, currency)}
+                            </span>
                           </div>
-                          <span
-                            className={`tnum flex items-center gap-0.5 text-[11px] ${dirClass}`}
-                          >
-                            <span aria-hidden>{directionGlyph(quote.change)}</span>
-                            {formatPercent(quote.changePct)}
-                          </span>
+                          <div className="mt-1 flex items-center justify-between gap-2">
+                            <Sparkline
+                              values={sparkSeries(symbol, quote.changePct)}
+                              dir={sd}
+                              width={72}
+                              height={18}
+                            />
+                            <span
+                              className={`tnum flex items-center gap-0.5 text-[11px] ${dirClass}`}
+                            >
+                              <span aria-hidden>{directionGlyph(quote.change)}</span>
+                              {formatPercent(quote.changePct)}
+                            </span>
+                          </div>
                         </div>
                       </li>
                     );
                   })}
                 </ul>
-                <p className="text-text-low mt-2 text-[11px]">
-                  Latest cached price; move vs prior close. Bar scaled to ±5%.
+                <p className="text-ink-3 mt-2 text-[11px]">
+                  Latest cached price; move vs prior close. Trend is illustrative.
                 </p>
               </div>
             ) : null}
 
             {more.length > 0 ? (
               <div>
-                <h2 className="text-text-mid mb-2.5 text-[11px] font-medium tracking-[0.12em] uppercase">
+                <h2 className="t-micro text-ink-3 mb-2.5">
                   More in {sectionMeta(cluster.section).label}
                 </h2>
-                <ul className="border-line divide-line divide-y border-t border-b">
+                <ul className="border-hairline divide-hairline divide-y border-t border-b">
                   {more.map((c) => (
                     <li key={c.slug} className="py-2.5">
                       <Link href={`/news/${c.slug}`} className="group block">
                         <div className="flex items-center gap-2 text-[11px]">
-                          <span className="ours tnum">◆ {c.importanceScore}</span>
-                          <span className="text-text-low">
+                          <span className="text-signal-strong tnum">
+                            ◆ {c.importanceScore}
+                          </span>
+                          <span className="text-ink-3">
                             {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
                           </span>
                         </div>
-                        <h3 className="font-editorial text-text-hi group-hover:text-iris mt-0.5 text-[14px] leading-snug">
+                        <h3 className="font-editorial text-ink mt-0.5 text-[14px] leading-snug underline-offset-2 group-hover:underline">
                           {c.title}
                         </h3>
                       </Link>

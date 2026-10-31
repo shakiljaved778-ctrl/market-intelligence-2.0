@@ -1,68 +1,75 @@
 @import "tailwindcss";
 
 /*
- * Mizaan Intelligence — design tokens (§12)
- * Core idea: the chrome is monochrome; COLOUR BELONGS TO DATA.
- * The only saturated colour on a page comes from (a) price direction and
- * (b) --iris, reserved exclusively for OUR OWN computed content.
+ * Mizaan Intelligence - design tokens (single source of truth).
+ * Concept: calm authority - editorial paper by day ("Ledger"), a precision
+ * terminal by night ("Terminal Night"). Components use SEMANTIC names only,
+ * never raw hex. Light is the :root base; dark applies via [data-theme="dark"]
+ * and the system (prefers-color-scheme) media query, so the cookie-driven theme
+ * renders with no flash. Legacy aliases are kept mapped onto the new tokens so
+ * existing components keep working while they migrate to the semantic names.
  *
- * Theme: DARK default is a warm CHARCOAL-BLACK canvas (no blue cast) with a
- * restrained WARM-BROWN / caramel accent and fine grain; bold modern sans
- * display. Light is a warm cream with near-black ink. The accent is that brown,
- * still named --iris across the codebase (= "the accent"), reserved for OUR OWN
- * computed content — distinct from the monochrome chrome and from price-direction
- * green. Overrides live under [data-theme] and prefers-color-scheme so a
- * cookie-driven theme renders without a flash. Data colour (gain/loss) stays for
- * price only, always with a glyph + sign.
+ * Colour rules: chrome is monochrome; saturated colour is reserved for
+ * (a) price direction - up/down, always paired with a glyph + sign - and
+ * (b) signal (saffron), only for the signal glyph, rank scores and computed
+ * badges. brand (lapis) carries links, focus and primary actions.
  */
 
 :root {
-  /* Chrome — DARK default. A warm CHARCOAL-BLACK canvas (no blue cast) with a
-     restrained WARM-BROWN / caramel accent (--iris = "the accent"), reserved for
-     OUR OWN computed content. Surfaces are near-black so the hero blends into the
-     page rather than reading as a coloured wash. Price direction keeps gain/loss,
-     always paired with ▲/▼ and a sign (§12). */
-  --canvas: #0b0a09;
-  --surface: #141210;
-  --raised: #171512;
-  --raised-2: #201c17;
-  --line: #2b261f;
-  --line-strong: #3b342a;
+  /* ===== LIGHT · "Ledger" (base) ===== */
+  --bg: #f6f1e9;
+  --surface: #fffdf8;
+  --surface-2: #efe8dc;
+  --hairline: #e3dacb;
+  --hairline-strong: #cfc3b0;
 
-  --text-hi: #f5f1ea;
-  --text-mid: #ada492;
-  --text-low: #776f62;
+  --ink: #12151a;
+  --ink-2: #3e434b;
+  --ink-3: #6b7079;
+  --ink-4: #9a9ea5; /* decorative/disabled only — never meaningful text (AA) */
 
-  /* Data colour — price direction only, always with ▲/▼ + sign. */
-  --gain: #34d399;
-  --loss: #fb6a63;
+  --brand: #1b3a6b; /* Lapis — links, focus, primary actions */
+  --brand-soft: #e6ecf5;
+  --on-brand: #ffffff;
 
-  /* Warm-brown accent — brand + "ours". Light caramel so it reads on near-black;
-     a near-black warm panel pairs with it. --on-iris is text that sits ON the
-     accent (dark here, since the accent itself is light). */
-  --iris: #c0875a;
-  --iris-strong: #d9a877;
-  --on-iris: #1b1206;
-  --accent-soft: #15110c;
-  --accent-line: #3a2d1f;
+  --signal: #b5781c; /* Saffron — the ◆ glyph & large/bold rank scores */
+  --signal-strong: #8a5912; /* AA-safe saffron for small "computed" text/badges */
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
-  --shadow-md: 0 16px 40px -18px rgba(0, 0, 0, 0.72);
-  --shadow-lg: 0 34px 80px -26px rgba(0, 0, 0, 0.82);
-  --r-card: 20px;
-  --r-sm: 12px;
-  --glow: radial-gradient(
-    60% 60% at 50% 0%,
-    color-mix(in srgb, var(--iris) 30%, transparent),
-    transparent 70%
-  );
+  --up: #0b7a4b;
+  --up-soft: #e3f2ea;
+  --down: #c0332a;
+  --down-soft: #f8e5e2;
+  --flat: #6b7079;
+
+  /* Radius — crisp; no pills for data surfaces. */
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 8px;
+  --r-card: 8px;
+  --r-sm: 4px;
+
+  /* Shadows — almost none in light; hairlines do the work. */
+  --shadow-sm: 0 1px 0 rgba(18, 21, 26, 0.03);
+  --shadow-md: 0 1px 2px rgba(18, 21, 26, 0.05);
+  --shadow-lg: 0 6px 20px -12px rgba(18, 21, 26, 0.16);
+
+  /* Layout. */
+  --maxw: 1320px;
+  --measure: 68ch;
+  --gutter: 24px;
+
   --card-top: linear-gradient(
     180deg,
-    color-mix(in srgb, #ffffff 6%, transparent),
+    color-mix(in srgb, #ffffff 45%, transparent),
     transparent 42%
   );
+  --glow: radial-gradient(
+    60% 60% at 50% 0%,
+    color-mix(in srgb, var(--brand) 9%, transparent),
+    transparent 70%
+  );
 
-  /* Type scale (§12): 12/13/15/17/21/27/34/44 */
+  /* Type scale (refined in Phase 2). */
   --step-0: 0.75rem;
   --step-1: 0.8125rem;
   --step-2: 0.9375rem;
@@ -72,96 +79,201 @@
   --step-6: 2.125rem;
   --step-7: 2.75rem;
 
-  color-scheme: dark;
-}
-
-/* LIGHT — a warm cream with near-black ink and a rich brown accent. */
-:root[data-theme="light"] {
-  --canvas: #f6f1e9;
-  --surface: #fffdf9;
-  --raised: #fffdf9;
-  --raised-2: #efe8dc;
-  --line: #e5ddcf;
-  --line-strong: #d2c6b2;
-
-  --text-hi: #17130d;
-  --text-mid: #5a5245;
-  --text-low: #8a8070;
-
-  --gain: #0f9d6c;
-  --loss: #e0484d;
-  --iris: #8a5a30;
-  --iris-strong: #6f4824;
-  --on-iris: #fff8f0;
-  --accent-soft: #f1e8d9;
-  --accent-line: #e0d2bb;
-
-  --shadow-sm: 0 1px 2px rgba(60, 45, 25, 0.06);
-  --shadow-md: 0 16px 40px -18px rgba(60, 45, 25, 0.16);
-  --shadow-lg: 0 34px 78px -26px rgba(60, 45, 25, 0.2);
-  --card-top: linear-gradient(
-    180deg,
-    color-mix(in srgb, #ffffff 72%, transparent),
-    transparent 42%
-  );
+  /* ===== Legacy aliases → new tokens (kept until components migrate) ===== */
+  --canvas: var(--bg);
+  --raised: var(--surface);
+  --raised-2: var(--surface-2);
+  --line: var(--hairline);
+  --line-strong: var(--hairline-strong);
+  --text-hi: var(--ink);
+  --text-mid: var(--ink-2);
+  --text-low: var(--ink-3);
+  --gain: var(--up);
+  --loss: var(--down);
+  --iris: var(--brand); /* old accent → brand (links/buttons/focus) */
+  --iris-strong: var(--brand);
+  --on-iris: var(--on-brand);
+  --accent-soft: var(--brand-soft);
+  --accent-line: var(--hairline-strong);
 
   color-scheme: light;
 }
 
-/* Respect OS light preference only when the user has not set an explicit theme. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --canvas: #f6f1e9;
-    --surface: #fffdf9;
-    --raised: #fffdf9;
-    --raised-2: #efe8dc;
-    --line: #e5ddcf;
-    --line-strong: #d2c6b2;
+/* ===== DARK · "Terminal Night" — explicit toggle ===== */
+:root[data-theme="dark"] {
+  --bg: #0a0d12;
+  --surface: #11151c;
+  --surface-2: #171c25;
+  --hairline: #222935;
+  --hairline-strong: #2e3746;
 
-    --text-hi: #17130d;
-    --text-mid: #5a5245;
-    --text-low: #8a8070;
+  --ink: #eceef1;
+  --ink-2: #b4bac4;
+  --ink-3: #868d98;
+  --ink-4: #5d6470;
 
-    --gain: #0f9d6c;
-    --loss: #e0484d;
-    --iris: #8a5a30;
-    --iris-strong: #6f4824;
-    --on-iris: #fff8f0;
-    --accent-soft: #f1e8d9;
-    --accent-line: #e0d2bb;
+  --brand: #7fa6ff;
+  --brand-soft: #16213a;
+  --on-brand: #0a0d12;
 
-    --shadow-sm: 0 1px 2px rgba(60, 45, 25, 0.06);
-    --shadow-md: 0 16px 40px -18px rgba(60, 45, 25, 0.16);
-    --shadow-lg: 0 34px 78px -26px rgba(60, 45, 25, 0.2);
+  --signal: #e8a93b;
+  --signal-strong: #e8a93b;
 
-    color-scheme: light;
+  --up: #2fc48a;
+  --up-soft: #0f2a20;
+  --down: #ff6a5c;
+  --down-soft: #33161a;
+  --flat: #868d98;
+
+  /* Dark uses surface steps, not shadows. */
+  --shadow-sm: 0 0 0 1px transparent;
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px -16px rgba(0, 0, 0, 0.7);
+  --card-top: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 4%, transparent),
+    transparent 42%
+  );
+  --glow: radial-gradient(
+    60% 60% at 50% 0%,
+    color-mix(in srgb, var(--brand) 16%, transparent),
+    transparent 70%
+  );
+
+  color-scheme: dark;
+}
+
+/* System dark — applies the same values when no explicit theme is set. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0d12;
+    --surface: #11151c;
+    --surface-2: #171c25;
+    --hairline: #222935;
+    --hairline-strong: #2e3746;
+
+    --ink: #eceef1;
+    --ink-2: #b4bac4;
+    --ink-3: #868d98;
+    --ink-4: #5d6470;
+
+    --brand: #7fa6ff;
+    --brand-soft: #16213a;
+    --on-brand: #0a0d12;
+
+    --signal: #e8a93b;
+    --signal-strong: #e8a93b;
+
+    --up: #2fc48a;
+    --up-soft: #0f2a20;
+    --down: #ff6a5c;
+    --down-soft: #33161a;
+    --flat: #868d98;
+
+    --shadow-sm: 0 0 0 1px transparent;
+    --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 30px -16px rgba(0, 0, 0, 0.7);
+    --card-top: linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 4%, transparent),
+      transparent 42%
+    );
+    --glow: radial-gradient(
+      60% 60% at 50% 0%,
+      color-mix(in srgb, var(--brand) 16%, transparent),
+      transparent 70%
+    );
+
+    color-scheme: dark;
+  }
+}
+
+/* ===== Colorblind-safe mode — up→blue, down→orange (AA-tuned per theme) ===== */
+:root[data-cb="1"] {
+  --up: #2563eb;
+  --up-soft: #e7eeff;
+  --down: #b45309;
+  --down-soft: #fbead9;
+}
+:root[data-theme="dark"][data-cb="1"] {
+  --up: #2563eb;
+  --up-soft: #122038;
+  --down: #d97706;
+  --down-soft: #33230f;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-cb="1"]:not([data-theme="light"]) {
+    --up: #2563eb;
+    --up-soft: #122038;
+    --down: #d97706;
+    --down-soft: #33230f;
   }
 }
 
 /* Map tokens into Tailwind v4's theme so `bg-canvas`, `text-mid`,
    `border-line`, `text-gain` etc. exist as utilities. */
 @theme inline {
-  --color-canvas: var(--canvas);
+  /* New semantic utilities (bg-bg, text-ink, border-hairline, text-signal, …). */
+  --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-raised: var(--raised);
-  --color-raised-2: var(--raised-2);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-text-hi: var(--text-hi);
-  --color-text-mid: var(--text-mid);
-  --color-text-low: var(--text-low);
-  --color-gain: var(--gain);
-  --color-loss: var(--loss);
-  --color-iris: var(--iris);
-  --color-iris-strong: var(--iris-strong);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-line: var(--accent-line);
+  --color-surface-2: var(--surface-2);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-signal: var(--signal);
+  --color-signal-strong: var(--signal-strong);
+  --color-up: var(--up);
+  --color-up-soft: var(--up-soft);
+  --color-down: var(--down);
+  --color-down-soft: var(--down-soft);
+  --color-flat: var(--flat);
 
-  /* Fonts are injected as CSS variables by next/font in the root layout. */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Legacy utilities (bg-canvas, text-hi, border-line, text-iris, text-gain…)
+     mapped onto the new tokens so existing components keep working. */
+  --color-canvas: var(--bg);
+  --color-raised: var(--surface);
+  --color-raised-2: var(--surface-2);
+  --color-line: var(--hairline);
+  --color-line-strong: var(--hairline-strong);
+  --color-text-hi: var(--ink);
+  --color-text-mid: var(--ink-2);
+  --color-text-low: var(--ink-3);
+  --color-gain: var(--up);
+  --color-loss: var(--down);
+  --color-iris: var(--brand);
+  --color-iris-strong: var(--brand);
+  --color-accent-soft: var(--brand-soft);
+  --color-accent-line: var(--hairline-strong);
+
+  /* Fonts are injected as CSS variables by next/font in the root layout.
+     Inter = UI/body, Newsreader = display/editorial serif, JetBrains Mono =
+     figures/tickers, IBM Plex Sans Arabic = :lang(ar). */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
-  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+  --font-arabic: var(--font-plex-arabic), var(--font-inter), sans-serif;
+}
+
+/* ===== Fluid type scale (Phase 2) — clamp() between the stated bounds ===== */
+:root {
+  --fs-display: clamp(2.5rem, 1.6rem + 3.6vw, 3.5rem); /* 40 → 56 */
+  --fs-h1: clamp(1.875rem, 1.35rem + 2.1vw, 2.5rem); /* 30 → 40 */
+  --fs-h2: clamp(1.375rem, 1.07rem + 1.2vw, 1.75rem); /* 22 → 28 */
+  --fs-h3: clamp(1.125rem, 1.02rem + 0.42vw, 1.25rem); /* 18 → 20 */
+  --fs-body: 1.0625rem; /* 17 — article body */
+  --fs-ui: 0.9375rem; /* 15 — UI/body */
+  --fs-small: 0.8125rem; /* 13 */
+  --fs-micro: 0.6875rem; /* 11 — uppercase labels */
+  --lh-tight: 1.15;
+  --lh-body: 1.6;
+  --lh-ui: 1.5;
 }
 
 * {
@@ -173,13 +285,20 @@ html {
 }
 
 body {
-  background: var(--canvas);
-  color: var(--text-hi);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-sans);
-  font-size: var(--step-2);
-  line-height: 1.5;
+  font-size: var(--fs-ui);
+  line-height: var(--lh-ui);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Inter stylistic sets: cv11 (single-storey a), ss01, ss03. */
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+
+/* Arabic (GCC-ready) switches to IBM Plex Sans Arabic. */
+:lang(ar) {
+  font-family: var(--font-arabic);
 }
 
 /* Editorial display gets tighter tracking + optical weight. */
@@ -187,10 +306,64 @@ body {
   letter-spacing: -0.011em;
 }
 
-/* Every price, percentage and table figure: mono + tabular-nums (§12). */
+/* Every price, percentage and table figure: mono + tabular, slashed zero, so
+   digits never jitter when a value updates. */
 .tnum {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum", "zero";
+}
+/* Figures inside dense tables may use Inter with tabular/slashed-zero. */
+.tnum-sans {
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum", "zero";
+}
+
+/* ===== Type utilities (fluid scale) ===== */
+.t-display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: 1.18;
+  letter-spacing: -0.014em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.t-h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+.t-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  text-wrap: pretty;
+}
+.t-small {
+  font-size: var(--fs-small);
+}
+.t-micro {
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
 }
 
 /* Editorial voice: Newsreader for headlines and recap body. */
@@ -206,9 +379,13 @@ body {
   color: var(--loss);
 }
 
-/* The accent means "this is ours, not the wire's." */
+/* The signal accent means "this is ours / computed, not the wire's."
+   Saffron, reserved for rank scores, source counts and the ◆ glyph (§12). */
 .ours {
-  color: var(--iris);
+  color: var(--signal-strong);
+}
+.computed {
+  color: var(--signal-strong);
 }
 
 /* Micro-label in mono — a quiet eyebrow, never tracked all-caps (§12). */
@@ -234,7 +411,7 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--iris);
+  background: var(--signal);
 }
 
 /* Stadium pill for nav/control chrome (chrome only — data stays radius 0). */
@@ -242,21 +419,27 @@ body {
   border-radius: 999px;
 }
 
-/* Editorial prose for the written pages (§12). */
+/* Editorial prose for the written pages. 17px/1.6, 68ch measure, pretty wrap
+   and hanging punctuation where supported. */
 .prose-body {
-  color: var(--text-mid);
-  font-size: var(--step-2);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  max-width: var(--measure);
+  hanging-punctuation: first last;
 }
 .prose-body p {
   margin: 0 0 1rem;
-  line-height: 1.6;
+  line-height: var(--lh-body);
+  text-wrap: pretty;
 }
 .prose-body h2 {
   font-family: var(--font-serif);
-  color: var(--text-hi);
-  font-size: var(--step-4);
+  color: var(--ink);
+  font-size: var(--fs-h2);
   line-height: 1.2;
+  letter-spacing: -0.012em;
   margin: 1.75rem 0 0.5rem;
+  text-wrap: balance;
 }
 .prose-body ul {
   margin: 0 0 1rem;
@@ -277,7 +460,7 @@ body {
 
 /* Visible keyboard focus is part of the unannounced quality floor (§12). */
 :where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--iris);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -389,7 +572,11 @@ body {
 
 /* Accent gradient text — used sparingly on the hero accent. */
 .ours-grad {
-  background: linear-gradient(120deg, var(--iris-strong), var(--iris) 60%, #8a5a30);
+  background: linear-gradient(
+    120deg,
+    var(--brand),
+    color-mix(in srgb, var(--brand) 70%, var(--ink)) 90%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -517,19 +704,20 @@ body {
   margin-right: -50vw;
 }
 
-/* Display type for marketing headlines — a bold, modern sans with tight
-   tracking and heavy weight. */
+/* Display type for marketing headlines — the editorial serif (Newsreader),
+   balanced wrap, optical tracking. */
 .display {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.028em;
-  line-height: 1;
-  font-size: clamp(2.75rem, 7vw, 5.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-size: var(--fs-display);
+  text-wrap: balance;
 }
-/* Optional tighter, heavier variant for the biggest masthead moments. */
+/* Optional tighter variant for the biggest masthead moments. */
 .display-caps {
-  letter-spacing: -0.035em;
-  font-weight: 800;
+  letter-spacing: -0.024em;
+  font-weight: 700;
 }
 
 /* Uppercase tracked sub-line, kept restrained. */
@@ -906,4 +1094,95 @@ body {
   border: 1px solid var(--accent-line);
   color: var(--iris-strong);
   border-radius: 999px;
+}
+
+/* ============================================================
+   States — shimmer skeletons that match layout shape; never a blank box.
+   ============================================================ */
+.mi-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: var(--r-2);
+}
+.mi-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ink) 7%, transparent),
+    transparent
+  );
+  animation: mi-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes mi-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mi-skeleton::after {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   Ticker tape — a smooth CSS marquee. Pauses on hover/focus; under
+   reduced motion it becomes a static, horizontally scrollable rail.
+   ============================================================ */
+.ticker-tape {
+  overflow: hidden;
+  position: relative;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-marquee 70s linear infinite;
+  will-change: transform;
+}
+.ticker-tape:hover .ticker-track,
+.ticker-tape:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+@keyframes ticker-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-tape {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ticker-tape::-webkit-scrollbar {
+    display: none;
+  }
+  .ticker-track {
+    animation: none;
+    width: auto;
+  }
+  /* Drop the duplicated loop copy when static. */
+  .ticker-track > [data-ticker-dup] {
+    display: none;
+  }
+}
+
+/* ============================================================
+   View Transitions — a gentle cross-fade between routes (320ms page
+   transition per the motion spec). Fully disabled under reduced motion.
+   ============================================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }

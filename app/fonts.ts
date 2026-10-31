@@ -1,23 +1,36 @@
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import {
+  Inter,
+  JetBrains_Mono,
+  Newsreader,
+  IBM_Plex_Sans_Arabic,
+} from "next/font/google";
 
-/** Geist Sans — interface text (§12). */
-export const geistSans = Geist({
+/** Inter — UI and body text. Feature settings (cv11/ss01/ss03) applied in CSS. */
+export const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-inter",
   display: "swap",
 });
 
-/** Geist Mono — every price, percentage and table figure, with tabular-nums (§12). */
-export const geistMono = Geist_Mono({
+/** JetBrains Mono — tickers, quotes and every table figure (tabular-nums). */
+export const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
-/** Newsreader — recap body and inner-page editorial serif (§12). */
+/** Newsreader — editorial display serif (headlines, recaps, article body). */
 export const newsreader = Newsreader({
   subsets: ["latin"],
   variable: "--font-newsreader",
   display: "swap",
   style: ["normal", "italic"],
+});
+
+/** IBM Plex Sans Arabic — GCC-ready Arabic, applied via :lang(ar). */
+export const plexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex-arabic",
+  display: "swap",
 });
