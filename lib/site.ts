@@ -22,9 +22,16 @@ function normalize(raw: string | undefined): string | null {
   }
 }
 
+// The production custom domain. Used for canonical URLs / metadataBase when no
+// explicit NEXT_PUBLIC_SITE_URL is set, so links point at the real domain rather
+// than the generated *.vercel.app host.
+const PROD_URL = "https://www.mizaan.tech";
+
 function resolveSiteUrl(): string {
+  const isProd = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
   return (
     normalize(process.env.NEXT_PUBLIC_SITE_URL) ??
+    (isProd ? PROD_URL : null) ??
     normalize(process.env.VERCEL_URL) ??
     "http://localhost:3000"
   );

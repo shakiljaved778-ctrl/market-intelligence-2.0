@@ -1,11 +1,15 @@
 # CLAUDE.md — Mizaan Intelligence (MarketIntelligence 2.0)
 
-> Brand: **Mizaan Intelligence** (wordmark MIZAAN + "intelligence"). Theme (ref:
-> YureCorp business landing): **dark default** is near-black neutral with a bold
-> **orange** accent; light is a warm off-white with the same orange. The accent
-> token is still named `--iris` (= "the accent") across the code. Rounded cards +
-> soft shadows; `.accent-panel` is the warm surface. Data colour (gain/loss) stays
-> reserved for price direction.
+> Brand: **Mizaan** (wordmark MIZAAN + "intelligence"), domain **mizaan.tech**.
+> Theme (rebrand, ref: the Masterful Swing golf landing): **light default** is a
+> warm cream-sage off-white with deep **forest-green** ink; dark is a deep forest
+> green with cream ink. Elegant high-contrast serif display (Playfair Display,
+> `.display`), Newsreader for editorial body, Geist Sans UI, Geist Mono figures.
+> The accent is a restrained **gold**, still named `--iris` (= "the accent") across
+> the code, reserved for OUR OWN computed content — distinct from the green chrome
+> and from price-direction green. Large rounded cards (`--r-card` 22px) + soft,
+> green-tinted shadows; `.accent-panel`/`.glass` are the soft surfaces. Data colour
+> (gain/loss) stays reserved for price direction, always with a glyph + sign.
 
 Standing rules for this repository. Condensed from the master prompt (§2, §3, §4,
 §10, §17). These are non-negotiable; read them before writing code.

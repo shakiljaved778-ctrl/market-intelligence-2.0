@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { geistMono, geistSans, newsreader } from "./fonts";
+import { geistMono, geistSans, newsreader, playfair } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MarketStrip } from "@/components/market/MarketStrip";
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   // Rankings/clustering are computed deterministically; story summaries are
   // AI-written from cited sources.
   description:
-    "Mizaan Intelligence: algorithmically curated market intelligence — signal ranking, cross-source clustering and news-to-price attribution across global and GCC markets, with AI-written story summaries from cited sources.",
+    "Mizaan — a trusted source for market news and live data. Signal-ranked intelligence: cross-source clustering, news-to-price attribution and live quotes across global and GCC markets, with AI-written story summaries from cited sources.",
   applicationName: "Mizaan Intelligence",
   openGraph: {
     type: "website",
@@ -48,8 +48,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0e0e11" },
-    { media: "(prefers-color-scheme: light)", color: "#f3f4f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1510" },
+    { media: "(prefers-color-scheme: light)", color: "#eef1ec" },
   ],
 };
 
@@ -86,7 +86,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${playfair.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh">

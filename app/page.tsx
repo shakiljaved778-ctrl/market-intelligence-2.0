@@ -104,16 +104,15 @@ export default async function BoardPage() {
               <span className="ours" aria-hidden>
                 ◆
               </span>
-              signal over noise
+              a trusted market read
             </p>
-            <h1 className="display text-text-hi mt-4 text-[clamp(2.35rem,5vw,4rem)] leading-[1.02]">
-              Market intelligence, weighted by{" "}
-              <span className="ours">what actually moves it.</span>
+            <h1 className="display display-caps text-text-hi mt-4 text-[clamp(2.1rem,4.8vw,3.9rem)] leading-[1.03]">
+              Market news &amp; data, <span className="ours">ranked by signal.</span>
             </h1>
             <p className="text-text-mid mt-5 max-w-[52ch] text-[15px] leading-relaxed">
               Mizaan ranks which stories matter, binds them to the instruments they
-              move, and writes an AI summary from cited sources — computed
-              deterministically, in USD or QAR.
+              move, pairs them with live quotes, and writes an AI summary from cited
+              sources — computed deterministically, in USD or QAR.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/news" className="btn btn-primary">

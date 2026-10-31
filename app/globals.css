@@ -6,128 +6,129 @@
  * The only saturated colour on a page comes from (a) price direction and
  * (b) --iris, reserved exclusively for OUR OWN computed content.
  *
- * Theme (ref: YureCorp business landing): dark default is near-black neutral with
- * a bold ORANGE accent; light is a warm off-white with the same orange. The
- * accent token is still named --iris across the codebase (= "the accent").
- * Overrides live under [data-theme] and prefers-color-scheme so a cookie-driven
- * theme renders without a flash. Data colour (gain/loss) stays for price only.
+ * Theme (ref: Masterful Swing golf landing): LIGHT default is a warm cream-sage
+ * off-white with deep FOREST-GREEN ink; dark is a deep forest green with cream
+ * ink. The accent is a restrained GOLD, still named --iris across the codebase
+ * (= "the accent"), reserved for OUR OWN computed content — distinct from the
+ * green chrome and from price-direction green. Overrides live under [data-theme]
+ * and prefers-color-scheme so a cookie-driven theme renders without a flash.
+ * Data colour (gain/loss) stays for price only, always with a glyph + sign.
  */
 
 :root {
-  /* Chrome — dark (default). Near-black neutral with a bold ORANGE accent
-     (ref: YureCorp business landing). Rounded cards, soft depth. */
-  --canvas: #0e0e11;
-  --surface: #17171b;
-  --raised: #1d1d22;
-  --raised-2: #24242b;
-  --line: #2a2a31;
-  --line-strong: #3a3a44;
+  /* Chrome — LIGHT default. Rebrand (ref: Masterful Swing golf landing): a warm
+     cream-sage off-white with deep FOREST-GREEN ink; the accent is a restrained
+     GOLD, reserved for OUR OWN computed content (--iris = "the accent"). Price
+     direction keeps gain/loss, always paired with ▲/▼ and a sign (§12). */
+  --canvas: #eef1ec;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --raised-2: #e6ece1;
+  --line: #d9e0d4;
+  --line-strong: #c3ccbc;
 
-  --text-hi: #f5f4f2;
-  --text-mid: #a7a6ad;
-  --text-low: #74737c;
+  --text-hi: #15352a;
+  --text-mid: #4b5c52;
+  --text-low: #8a978c;
 
-  /* Data colour — identical in both modes (it means the same thing). */
-  /* Always paired with ▲/▼ and a sign — never colour alone. */
-  --gain: #34d399;
-  --loss: #f2555a;
+  /* Data colour — price direction only, always with ▲/▼ + sign. */
+  --gain: #1f9d57;
+  --loss: #cf4b43;
 
-  /* Orange accent — brand + "ours". A soft warm surface pairs with it.
-     (The token is still named --iris across the codebase = "the accent".) */
-  --iris: #ff7a1a;
-  --iris-strong: #ff9a45;
-  --accent-soft: #241a10; /* warm panel on dark */
-  --accent-line: #4a3316;
+  /* Gold accent — brand + "ours" (distinct from the green chrome and from the
+     price-direction green). A soft sage panel pairs with it. */
+  --iris: #96781d;
+  --iris-strong: #b8922f;
+  --accent-soft: #e7eee1;
+  --accent-line: #ccd8c4;
 
-  /* Elevation + shape + glow. Softer, rounder — the SaaS reference. */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 28px 70px -24px rgba(0, 0, 0, 0.72);
-  --r-card: 18px;
-  --r-sm: 10px;
+  --shadow-sm: 0 1px 2px rgba(20, 50, 38, 0.06);
+  --shadow-md: 0 14px 34px -16px rgba(20, 50, 38, 0.18);
+  --shadow-lg: 0 30px 72px -26px rgba(20, 50, 38, 0.26);
+  --r-card: 22px;
+  --r-sm: 12px;
   --glow: radial-gradient(
     60% 60% at 50% 0%,
-    color-mix(in srgb, var(--iris) 22%, transparent),
+    color-mix(in srgb, var(--text-hi) 9%, transparent),
     transparent 70%
   );
   --card-top: linear-gradient(
     180deg,
-    color-mix(in srgb, #ffffff 5%, transparent),
-    transparent 40%
+    color-mix(in srgb, #ffffff 72%, transparent),
+    transparent 42%
   );
 
   /* Type scale (§12): 12/13/15/17/21/27/34/44 */
-  --step-0: 0.75rem; /* 12 */
-  --step-1: 0.8125rem; /* 13 */
-  --step-2: 0.9375rem; /* 15 */
-  --step-3: 1.0625rem; /* 17 */
-  --step-4: 1.3125rem; /* 21 */
-  --step-5: 1.6875rem; /* 27 */
-  --step-6: 2.125rem; /* 34 */
-  --step-7: 2.75rem; /* 44 */
-
-  color-scheme: dark;
-}
-
-/* Light mode (default) — a cool, airy near-white with soft LAVENDER surfaces and
-   a violet accent (ref: Biofix health-tech). Soft shadows, generous rounding. */
-:root[data-theme="light"] {
-  --canvas: #faf8f5;
-  --surface: #ffffff;
-  --raised: #ffffff;
-  --raised-2: #fdf3ea;
-  --line: #ece7e0;
-  --line-strong: #ddd6cc;
-
-  --text-hi: #1a1712;
-  --text-mid: #5c574f;
-  --text-low: #9a9389;
-
-  --gain: #10a071;
-  --loss: #e0484d;
-  --iris: #f2660a;
-  --iris-strong: #d9540a;
-  --accent-soft: #fff1e2; /* soft peach panel */
-  --accent-line: #ffd9b8;
-
-  --shadow-sm: 0 1px 2px rgba(120, 80, 40, 0.06);
-  --shadow-md: 0 12px 34px -14px rgba(120, 80, 40, 0.16);
-  --shadow-lg: 0 28px 64px -24px rgba(120, 80, 40, 0.2);
-  --card-top: linear-gradient(
-    180deg,
-    color-mix(in srgb, #ffffff 70%, transparent),
-    transparent 40%
-  );
+  --step-0: 0.75rem;
+  --step-1: 0.8125rem;
+  --step-2: 0.9375rem;
+  --step-3: 1.0625rem;
+  --step-4: 1.3125rem;
+  --step-5: 1.6875rem;
+  --step-6: 2.125rem;
+  --step-7: 2.75rem;
 
   color-scheme: light;
 }
 
-/* Respect OS preference only when the user has not set an explicit theme. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --canvas: #faf8f5;
-    --surface: #ffffff;
-    --raised: #ffffff;
-    --raised-2: #fdf3ea;
-    --line: #ece7e0;
-    --line-strong: #ddd6cc;
+/* DARK — a deep forest green with cream ink and a warm gold accent. */
+:root[data-theme="dark"] {
+  --canvas: #0b1510;
+  --surface: #10201a;
+  --raised: #12241c;
+  --raised-2: #182d23;
+  --line: #233a30;
+  --line-strong: #32513f;
 
-    --text-hi: #1a1712;
-    --text-mid: #5c574f;
-    --text-low: #9a9389;
+  --text-hi: #eef2ea;
+  --text-mid: #a6b7ab;
+  --text-low: #6f8077;
 
-    --gain: #10a071;
-    --loss: #e0484d;
-    --iris: #f2660a;
-    --iris-strong: #d9540a;
-    --accent-soft: #fff1e2;
-    --accent-line: #ffd9b8;
+  --gain: #34d399;
+  --loss: #f26a63;
+  --iris: #d8b45e;
+  --iris-strong: #e7cb85;
+  --accent-soft: #11241b;
+  --accent-line: #294635;
 
-    --shadow-sm: 0 1px 2px rgba(120, 80, 40, 0.06);
-    --shadow-md: 0 12px 34px -14px rgba(120, 80, 40, 0.16);
-    --shadow-lg: 0 28px 64px -24px rgba(120, 80, 40, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 14px 34px -14px rgba(0, 0, 0, 0.62);
+  --shadow-lg: 0 30px 72px -24px rgba(0, 0, 0, 0.72);
+  --card-top: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 6%, transparent),
+    transparent 42%
+  );
 
-    color-scheme: light;
+  color-scheme: dark;
+}
+
+/* Respect OS dark preference only when the user has not set an explicit theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #0b1510;
+    --surface: #10201a;
+    --raised: #12241c;
+    --raised-2: #182d23;
+    --line: #233a30;
+    --line-strong: #32513f;
+
+    --text-hi: #eef2ea;
+    --text-mid: #a6b7ab;
+    --text-low: #6f8077;
+
+    --gain: #34d399;
+    --loss: #f26a63;
+    --iris: #d8b45e;
+    --iris-strong: #e7cb85;
+    --accent-soft: #11241b;
+    --accent-line: #294635;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 14px 34px -14px rgba(0, 0, 0, 0.62);
+    --shadow-lg: 0 30px 72px -24px rgba(0, 0, 0, 0.72);
+
+    color-scheme: dark;
   }
 }
 
@@ -153,6 +154,7 @@
   /* Fonts are injected as CSS variables by next/font in the root layout. */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-display: var(--font-playfair), var(--font-newsreader), ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 }
 
@@ -211,15 +213,16 @@ body {
   color: var(--text-mid);
 }
 
-/* Brand mark: a small hairline square with the iris dot. */
+/* Brand mark: a hairline ring with a gold dot (ref: the golf landing's circular
+   monogram). */
 .mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 22px;
   height: 22px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: 1.5px solid var(--text-hi);
+  border-radius: 50%;
 }
 .mark::after {
   content: "";
@@ -509,13 +512,20 @@ body {
   margin-right: -50vw;
 }
 
-/* Bold display type for marketing headlines — confident and modern. */
+/* Display type for marketing headlines — an elegant high-contrast serif
+   (ref: the golf landing's editorial masthead). */
 .display {
-  font-family: var(--font-sans);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 0.98;
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
   font-size: clamp(2.75rem, 7vw, 5.25rem);
+}
+/* Uppercase, tracked-out serif for the hero masthead. */
+.display-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-weight: 500;
 }
 
 /* Uppercase tracked sub-line, kept restrained. */
@@ -647,16 +657,16 @@ body {
    ============================================================ */
 
 :root {
-  /* Decorative band hues — warm amber/orange to sit with the accent. */
-  --aurora-1: #ff7a1a; /* orange */
-  --aurora-2: #ffb066; /* amber */
-  --aurora-3: #ff8f3a; /* warm orange */
+  /* Decorative band hues — forest green with a warm gold wash (rebrand). */
+  --aurora-1: #1f7a52; /* emerald */
+  --aurora-2: #3f9269; /* sage green */
+  --aurora-3: #d8b45e; /* gold */
   --node-line: color-mix(in srgb, var(--iris) 45%, var(--line-strong));
 }
 :root[data-theme="light"] {
-  --aurora-1: #f2660a;
-  --aurora-2: #ff9a45;
-  --aurora-3: #ffb877;
+  --aurora-1: #74ad8c;
+  --aurora-2: #9fc6ad;
+  --aurora-3: #cdb56c;
   --node-line: color-mix(in srgb, var(--iris) 30%, var(--line-strong));
 }
 
