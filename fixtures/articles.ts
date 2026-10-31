@@ -41,6 +41,12 @@ const T8 = "2026-10-20T12:";
 const T9 = "2026-10-23T12:";
 const T10 = "2026-10-25T12:";
 const T11 = "2026-10-26T12:";
+// Newest batch — late-October, leads the wire (DEMO_NOW pins to newest + 1h).
+const T12 = "2026-10-27T12:";
+const T13 = "2026-10-28T12:";
+const T14 = "2026-10-29T12:";
+const T15 = "2026-10-30T12:";
+const T16 = "2026-10-31T12:";
 
 export const FIXTURE_ARTICLES: RawArticle[] = [
   // --- Fed decision: one event, four sources → one cluster ---
@@ -2356,5 +2362,177 @@ export const FIXTURE_ARTICLES: RawArticle[] = [
     dek: "The stock rose sharply on its first day of trading as investors rushed to buy into one of the year's highest-profile technology listings.",
     url: "https://outlet-b.example/anthropic-debut",
     publishedAt: `${T11}04:00.000Z`,
+  },
+
+  // === Fresh late-October batch (leads the wire) ============================
+
+  // --- LEAD: global stocks at a record, one event across three sources ---
+  {
+    id: 201,
+    sourceId: "reuters",
+    sourceName: "Reuters",
+    tier: "wire",
+    trustScore: 90,
+    headline: "S&P 500 climbs to a record high as rate-cut bets firm",
+    dek: "The S&P 500 hit a fresh all-time high, with gains led by megacap shares including Nvidia and Apple, as Wall Street bet on looser policy ahead.",
+    url: "https://www.reuters.com/markets/global-stocks-record",
+    publishedAt: `${T16}00:00.000Z`,
+  },
+  {
+    id: 202,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "S&P 500 notches another all-time high",
+    dek: "US stocks extended their record run, with the S&P 500 led higher by technology and financial shares.",
+    url: "https://outlet-a.example/global-equity-record",
+    publishedAt: `${T16}02:00.000Z`,
+  },
+  {
+    id: 203,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "S&P 500 rallies to a record as Treasury yields slip",
+    dek: "The S&P 500 advanced to a record and bond yields eased, lifting US equities across the board.",
+    url: "https://outlet-b.example/stocks-records-yields",
+    publishedAt: `${T16}03:30.000Z`,
+  },
+  {
+    id: 214,
+    sourceId: "reuters",
+    sourceName: "Reuters",
+    tier: "wire",
+    trustScore: 90,
+    headline: "Wall Street closes at a record as the S&P 500 leads",
+    dek: "US equities finished at an all-time high, with the S&P 500 and the Nasdaq both setting records as megacap shares rallied.",
+    url: "https://www.reuters.com/markets/wall-street-record-close",
+    publishedAt: `${T16}04:30.000Z`,
+  },
+
+  // --- Science (non-financial) ---
+  {
+    id: 208,
+    sourceId: "nasa",
+    sourceName: "NASA",
+    tier: "primary",
+    trustScore: 100,
+    headline: "NASA probe returns its first asteroid samples to Earth",
+    dek: "A spacecraft delivered pristine material from a near-Earth asteroid, giving researchers a rare, uncontaminated look at the early solar system.",
+    url: "https://www.nasa.gov/mission/asteroid-sample-return",
+    publishedAt: `${T14}05:00.000Z`,
+  },
+
+  // --- Economy: US Q3 GDP ---
+  {
+    id: 204,
+    sourceId: "bea",
+    sourceName: "U.S. Bureau of Economic Analysis",
+    tier: "primary",
+    trustScore: 100,
+    headline: "US economy grew faster than expected in the third quarter",
+    dek: "GDP rose at a stronger annualised pace than forecast as consumer spending and business investment held up into the autumn.",
+    url: "https://www.bea.gov/data/gdp/gross-domestic-product",
+    publishedAt: `${T15}00:00.000Z`,
+  },
+  // --- Markets: gold record ---
+  {
+    id: 206,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Gold climbs to a record as haven demand builds",
+    dek: "Bullion pushed to an all-time high as investors sought safety and bet on lower real interest rates.",
+    url: "https://outlet-a.example/gold-record",
+    publishedAt: `${T15}02:30.000Z`,
+  },
+  // --- Health (non-financial) ---
+  {
+    id: 209,
+    sourceId: "who",
+    sourceName: "World Health Organization",
+    tier: "primary",
+    trustScore: 100,
+    headline: "WHO reports progress in its malaria vaccine rollout",
+    dek: "The health agency said expanded vaccine coverage is cutting childhood cases across several high-burden countries.",
+    url: "https://www.who.int/news/malaria-vaccine-rollout",
+    publishedAt: `${T15}04:00.000Z`,
+  },
+
+  // --- Technology (non-financial): Nvidia AI chip ---
+  {
+    id: 205,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Nvidia unveils its next-generation AI chip",
+    dek: "The chipmaker detailed a new semiconductor aimed at accelerating large AI models, with shipments slated for next year.",
+    url: "https://outlet-b.example/nvidia-next-gen-ai-chip",
+    publishedAt: `${T12}02:00.000Z`,
+  },
+  // --- Economy: ECB decision ---
+  {
+    id: 207,
+    sourceId: "ecb",
+    sourceName: "European Central Bank",
+    tier: "primary",
+    trustScore: 100,
+    headline: "ECB holds interest rates, flags sticky services inflation",
+    dek: "The central bank kept its policy rate unchanged and warned that services inflation remains uncomfortably firm.",
+    url: "https://www.ecb.europa.eu/press/monetary-policy",
+    publishedAt: `${T14}01:30.000Z`,
+  },
+  // --- Markets: bank earnings ---
+  {
+    id: 210,
+    sourceId: "outlet-a",
+    sourceName: "Market Outlet A",
+    tier: "outlet",
+    trustScore: 60,
+    headline: "Big banks beat estimates as trading revenue surges",
+    dek: "Quarterly earnings topped expectations on strong markets activity, lifting the financial sector.",
+    url: "https://outlet-a.example/bank-earnings-beat",
+    publishedAt: `${T14}03:00.000Z`,
+  },
+
+  // --- Sports (non-financial) ---
+  {
+    id: 211,
+    sourceId: "outlet-b",
+    sourceName: "Market Outlet B",
+    tier: "outlet",
+    trustScore: 58,
+    headline: "Qatar to host an expanded club football tournament",
+    dek: "Organisers confirmed a larger field for next year's championship, extending the country's run of major sporting events.",
+    url: "https://outlet-b.example/qatar-club-tournament",
+    publishedAt: `${T13}00:00.000Z`,
+  },
+  // --- Economy: eurozone inflation ---
+  {
+    id: 212,
+    sourceId: "eurostat",
+    sourceName: "Eurostat",
+    tier: "primary",
+    trustScore: 100,
+    headline: "Eurozone inflation eases to a two-year trough",
+    dek: "Headline consumer price growth cooled more than expected, strengthening the case for rate cuts.",
+    url: "https://ec.europa.eu/eurostat/inflation",
+    publishedAt: `${T13}01:00.000Z`,
+  },
+  // --- Markets: oil steadies ---
+  {
+    id: 213,
+    sourceId: "reuters",
+    sourceName: "Reuters",
+    tier: "wire",
+    trustScore: 90,
+    headline: "Oil steadies after OPEC+ signals no change to output",
+    dek: "Crude prices found a floor as the producer group indicated it would keep supply targets unchanged into the next quarter.",
+    url: "https://www.reuters.com/markets/commodities/oil-steadies",
+    publishedAt: `${T12}00:00.000Z`,
   },
 ];

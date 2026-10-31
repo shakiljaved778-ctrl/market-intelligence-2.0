@@ -318,4 +318,44 @@ The debut lands amid intense investor appetite for AI exposure, which has lifted
 
 **Why it matters:** A public Anthropic puts one of the AI race's front-runners under the market's full glare, giving everyday investors a way in and a clearer read on what the industry is really worth.`,
   },
+  201: {
+    model: "editorial-demo",
+    md: `The S&P 500 pushed to a fresh record high, leading global equities higher as investors grew more confident that the Federal Reserve is nearing the end of its tightening cycle. The rally was broad, led by technology and financial shares, while government bond yields eased as traders positioned for rate cuts before year-end.
+
+Records invite caution as readily as optimism: stretched valuations leave less room for disappointment if inflation proves stickier or growth softens. For now, the market is pricing a soft landing — cooling prices without a sharp downturn.
+
+**Why it matters:** The path of rates from here, not the record itself, will decide whether this advance holds — and every incoming inflation and jobs print now carries extra weight.`,
+  },
+  204: {
+    model: "editorial-demo",
+    md: `The U.S. economy expanded at a faster annualised pace than forecasters expected last quarter, as resilient consumer spending and steady business investment offset the drag from higher borrowing costs. The figures point to an economy that has absorbed tighter policy better than many had feared.
+
+Stronger growth is a double-edged read for markets: it supports corporate earnings but can delay the rate relief investors are counting on if it keeps price pressures alive. The composition — how much came from consumption versus inventories — matters for whether the pace can be sustained.
+
+**Why it matters:** Growth this firm complicates the case for early rate cuts, and bonds and rate-sensitive equities will trade on exactly that tension.`,
+  },
+  205: {
+    model: "editorial-demo",
+    md: `Nvidia detailed its next-generation AI accelerator, a chip designed to train and run ever-larger models faster and more efficiently than the hardware powering today's systems. The company framed it as the backbone for the next wave of data-centre build-outs, with volume shipments planned for next year.
+
+Each generation resets the competitive bar for rivals and the cost curve for the cloud providers and AI labs that buy in bulk. Demand has run ahead of supply for successive cycles, making each launch a closely watched signal for the whole AI hardware chain.
+
+**Why it matters:** The pace of AI capability — and the capital pouring into data centres — is gated by chips like this one, so the roadmap ripples far beyond a single company.`,
+  },
+  206: {
+    model: "editorial-demo",
+    md: `Gold pushed to a record high as investors sought safety and wagered that falling real interest rates would make the non-yielding metal more attractive. Haven demand, central-bank buying and a softer dollar have combined to drive a sustained advance.
+
+Records in bullion often say as much about the backdrop as about gold itself — a hedge against uncertainty and a bet that policy will ease. The move tends to track real yields closely, so any shift in the rate outlook can turn it quickly.
+
+**Why it matters:** A record gold price is a vote on where real rates and risk are heading, and a useful cross-check on the optimism showing up in equities.`,
+  },
+  208: {
+    model: "editorial-demo",
+    md: `A NASA spacecraft returned its first samples from a near-Earth asteroid, delivering pristine material that has been shielded from Earth's atmosphere and contamination. Scientists will study the grains for clues about the chemistry of the early solar system and the origins of water and organic molecules.
+
+Sample-return missions are rare and technically demanding: the payoff is material that laboratories can analyse for decades with instruments far more sensitive than anything a spacecraft can carry. Early findings often reshape models of how planets — and the ingredients for life — came together.
+
+**Why it matters:** Hands-on asteroid material is a direct window into the solar system's formation, and a proof point for the precision needed in future deep-space missions.`,
+  },
 };
