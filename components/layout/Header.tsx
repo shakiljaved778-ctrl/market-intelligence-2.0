@@ -5,6 +5,7 @@ import { CurrencyToggle } from "./CurrencyToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { ColorblindToggle } from "./ColorblindToggle";
 import { SymbolSearch } from "@/components/market/SymbolSearch";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 const NAV = [
   { href: "/markets", label: "Markets" },
@@ -26,21 +27,9 @@ export function Header({
   return (
     <header className="border-line bg-canvas/95 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4">
-        {/* Wordmark: hairline mark + bold name + a quiet "intelligence" lockup. */}
-        <Link
-          href="/"
-          className="flex items-center gap-2.5"
-          aria-label="Mizaan Intelligence home"
-        >
-          <span className="mark" aria-hidden />
-          <span className="flex flex-col leading-none">
-            <span className="text-text-hi text-[19px] font-bold tracking-[0.16em]">
-              MIZAA<span className="ours">N</span>
-            </span>
-            <span className="text-text-low mt-1 hidden font-mono text-[9px] tracking-[0.34em] sm:block">
-              INTELLIGENCE
-            </span>
-          </span>
+        {/* Wordmark: balance-beam mark (◆ pivot) + serif name + small-caps tag. */}
+        <Link href="/" aria-label="Mizaan Intelligence home" className="shrink-0">
+          <Wordmark />
         </Link>
 
         {/* Pill nav with mono labels — chrome, not data (desktop). */}
