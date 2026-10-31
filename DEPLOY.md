@@ -50,18 +50,32 @@ The quote/macro refresh runs as Vercel routes, so the provider keys go in the Ve
 project → **Settings → Environment Variables**. Add the ones you have (any subset —
 skip the rest; each one lights up more live data, anything missing stays on fixtures):
 
+> **Minimum to get live intraday quotes:** `FINNHUB_API_KEY` (in Vercel) + a **KV**
+> store (§2a) + `CRON_SECRET` + the GitHub Actions secrets in §2c. Everything else is
+> additive. If you add only one key, make it `FINNHUB_API_KEY` — see the note below.
+
 | Variable | What it turns on |
 |---|---|
-| `FMP_API_KEY` | live stock quotes + profiles + search (free ~250/day) |
+| **`FINNHUB_API_KEY`** | **primary live stock quotes + profiles + search** (free **60/min** — the only free tier that sustains the every-5-min quotes job) |
+| `FRED_API_KEY` | US economic data (free, generous) — powers `/economy` |
+| `FMP_API_KEY` | fundamentals (P/E, margins…) + a quote/profile fallback (free ~250/day) |
 | `POLYGON_API_KEY` | price charts / aggregate candles (free ~5/min) |
 | `EODHD_API_KEY` | end-of-day history + real-time fallback |
-| `FINNHUB_API_KEY` | optional — extra quotes/profiles |
 | `ALPHAVANTAGE_API_KEY` | last-resort quote/daily-candle/profile/search fallback (free ~25/day) |
-| `FRED_API_KEY` | US economic data (free) |
 | `PEXELS_API_KEY` | story cover photos (used by the backfill script/jobs, cached) |
+| `GROQ_API_KEY` | AI story summaries (free tier; jobs/backfill only, cached) |
 | `SEC_USER_AGENT` | e.g. `Mizan you@mizan.com` (required by SEC EDGAR) |
 | `NEXT_PUBLIC_SITE_URL` | your live URL (`https://…`) — fixes OG images + canonical |
 | `CRON_SECRET` | any long random string — protects the refresh jobs |
+
+> **Why Finnhub, not FMP, for quotes.** The `quotes` job refreshes ~55 tracked
+> symbols **every 5 minutes** (≈16k calls/day). Finnhub's free tier is **60 calls per
+> minute**, which sustains that; FMP's free tier is **250 calls per _day_**, so it is
+> exhausted within the first couple of runs and intraday quotes silently stop
+> updating. Set `FINNHUB_API_KEY` for live prices; FMP's daily budget is reserved for
+> low-frequency fundamentals (and stays a quote fallback). Crypto resolves via
+> CoinGecko with **no key** (keyless, ~30/min), so BTC/ETH/… go live as soon as the
+> job runs.
 
 > Free-tier discipline (§2): every provider above is used on its **free tier** and
 > every response is **cached in KV** so pages never re-hit a vendor. Keep them on the
@@ -124,12 +138,15 @@ the repo's **Actions** tab → pick a workflow → **Run workflow**).
 ### Go-live order (quick reference)
 
 1. Level 1 deploy (repo → Vercel → Deploy).
-2. Vercel: create **Postgres** + **KV** storage.
+2. Vercel: create **KV** storage (needed for quotes) + **Postgres** (needed for news).
 3. Locally: `pnpm db:migrate` (then optionally `pnpm db:seed`).
-4. Vercel: paste provider keys + `CRON_SECRET` + `NEXT_PUBLIC_SITE_URL`, redeploy.
-5. GitHub: add the Actions secrets above; run `quotes` + `ingest` once to verify.
-6. Check the live site — quotes and the wire now show live data, cards say the real
-   provider instead of "fixture".
+4. Vercel: add at least **`FINNHUB_API_KEY`** (live quotes) + `FRED_API_KEY` (economy),
+   plus `CRON_SECRET` + `NEXT_PUBLIC_SITE_URL`; redeploy.
+5. GitHub → Settings → Secrets → Actions: add `APP_URL` + `CRON_SECRET` (must match
+   Vercel), and `POSTGRES_URL` + `KV_*` for the news jobs. Then **Actions → quotes →
+   Run workflow** once to verify (expect HTTP 200).
+6. Check the live site — movers/quote pages now say the real provider (e.g. `finnhub`)
+   instead of a "sample" tag; crypto goes live keyless on the first run.
 
 ---
 
