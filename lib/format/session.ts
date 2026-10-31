@@ -91,3 +91,27 @@ export function sessionFor(
     return { state: "post", label: "After hours", delayed: false };
   return { state: "open", label: "Open", delayed: false };
 }
+
+/**
+ * Session state plus minutes to the next relevant boundary (close when open,
+ * open when pre-market), for the header market-status pill. etaMin is null when
+ * there's no same-day boundary (closed / after hours / EOD / 24-7).
+ */
+export function marketCountdown(
+  exchange: string,
+  now: Date = new Date(),
+): { state: SessionState; label: string; etaMin: number | null } {
+  const info = sessionFor(exchange, now);
+  const hours = EXCHANGES[(exchange ?? "").toUpperCase()];
+  if (!hours || hours.alwaysOpen || hours.eodOnly) {
+    return { state: info.state, label: info.label, etaMin: null };
+  }
+  const { minutes } = localParts(hours.tz, now);
+  const openMin = hours.open[0] * 60 + hours.open[1];
+  const closeMin = hours.close[0] * 60 + hours.close[1];
+  if (info.state === "open")
+    return { state: info.state, label: info.label, etaMin: closeMin - minutes };
+  if (info.state === "pre")
+    return { state: info.state, label: info.label, etaMin: openMin - minutes };
+  return { state: info.state, label: info.label, etaMin: null };
+}
