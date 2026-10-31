@@ -81,33 +81,31 @@ export default async function QuotePage({ params }: Params) {
         <div className="mx-auto max-w-[1280px] px-4 py-8">
           <div className="fade-up flex flex-wrap items-end justify-between gap-4">
             <div>
-              <div className="text-text-mid flex items-center gap-2 text-[13px]">
-                <h1 className="page-title !text-[clamp(1.5rem,3vw,2rem)]">
-                  {meta?.name ?? sym}
-                </h1>
-                <span className="tnum">{sym}</span>
-                {meta ? <span className="text-text-low">· {meta.exchange}</span> : null}
+              <div className="text-ink-2 flex items-center gap-2 text-[13px]">
+                <h1 className="t-h3 font-editorial text-ink">{meta?.name ?? sym}</h1>
+                <span className="tnum text-ink-3">{sym}</span>
+                {meta ? <span className="text-ink-4">· {meta.exchange}</span> : null}
               </div>
-              <div className="mt-2 flex items-baseline gap-3">
-                <span className="tnum text-text-hi text-[34px]">
+              <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span className="tnum text-ink text-[clamp(2.5rem,6vw,4rem)] leading-none font-medium">
                   {formatMoney(quote.priceUsd, currency)}
                 </span>
                 <span
-                  className={`tnum flex items-center gap-1.5 text-[15px] ${dirClass}`}
+                  className={`tnum flex items-center gap-1.5 text-[18px] ${dirClass}`}
                 >
                   <span aria-hidden>{directionGlyph(quote.change)}</span>
                   {formatMoney(Math.abs(quote.change), currency)}
-                  <span className="text-text-mid">·</span>
+                  <span className="text-ink-4">·</span>
                   {formatPercent(quote.changePct)}
                 </span>
               </div>
             </div>
             <div className="text-right">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] ${
+                className={`inline-flex items-center gap-1.5 rounded-[6px] border px-2.5 py-1 text-[12px] ${
                   session.state === "open"
-                    ? "border-gain/40 dir-gain bg-gain/10"
-                    : "border-line text-text-mid"
+                    ? "border-up/40 text-up bg-up-soft"
+                    : "border-hairline text-ink-2"
                 }`}
               >
                 {session.state === "open" ? (
