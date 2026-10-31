@@ -8,10 +8,13 @@ import Link from "next/link";
 export function InstrumentChip({
   symbol,
   changePct,
+  asLink = true,
   className,
 }: {
   symbol: string;
   changePct?: number | null;
+  /** false renders a non-interactive span — use inside another link (e.g. a card). */
+  asLink?: boolean;
   className?: string;
 }) {
   const hasChange = typeof changePct === "number" && Number.isFinite(changePct);
@@ -27,11 +30,8 @@ export function InstrumentChip({
     hasChange && changePct! > 0 ? "+" : hasChange && changePct! < 0 ? "−" : "";
   const color = dir === "up" ? "text-up" : dir === "down" ? "text-down" : "text-ink-3";
 
-  return (
-    <Link
-      href={`/quote/${symbol}`}
-      className={`border-hairline hover:border-hairline-strong text-ink-2 hover:text-ink inline-flex items-center gap-1.5 rounded-[4px] border px-1.5 py-0.5 text-[11px] transition-colors ${className ?? ""}`}
-    >
+  const inner = (
+    <>
       <span className="tnum font-medium">{symbol}</span>
       {hasChange ? (
         <span className={`tnum inline-flex items-center gap-0.5 ${color}`}>
@@ -40,6 +40,20 @@ export function InstrumentChip({
           {Math.abs(changePct!).toFixed(2)}%
         </span>
       ) : null}
+    </>
+  );
+
+  const base = `border-hairline text-ink-2 inline-flex items-center gap-1.5 rounded-[4px] border px-1.5 py-0.5 text-[11px] ${className ?? ""}`;
+
+  if (!asLink) {
+    return <span className={base}>{inner}</span>;
+  }
+  return (
+    <Link
+      href={`/quote/${symbol}`}
+      className={`${base} hover:border-hairline-strong hover:text-ink transition-colors`}
+    >
+      {inner}
     </Link>
   );
 }
