@@ -19,6 +19,8 @@
     "job:ingest": "tsx jobs/ingest.ts",
     "job:cluster": "tsx jobs/cluster.ts",
     "test:e2e": "playwright test",
+    "visual:baseline": "playwright test --config playwright.visual.config.ts --update-snapshots",
+    "visual:compare": "playwright test --config playwright.visual.config.ts",
     "check:colors": "node scripts/check-colors.mjs"
   },
   "dependencies": {
