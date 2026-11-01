@@ -21,7 +21,7 @@ unapproved diff above 0.5% (outside masked live data).
 | # | Phase | Status | Branch | Notes |
 |---|---|---|---|---|
 | 0 | Guardrails, audit, baseline | ✅ done | `claude/wonderful-davinci-3fxwpg` | Rules in CLAUDE.md; docs/AUDIT.md; visual baseline (36 shots) + `visual:compare` gate |
-| 1 | Market data integrity | ⏳ pending | | **Blocked on live keys** — see AUDIT §9; builds validation + hide-when-empty |
+| 1 | Market data integrity | ✅ done | `claude/wonderful-davinci-3fxwpg` | Sanity layer + tests; GCC spotlight hidden (no real source); recap ≥80% gate; peg already centralised |
 | 2 | News feed quality | ⏳ pending | | Dedupe/quality-gate/classifier machinery; needs real feeds for live effect |
 | 3 | Technical SEO | ⏳ pending | | Per-route metadata, split sitemaps, news-sitemap, RSS/section, per-slug OG |
 | 4 | Google News / E-E-A-T | ⏳ pending | | Author entity, trust pages, bylines, corrections log |
@@ -50,6 +50,39 @@ unapproved diff above 0.5% (outside masked live data).
   - `tests/visual-baseline/{mobile,desktop}/*.png` — committed baselines.
   - npm scripts: `visual:baseline` (record), `visual:compare` (verify).
 - Verified: `pnpm visual:compare` → **36 passed**; `tsc`, `eslint`, `prettier` clean.
+
+## Phase 1 — what was built (market data integrity)
+
+- **`lib/market/sanity.ts`** + **`sanity.test.ts`** (7 tests): the single server-side
+  validator — rejects null/zero/negative prices, rejects stale quotes (delay + 24h
+  grace), flags outliers (>15% stock / >5% index) and requires a second source within
+  1% else falls back to the last-valid value (keeping its timestamp). Logs every
+  rejection.
+- **`lib/market/read.ts`**: every live quote now passes through `sanitizeQuote()` at the
+  single `liveQuote()` chokepoint (used by `readQuote` + `readUniverse` = all widgets),
+  so a bad live value is dropped and the widget falls back to a clearly-labelled sample.
+  (Outlier second-source confirmation belongs in the ingest job — it has a 2nd provider
+  and the prior value; wire it there in a later pass.)
+- **`lib/market/indices.ts`** + **`app/page.tsx`**: GCC spotlight now reads **real** GCC
+  EOD levels from cache (`market:index:<symbol>`); with no such source configured it
+  returns `[]`, so the spotlight **hides** (logs a warning) instead of showing
+  illustrative values. **This is the one intended visual change in Phase 1** — the
+  homepage baseline was re-recorded. The block reappears automatically once a real GCC
+  EOD provider writes those keys.
+- **`lib/narrative/read.ts`**: session recap is only built when ≥80% of tracked indices
+  have a valid close (fixture mode is 100% valid, so the demo is unchanged).
+- **QAR peg**: already a single constant (`lib/currency/peg.ts`) imported everywhere —
+  no change needed.
+- Verified: `tsc`, `eslint`, `prettier`, `check:colors` clean; **98 unit tests pass**;
+  `pnpm visual:compare` → **36 passed** (only the home shots changed, as intended).
+
+### Deferred from Phase 1 (reported, not silently skipped)
+- **Wholesale fixture removal** was NOT done: with zero live keys it would blank the
+  production site (violates the zero-key invariant). Fixtures stay as the *labelled*
+  fallback; the sanity layer + GCC-hide give the "real-or-hidden" behaviour where it
+  matters. Flip fully to real data by adding the keys in `DEPLOY.md`.
+- **Outlier second-source confirmation** at ingest time (needs a 2nd provider call in
+  the quotes job) — validator is built & tested, wiring deferred.
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch

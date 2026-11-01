@@ -1,4 +1,5 @@
 import { getKvStore } from "@/lib/cache/store";
+import { sanitizeQuote } from "@/lib/market/sanity";
 import { dbCandles, dbLatestQuote } from "@/lib/db/queries/read";
 import { dbLatestFundamentals } from "@/lib/db/queries/fundamentals";
 import { fixtureCandles } from "@/fixtures/candles";
@@ -53,8 +54,13 @@ function universeToQuote(row: UniverseRow): Quote {
 async function liveQuote(symbol: string): Promise<Quote | null> {
   const sym = symbol.toUpperCase();
   const cached = await kvGet<Quote>(`market:quote:${sym}`);
-  if (cached) return cached;
-  return dbLatestQuote(sym);
+  const raw = cached ?? (await dbLatestQuote(sym));
+  // Every widget's live quote passes through the sanity layer (Phase 1 data
+  // integrity): a null/zero/negative or stale value is dropped so the caller
+  // falls back to a clearly-labelled sample rather than showing a bad number.
+  // (Outlier second-source confirmation happens in the ingest job, which has a
+  // second provider and the prior value to compare against.)
+  return sanitizeQuote(raw);
 }
 
 export async function readQuote(symbol: string): Promise<Quote | null> {

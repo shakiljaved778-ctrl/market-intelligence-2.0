@@ -16,7 +16,8 @@ import {
 } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
-import { INDEX_STRIP } from "@/fixtures/indices";
+import type { IndexStripItem } from "@/fixtures/indices";
+import { readGccIndices } from "@/lib/market/indices";
 import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 
 function StatTile({
@@ -55,7 +56,7 @@ function LatestRow({ c }: { c: WireCluster }) {
   );
 }
 
-function GccCard({ item }: { item: (typeof INDEX_STRIP)[number] }) {
+function GccCard({ item }: { item: IndexStripItem }) {
   const dir = directionOf(item.change);
   const sd = dir === "gain" ? "up" : dir === "loss" ? "down" : "flat";
   const color = sd === "up" ? "text-up" : sd === "down" ? "text-down" : "text-ink-3";
@@ -107,7 +108,9 @@ export default async function BoardPage() {
     .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime())
     .slice(0, 8);
   const sessionRecap = listRecaps().find((r) => r.kind === "session_close");
-  const gcc = INDEX_STRIP.filter((i) => i.region === "GCC");
+  // Real GCC index levels only — hides the spotlight when no provider returns
+  // them, rather than showing illustrative values (Phase 1 §3).
+  const gcc = await readGccIndices();
 
   const bySection = new Map<string, WireCluster[]>();
   for (const c of clusters) {
@@ -322,7 +325,7 @@ export default async function BoardPage() {
             ))}
           </div>
           <p className="text-ink-4 t-micro mt-3">
-            GCC indices are EOD-only (no free intraday feed) · illustrative sample
+            GCC indices · end-of-day (prior close), per exchange
           </p>
         </section>
       ) : null}
