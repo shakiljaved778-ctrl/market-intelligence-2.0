@@ -6,6 +6,7 @@ import { UNIVERSE } from "@/fixtures/universe";
 import { isDbConfigured } from "@/lib/db/client";
 import { dbReadWire, type DbWireRow } from "@/lib/db/queries/wire";
 import { HashEmbedder } from "@/lib/curation/embed";
+import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedupe";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
 import {
@@ -148,6 +149,25 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
   };
 }
 
+/**
+ * Collapse near-duplicate clusters on the live wire (Phase 2 §2): keep the first
+ * of any same-section group whose titles are near-identical (token Jaccard ≥
+ * threshold), dropping the rest so a paraphrase never appears as a second card.
+ * Input is assumed importance-ranked, so the kept one is the stronger cluster.
+ */
+function collapseNearDuplicates(list: LoadedCluster[]): LoadedCluster[] {
+  const kept: LoadedCluster[] = [];
+  for (const l of list) {
+    const dup = kept.some(
+      (k) =>
+        k.cluster.section === l.cluster.section &&
+        titleSimilarity(k.cluster.title, l.cluster.title) >= DEFAULT_JACCARD_THRESHOLD,
+    );
+    if (!dup) kept.push(l);
+  }
+  return kept;
+}
+
 /** Compute the ranked wire deterministically from the fixture articles. */
 async function computeFixtureClusters(): Promise<LoadedCluster[]> {
   const ranked = await runPipeline(
@@ -182,7 +202,13 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
     try {
       const rows = await dbReadWire();
       if (rows.length > 0) {
-        const live = rows.map(dbLoaded);
+        // Phase 2 §2: on the LIVE wire, collapse near-duplicate clusters (same
+        // section, title Jaccard ≥ threshold) so a paraphrase never shows twice.
+        // The curated fixtures below are authored demo content and are exempt, so
+        // the zero-key demo is unchanged. (Per-section freshness windows —
+        // lib/curation/freshness.ts — gate the homepage/section fronts, not the
+        // full /news wire, and are applied at the rendering layer in live mode.)
+        const live = collapseNearDuplicates(rows.map(dbLoaded));
         const liveSlugs = new Set(live.map((l) => l.cluster.slug));
         const curated = (await computeFixtureClusters()).filter(
           (l) => !liveSlugs.has(l.cluster.slug),

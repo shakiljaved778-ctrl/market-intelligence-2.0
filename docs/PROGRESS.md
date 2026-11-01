@@ -22,7 +22,7 @@ unapproved diff above 0.5% (outside masked live data).
 |---|---|---|---|---|
 | 0 | Guardrails, audit, baseline | ✅ done | `claude/wonderful-davinci-3fxwpg` | Rules in CLAUDE.md; docs/AUDIT.md; visual baseline (36 shots) + `visual:compare` gate |
 | 1 | Market data integrity | ✅ done | `claude/wonderful-davinci-3fxwpg` | Sanity layer + tests; GCC spotlight hidden (no real source); recap ≥80% gate; peg already centralised |
-| 2 | News feed quality | ⏳ pending | | Dedupe/quality-gate/classifier machinery; needs real feeds for live effect |
+| 2 | News feed quality | ✅ done | `claude/wonderful-davinci-3fxwpg` | Classifier fix + 20 tests; quality gate, Jaccard dedupe, freshness modules (+tests); generic world headlines reworded |
 | 3 | Technical SEO | ⏳ pending | | Per-route metadata, split sitemaps, news-sitemap, RSS/section, per-slug OG |
 | 4 | Google News / E-E-A-T | ⏳ pending | | Author entity, trust pages, bylines, corrections log |
 | 5 | Programmatic GCC stock pages | ⏳ pending | | Needs a GCC EOD data source (none configured yet) |
@@ -83,6 +83,41 @@ unapproved diff above 0.5% (outside masked live data).
   matters. Flip fully to real data by adding the keys in `DEPLOY.md`.
 - **Outlier second-source confirmation** at ingest time (needs a 2nd provider call in
   the quotes job) — validator is built & tested, wiring deferred.
+
+## Phase 2 — what was built (news feed quality)
+
+- **Classifier fix** (`content/sections.yaml`): moved `space launch`/`satellite` out of
+  `technology` into `science` (+ `space agency`, `spacecraft`, `rocket launch`, `asteroid`,
+  `astronomy`) so space-agency stories go to Science, and added index names
+  (`ftse`, `dow jones`, `nikkei`, `dax`, `hang seng`) to Markets. **20 labelled test
+  cases** in `section.test.ts` lock it in (covering the cited FTSE→Markets, NASA→Science bugs).
+- **Quality gate** (`lib/curation/quality.ts` + tests): headline must name a specific
+  entity/number; raw institutional titles ("Minutes of the Meeting…", "Monetary policy
+  decisions") are flagged for rewrite; summaries must be ≥40 words with every number
+  present in a cited source. **Wired into `ingestAll`** (live) — seed-style headlines are
+  dropped, institutional titles kept for rewrite, every drop logged.
+- **Near-duplicate guard** (`lib/curation/dedupe.ts` + tests): same-section, 72h, title
+  token Jaccard. **Wired into the live wire read** (`lib/news/read.ts` →
+  `collapseNearDuplicates`) so a paraphrase never shows twice; curated fixtures exempt.
+- **Freshness windows** (`lib/curation/freshness.ts` + tests): Markets/Econ/Crypto 48h,
+  World/Tech/RE 72h, Science/Health 7d, Eureka evergreen (no age stamp).
+- **Fixture cleanup**: the three generic "world" headlines ("Leaders gather…", "Historic
+  peace deal…", "Voters head to the polls…") reworded to name concrete entities
+  (G20 summit, UN ceasefire, election with 70% turnout); all still classify to `world`.
+- Verified: `tsc`, `eslint`, `prettier` clean; **138 unit tests pass**; `visual:compare`
+  → **36/36** (headline rewording is content, under the 0.5% threshold — no design change).
+
+### Deferred from Phase 2 (reported, not silently skipped)
+- **Institutional-title *rewriting*** (§4): the detector is built & wired; the actual
+  rewrite into a factual headline needs the Groq summariser (runs only with a key).
+- **Freshness *wiring*** at the homepage/section-front rendering layer: the module is
+  built & tested but not yet applied to the read, because applying it globally dropped a
+  legitimately-old live story in the merge test and would churn the fixture baseline.
+  Apply it in the homepage/section-front selection in live mode.
+- **Hero rule** (§7: lead needs 3+ sources & <24h) — not wired this pass (would change the
+  fixture lead / baseline); build as a `pickHero` helper applied in live mode.
+- **Real resolving source URLs / 7-day pipeline replay** (§1, §8): need live feeds + keys;
+  fixtures keep `*.example` URLs as the labelled demo fallback (same call as Phase 1).
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch

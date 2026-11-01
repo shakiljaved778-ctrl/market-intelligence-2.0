@@ -65,6 +65,109 @@ describe("section classifier (deterministic, dictionary-driven)", () => {
   });
 });
 
+describe("section classifier — 20 labelled cases (Phase 2 §5)", () => {
+  beforeEach(() => __resetSectionCache());
+
+  type Case = {
+    title: string;
+    dek?: string;
+    topics?: string[];
+    tickers?: string[];
+    expected: string;
+  };
+
+  const CASES: Case[] = [
+    // Equity indices / earnings / stock moves → markets (incl. the cited FTSE bug).
+    {
+      title: "FTSE 100 climbs to a record on strong UK company results",
+      expected: "markets",
+    },
+    {
+      title: "Apple beats on earnings as iPhone sales rebound",
+      topics: ["earnings"],
+      tickers: ["AAPL"],
+      expected: "markets",
+    },
+    {
+      title: "Gold sets a record as investors hedge against uncertainty",
+      expected: "markets",
+    },
+    { title: "OPEC+ agrees to hold oil output steady", expected: "markets" },
+    { title: "Nikkei 225 rallies to a multi-decade high", expected: "markets" },
+    // Space agencies → science (the cited NASA-under-Tech bug).
+    {
+      title: "NASA resupply mission launches to the space station",
+      expected: "science",
+    },
+    {
+      title: "A satellite deployment expands global broadband coverage",
+      expected: "science",
+    },
+    {
+      title: "Astronomers map a distant asteroid in unprecedented detail",
+      expected: "science",
+    },
+    {
+      title: "Scientists sequence the genome of an extinct species",
+      expected: "science",
+    },
+    // Tech & AI only for tech companies / AI / digital products.
+    {
+      title: "OpenAI launches a faster AI model with better reasoning",
+      expected: "technology",
+    },
+    { title: "Nvidia unveils its next-generation AI chip", expected: "technology" },
+    // Macro → economy.
+    {
+      title: "US CPI cools to a three-year low",
+      topics: ["inflation"],
+      expected: "economy",
+    },
+    {
+      title: "Fed holds interest rates steady, signals patience on cuts",
+      topics: ["monetary_policy"],
+      expected: "economy",
+    },
+    // Crypto, real estate.
+    {
+      title: "Regulators clear first options on spot bitcoin ETFs",
+      expected: "crypto",
+    },
+    {
+      title: "Qatar home prices rise as mortgage demand firms",
+      expected: "realestate",
+    },
+    // Non-financial verticals.
+    { title: "WHO warns of a new measles outbreak in the region", expected: "health" },
+    { title: "Manchester United advance in the Champions League", expected: "sports" },
+    {
+      title: "A new Marvel film tops the global box office",
+      expected: "entertainment",
+    },
+    {
+      title: "Nobel Prize in Physics awarded for quantum research",
+      dek: "The laureate was honoured for foundational work.",
+      expected: "eureka",
+    },
+    { title: "G20 leaders meet for a diplomatic summit on trade", expected: "world" },
+  ];
+
+  it("has 20 cases", () => expect(CASES).toHaveLength(20));
+
+  for (const c of CASES) {
+    it(`"${c.title}" → ${c.expected}`, () => {
+      expect(
+        classifySection({
+          title: c.title,
+          dek: c.dek ?? null,
+          topics: c.topics,
+          tickers: c.tickers,
+        }),
+      ).toBe(c.expected);
+    });
+  }
+});
+
 describe("editorial mix (§13 product rule)", () => {
   beforeEach(() => __resetSectionCache());
 
