@@ -8,6 +8,7 @@ import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { getThemePref, getColorblind } from "@/lib/theme/server";
 import { SITE_URL } from "@/lib/site";
+import { siteLd } from "@/lib/seo";
 
 const siteUrl = SITE_URL;
 
@@ -23,8 +24,8 @@ function safeUrl(value: string): URL | undefined {
 export const metadata: Metadata = {
   metadataBase: safeUrl(siteUrl),
   title: {
-    default: "Mizaan Intelligence",
-    template: "%s · Mizaan Intelligence",
+    default: "Mizaan Intelligence — GCC & Global Market News, Live Data and Analysis",
+    template: "%s | Mizaan",
   },
   // Rankings/clustering are computed deterministically; story summaries are
   // AI-written from cited sources.
@@ -65,29 +66,8 @@ export default async function RootLayout({
   // "system" sets no data-theme attribute, so CSS resolves via prefers-color-scheme.
   const dataTheme = themePref === "system" ? undefined : themePref;
 
-  // Organization + WebSite JSON-LD (§6 SEO). SearchAction points at our search API.
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        name: "Mizaan Intelligence",
-        url: siteUrl,
-        description:
-          "Algorithmically curated market intelligence for global and GCC markets.",
-      },
-      {
-        "@type": "WebSite",
-        name: "Mizaan Intelligence",
-        url: siteUrl,
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${siteUrl}/api/market/search?q={query}`,
-          "query-input": "required name=query",
-        },
-      },
-    ],
-  };
+  // Organization + WebSite JSON-LD (§6 SEO), built from our own constants.
+  const jsonLd = siteLd();
 
   return (
     <html

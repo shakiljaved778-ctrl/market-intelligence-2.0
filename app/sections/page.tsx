@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canonical } from "@/lib/seo";
 import { CoverArt } from "@/components/news/CoverArt";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { readSectionSummaries } from "@/lib/news/read";
@@ -7,6 +8,7 @@ export const metadata = {
   title: "Sections",
   description:
     "Markets-first, with a deliberate non-financial mix — technology, health, sport, culture and science — to keep the whole picture in view.",
+  alternates: { canonical: canonical("/sections") },
 };
 
 export default async function SectionsPage() {

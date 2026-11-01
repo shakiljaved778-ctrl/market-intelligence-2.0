@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { pageMeta } from "@/lib/seo";
 import { Movers } from "@/components/market/Movers";
 import {
   SectorHeatmap,
@@ -24,7 +25,11 @@ function cryptoRows(): MarketQuoteRow[] {
     }));
 }
 
-export const metadata = { title: "Markets" };
+export const metadata = pageMeta(
+  "/markets",
+  "Markets — global & GCC",
+  "Global and GCC markets: session clocks, movers, a sector heatmap and a server-side screener. Index levels are currency-neutral and never converted.",
+);
 
 /** Heatmap data: equities grouped by sector, sized by market cap. */
 function heatmapData(): HeatGroup[] {

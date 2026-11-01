@@ -1,9 +1,14 @@
 import Link from "next/link";
+import { pageMeta } from "@/lib/seo";
 import { MacroChart } from "@/components/economy/MacroChart";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { readMacroSeries, readYieldCurve } from "@/lib/economy/read";
 
-export const metadata = { title: "Economy" };
+export const metadata = pageMeta(
+  "/economy",
+  "Economy — macro dashboard",
+  "US and global macro: inflation, growth, jobs and central-bank rates, charted from FRED and World Bank data with the economic calendar.",
+);
 
 export default async function EconomyPage() {
   const [series, curve] = await Promise.all([readMacroSeries(), readYieldCurve()]);

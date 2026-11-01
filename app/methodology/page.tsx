@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canonical } from "@/lib/seo";
 import { Prose } from "@/components/layout/Prose";
 import { QAR_PER_USD, pegReviewedOn } from "@/lib/currency/peg";
 
@@ -6,6 +7,7 @@ export const metadata = {
   title: "Methodology",
   description:
     "How Mizaan works: where data comes from, how stories are clustered and ranked, what 'computed' means, and what delays apply.",
+  alternates: { canonical: canonical("/methodology") },
 };
 
 export default function MethodologyPage() {

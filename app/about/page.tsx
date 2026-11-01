@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { canonical } from "@/lib/seo";
 import { Prose } from "@/components/layout/Prose";
 
 export const metadata = {
   title: "About",
   description:
     "Mizaan surfaces which stories matter, which instruments they move, and how markets responded — signal over an undifferentiated firehose.",
+  alternates: { canonical: canonical("/about") },
 };
 
 export default function AboutPage() {

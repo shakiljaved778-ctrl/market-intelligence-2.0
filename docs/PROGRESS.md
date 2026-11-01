@@ -23,7 +23,7 @@ unapproved diff above 0.5% (outside masked live data).
 | 0 | Guardrails, audit, baseline | ✅ done | `claude/wonderful-davinci-3fxwpg` | Rules in CLAUDE.md; docs/AUDIT.md; visual baseline (36 shots) + `visual:compare` gate |
 | 1 | Market data integrity | ✅ done | `claude/wonderful-davinci-3fxwpg` | Sanity layer + tests; GCC spotlight hidden (no real source); recap ≥80% gate; peg already centralised |
 | 2 | News feed quality | ✅ done | `claude/wonderful-davinci-3fxwpg` | Classifier fix + 20 tests; quality gate, Jaccard dedupe, freshness modules (+tests); generic world headlines reworded |
-| 3 | Technical SEO | ⏳ pending | | Per-route metadata, split sitemaps, news-sitemap, RSS/section, per-slug OG |
+| 3 | Technical SEO | ✅ done | `claude/wonderful-davinci-3fxwpg` | Per-route titles/canonicals, JSON-LD (+test), sitemap index+4 children, robots, clean section routes, per-slug OG, per-section RSS |
 | 4 | Google News / E-E-A-T | ⏳ pending | | Author entity, trust pages, bylines, corrections log |
 | 5 | Programmatic GCC stock pages | ⏳ pending | | Needs a GCC EOD data source (none configured yet) |
 | 6 | Newsletter + daily briefing | ⏳ pending | | Resend; env RESEND_* |
@@ -118,6 +118,38 @@ unapproved diff above 0.5% (outside masked live data).
   fixture lead / baseline); build as a `pickHero` helper applied in live mode.
 - **Real resolving source URLs / 7-day pipeline replay** (§1, §8): need live feeds + keys;
   fixtures keep `*.example` URLs as the labelled demo fallback (same call as Phase 1).
+
+## Phase 3 — what was built (technical SEO)
+
+- **`lib/seo.ts`** (+ `seo.test.ts`, 7 tests): `canonical()`, `ogImage()`, `pageMeta()`
+  and the JSON-LD builders (Organization, WebSite+SearchAction, NewsArticle, BreadcrumbList,
+  Corporation, graph). One source of truth, unit-tested.
+- **Titles**: template `%s | Mizaan`; home `Mizaan Intelligence — GCC & Global Market News…`;
+  unique title + description + canonical on markets, economy, calendar, screener, news,
+  sections, methodology, about, home.
+- **Quote pages**: `[Name] ([SYMBOL]) Share Price Today, News & Chart | Mizaan`, description,
+  canonical, per-symbol OG, BreadcrumbList + Corporation (tickerSymbol) JSON-LD.
+- **Article pages**: canonical, per-slug OG, NewsArticle (publisher logo, `isBasedOn` sources,
+  image) + BreadcrumbList JSON-LD.
+- **Clean section routes** `/news/section/[section]` (reuse the News page, identical render);
+  `/news?section=x` canonicalises to them.
+- **Sitemap index** at `/sitemap.xml` → children `/sitemaps/{pages,news-articles,quotes,recaps}.xml`
+  (plain route handlers — Next's `generateSitemaps` 404s its index; quotes = resolvable only;
+  ready to split past 45k URLs). Verified serving valid XML.
+- **robots.txt**: allow `/` + `/api/og`; disallow `/api/`, `/search`, `/preview`; Host + sitemap.
+- **RSS**: `/feed.xml` (latest 50) + `/feed/[section]` per vertical (`lib/rss.ts` shared),
+  with `<link rel=alternate>` on section pages.
+- **IndexNow** (`lib/indexnow.ts`): env-gated `pingIndexNow()` helper (no-op without key).
+- Verified: `tsc`, `eslint`, `prettier` clean; **145 unit tests**; `visual:compare` **36/36**
+  (all SEO is in `<head>`/routes — zero design change); live curl of robots, sitemap index,
+  child sitemaps, per-section RSS, quote JSON-LD and clean section route all correct.
+
+### Deferred from Phase 3 (reported, not silently skipped)
+- **IndexNow activation**: helper built; hosting the `<key>.txt` verification file and
+  calling `pingIndexNow` on publish is a live-mode wiring (needs `INDEXNOW_KEY` + the jobs).
+- **410 for removed articles**: no "removed" store exists yet; 404 is correct until one does.
+- **noindex on search/pagination**: no user-facing search-results route or paginated route
+  exists (search is a modal over `/api/market/search`, already disallowed), so nothing to tag.
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch

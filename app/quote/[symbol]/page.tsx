@@ -15,6 +15,7 @@ import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent
 import { relativeTime } from "@/lib/format/relative-time";
 import { sessionFor } from "@/lib/format/session";
 import { universeBySymbol } from "@/fixtures/universe";
+import { breadcrumbLd, canonical, corporationLd, graph, ogImage } from "@/lib/seo";
 
 interface Params {
   params: Promise<{ symbol: string }>;
@@ -23,7 +24,25 @@ interface Params {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { symbol } = await params;
   const sym = symbol.toUpperCase();
-  return { title: `${sym} — quote` };
+  const meta = universeBySymbol(sym);
+  const name = meta?.name ?? sym;
+  const title = `${name} (${sym}) Share Price Today, News & Chart`;
+  const description = `Live ${name} (${sym}) price, chart and the latest Mizaan news coverage across global and GCC markets. Delayed data, source-stamped.`;
+  const url = canonical(`/quote/${sym}`);
+  const image = ogImage(`${name} (${sym})`, "quote");
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url,
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: { card: "summary_large_image", title, images: [image] },
+  };
 }
 
 export default async function QuotePage({ params }: Params) {
@@ -74,8 +93,26 @@ export default async function QuotePage({ params }: Params) {
     },
   ];
 
+  // BreadcrumbList + Corporation structured data (§6 SEO).
+  const jsonLd = graph(
+    breadcrumbLd([
+      { name: "Home", path: "/" },
+      { name: "Markets", path: "/markets" },
+      { name: meta?.name ?? sym, path: `/quote/${sym}` },
+    ]),
+    corporationLd({
+      name: meta?.name ?? sym,
+      ticker: sym,
+      url: canonical(`/quote/${sym}`),
+    }),
+  );
+
   return (
     <div className="pb-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Price header with session state and delay label (§13). */}
       <div className="header-band bleed">
         <div className="mx-auto max-w-[1280px] px-4 py-8">

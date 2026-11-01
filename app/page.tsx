@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canonical } from "@/lib/seo";
 import { CoverArt } from "@/components/news/CoverArt";
 import { SectionTag } from "@/components/news/SectionTag";
 import { StoryCard } from "@/components/news/StoryCard";
@@ -90,6 +91,8 @@ function GccCard({ item }: { item: IndexStripItem }) {
     </div>
   );
 }
+
+export const metadata = { alternates: { canonical: canonical("/") } };
 
 export default async function BoardPage() {
   const [currency, clusters, summary] = await Promise.all([

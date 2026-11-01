@@ -15,7 +15,7 @@ import { ReadingProgress } from "@/components/news/ReadingProgress";
 import { ShareButtons } from "@/components/ui/ShareButtons";
 import { SignalScore } from "@/components/ui/SignalScore";
 import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
-import { SITE_URL } from "@/lib/site";
+import { breadcrumbLd, canonical, graph, newsArticleLd, ogImage } from "@/lib/seo";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -24,7 +24,25 @@ interface Params {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const detail = await readCluster(slug);
-  return { title: detail?.cluster.title ?? "Story" };
+  if (!detail) return { title: "Story" };
+  const { cluster } = detail;
+  const description = (cluster.dek ?? cluster.title).slice(0, 150);
+  const section = sectionMeta(cluster.section).label;
+  const image = ogImage(cluster.title, section);
+  const url = canonical(`/news/${slug}`);
+  return {
+    title: cluster.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: cluster.title,
+      description,
+      url,
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: { card: "summary_large_image", title: cluster.title, images: [image] },
+  };
 }
 
 export default async function ClusterPage({ params }: Params) {
@@ -49,20 +67,28 @@ export default async function ClusterPage({ params }: Params) {
   ).filter((x): x is { symbol: string; quote: Quote } => x !== null);
   const more = sectionWire.filter((c) => c.slug !== cluster.slug).slice(0, 4);
 
-  // NewsArticle structured data (§6 SEO) — built from our own fields.
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: cluster.title,
-    description: cluster.dek ?? undefined,
-    datePublished: cluster.eventTime,
-    dateModified: cluster.eventTime,
-    articleSection: sectionMeta(cluster.section).label,
-    url: `${SITE_URL}/news/${cluster.slug}`,
-    isAccessibleForFree: true,
-    author: { "@type": "Organization", name: "Mizaan Intelligence" },
-    publisher: { "@type": "Organization", name: "Mizaan Intelligence" },
-  };
+  // NewsArticle + BreadcrumbList structured data (§6 SEO) — from our own fields.
+  const jsonLd = graph(
+    newsArticleLd({
+      headline: cluster.title,
+      description: cluster.dek,
+      slug: cluster.slug,
+      datePublished: cluster.eventTime,
+      dateModified: cluster.eventTime,
+      section: sectionMeta(cluster.section).label,
+      sources: members.map((m) => m.url),
+      imageUrl: cluster.imageUrl,
+    }),
+    breadcrumbLd([
+      { name: "Home", path: "/" },
+      { name: "Wire", path: "/news" },
+      {
+        name: sectionMeta(cluster.section).label,
+        path: `/news/section/${cluster.section}`,
+      },
+      { name: cluster.title, path: `/news/${cluster.slug}` },
+    ]),
+  );
 
   return (
     <div className="py-8">
