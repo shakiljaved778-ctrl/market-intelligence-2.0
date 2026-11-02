@@ -95,6 +95,9 @@ export function Footer() {
             story summaries are AI-written from the cited sources and may contain errors
             — verify against the originals.
           </p>
+          <p className="text-ink-4 mt-4 text-[12px]">
+            © 2026 Mizaan Intelligence. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

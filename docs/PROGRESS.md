@@ -29,7 +29,7 @@ unapproved diff above 0.5% (outside masked live data).
 | 6 | Newsletter + daily briefing | ✅ done | `claude/wonderful-davinci-3fxwpg` | Signup (article+footer), double opt-in, confirm/unsubscribe, briefing builder+archive, send cron+workflow — all Resend env-gated |
 | 7 | Analytics | ⏳ pending | | GA4/Vercel/Clarity/GSC + consent notice |
 | 8 | Performance (pixel-identical) | ⏳ pending | | Lighthouse before/after |
-| 9 | Security & licences | ⏳ pending | | Rate limits, headers, .env.example, licence audit |
+| 9 | Security & licences | ✅ done | `claude/wonderful-davinci-3fxwpg` | Security headers + CSP-RO, API rate-limit + UA block (middleware), AI-crawler policy, .env.example, DATA-LICENCES.md, terms + ©, dep audit |
 | 10 | Monetisation readiness | ⏳ pending | | Sponsor slot, /advertise, /for-business — all disabled |
 | 11 | Final QA | ⏳ pending | | Full `visual:compare` + production SEO verification |
 
@@ -236,6 +236,37 @@ unapproved diff above 0.5% (outside masked live data).
 - Verify `mizaan.tech` as a Resend sending domain (SPF/DKIM/DMARC) before enabling.
 - Keep `NEWSLETTER_DRYRUN=1` for the first few days (sends only to the editor).
 - Add `APP_URL` + `CRON_SECRET` as GitHub Actions secrets so `briefing.yml` can fire.
+
+## Phase 9 — what was built (security, anti-scraping, licences)
+
+- **Security headers** (`next.config.ts`): HSTS (2y, preload), `X-Content-Type-Options`,
+  `Referrer-Policy`, `X-Frame-Options SAMEORIGIN`, `Permissions-Policy`, and a
+  **CSP in Report-Only** first (tune from reports before enforcing). `productionBrowserSourceMaps:
+  false`; `poweredByHeader: false`. Verified served on `/`.
+- **API protection** (`middleware.ts`): per-IP **rate limit (60/min)** on `/api/market/*` +
+  `/api/wire/*` (→ 429), and **empty/scraper user-agent → 403**. Verified (empty/python-requests
+  blocked, browser 200, 429 after the limit). Cron routes keep CRON_SECRET; `/api/og` exempt.
+- **AI-crawler policy** (`app/robots.ts`): Googlebot/Google-Extended/Bingbot always allowed;
+  GPTBot/CCBot/ClaudeBot/anthropic-ai/PerplexityBot allowed by default, blocked site-wide with
+  `BLOCK_AI_CRAWLERS=1`.
+- **Content protection**: footer `© 2026 Mizaan Intelligence. All rights reserved.`; `/terms`
+  gains a "No scraping or republication" clause + licensing contact + copyright.
+- **`.env.example`** (every variable name, no values); **`docs/DATA-LICENCES.md`** (per-provider
+  plan/endpoints/attribution + `[CHECK ON PROVIDER SITE]` for commercial-display rights).
+- **Dependencies**: `pnpm audit` run; `zod` 3→4.6.7 (non-breaking here — tsc + 149 tests green),
+  `next` already latest 15.x. **Remaining prod criticals/highs are all transitive under `next`**
+  (sharp, protobufjs, postcss + the Next advisory) and need a **major** Next upgrade — deferred
+  as out of scope for a non-breaking fix (owner decision).
+- Verified: tsc, eslint, prettier, check:colors clean; **149 tests**; `visual:compare` **36/36**
+  (footer © re-baselined); headers/rate-limit/UA-block/robots confirmed by live curl.
+
+### Deferred from Phase 9 (reported)
+- **Enforce CSP** (move from Report-Only to enforced) once violation reports are reviewed —
+  needs nonces for the inline JSON-LD/Next bootstrap scripts.
+- **KV-backed rate limiter** (durable across instances) when KV is configured; middleware limiter
+  is in-memory per edge instance today.
+- **Major Next upgrade** to clear the transitive sharp/protobufjs/postcss + Next advisories.
+- **gitleaks** history scan in CI (no committed secrets to date).
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch
