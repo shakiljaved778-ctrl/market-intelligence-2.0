@@ -25,7 +25,7 @@ unapproved diff above 0.5% (outside masked live data).
 | 2 | News feed quality | ✅ done | `claude/wonderful-davinci-3fxwpg` | Classifier fix + 20 tests; quality gate, Jaccard dedupe, freshness modules (+tests); generic world headlines reworded |
 | 3 | Technical SEO | ✅ done | `claude/wonderful-davinci-3fxwpg` | Per-route titles/canonicals, JSON-LD (+test), sitemap index+4 children, robots, clean section routes, per-slug OG, per-section RSS |
 | 4 | Google News / E-E-A-T | ✅ done | `claude/wonderful-davinci-3fxwpg` | news-sitemap, author entity + page, byline + AST dates, trust pages, corrections, contact form, Org/Person schema |
-| 5 | Programmatic GCC stock pages | ⏳ pending | | Needs a GCC EOD data source (none configured yet) |
+| 5 | Programmatic GCC stock pages | ✅ done | `claude/wonderful-davinci-3fxwpg` | QSE master list (20), exchange hubs, GCC company pages (profile/peers/coverage, price+index only with real data) |
 | 6 | Newsletter + daily briefing | ⏳ pending | | Resend; env RESEND_* |
 | 7 | Analytics | ⏳ pending | | GA4/Vercel/Clarity/GSC + consent notice |
 | 8 | Performance (pixel-identical) | ⏳ pending | | Lighthouse before/after |
@@ -180,6 +180,34 @@ unapproved diff above 0.5% (outside masked live data).
 ### Deferred from Phase 4 (reported)
 - **Corrections DB table**: the log reads a committed (empty) list; wire the `corrections`
   table in live mode. Rendering + report flow already work.
+
+## Phase 5 — what was built (programmatic GCC stock pages)
+
+- **Company master list** (`content/gcc-companies.ts`): the 4 GCC exchanges + a seed
+  roster of **20 well-known QSE constituents** (symbol, name_en, sector — verified public
+  data). nameAr/ISIN/website/profile left `[CHECK]` (not invented). Tadawul/ADX/DFM rosters
+  are structurally ready, empty pending verified data.
+- **GCC company pages** (`components/market/GccCompanyView.tsx`, routed from the existing
+  `/quote/[symbol]`): breadcrumbs (Home > Markets > [Exchange] > [Name]), H1 "[Name] share
+  price", profile, sector peers, related coverage. **Title** "[Name] ([SYMBOL]) Share Price
+  Today | [Exchange] | Mizaan". The **price block + indexing appear only with a REAL quote**
+  (provider ≠ fixture) AND a profile or related story — otherwise a "pricing pending" state
+  and `noindex`. Never an invented price (the QSE fixtures in the universe are ignored here).
+  Corporation + BreadcrumbList JSON-LD. Non-GCC symbols (e.g. AAPL) are untouched.
+- **Exchange hubs** `/markets/{qse,tadawul,adx,dfm}` — company tables linking to the pages;
+  plain links added to the Markets page; added to the sitemap (hubs indexable).
+- Verified: `tsc`, `eslint`, `prettier` clean; **145 unit tests**; `visual:compare` **36/36**
+  (only the Markets exchange-links row re-baselined; `/quote/AAPL` byte-identical); live curl
+  confirmed QNBK title/H1/pending/noindex, the QSE hub, and AAPL unchanged.
+
+### Deferred / needs owner data (Phase 5)
+- **Real GCC prices**: need a provider that returns QSE/Tadawul/ADX/DFM EOD (none configured);
+  pages light up and become indexable the moment one writes `market:quote:<SYMBOL>` to cache.
+- **Company profiles, Arabic names, ISINs, upcoming events, full P/E & dividend blocks** —
+  `[CHECK]` for the owner to supply (no invented facts). ISR cadence (15 min / 24h) applies
+  once real data flows.
+- Note: QSE fixtures already in the universe still show as *labelled samples* in Movers/screener
+  (pre-existing Phase 1 behaviour) — the dedicated GCC pages correctly hide that fixture price.
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch

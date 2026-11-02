@@ -3,6 +3,7 @@ import { MACRO_SERIES } from "@/fixtures/macro";
 import { allSections, readWire } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
 import { readQuote } from "@/lib/market/read";
+import { GCC_EXCHANGES } from "@/content/gcc-companies";
 import { SITE_URL as SITE } from "@/lib/site";
 
 /**
@@ -53,7 +54,11 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
       loc: `${SITE}/news/section/${s.id}`,
       lastmod: now,
     }));
-    return [...staticRoutes, ...series, ...sections];
+    const exchanges = GCC_EXCHANGES.map((e) => ({
+      loc: `${SITE}/markets/${e.id}`,
+      lastmod: now,
+    }));
+    return [...staticRoutes, ...series, ...sections, ...exchanges];
   }
 
   if (name === "news-articles") {

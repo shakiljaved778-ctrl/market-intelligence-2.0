@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GCC_EXCHANGES } from "@/content/gcc-companies";
 import { pageMeta } from "@/lib/seo";
 import { Movers } from "@/components/market/Movers";
 import {
@@ -105,6 +106,23 @@ export default async function MarketsPage() {
             </div>
           );
         })}
+      </section>
+
+      {/* GCC exchange hubs (§5) — plain links to the per-exchange company lists. */}
+      <section
+        className="fade-up mt-5 flex flex-wrap items-center gap-2"
+        style={{ "--d": "120ms" } as React.CSSProperties}
+      >
+        <span className="t-micro text-ink-3">GCC exchanges:</span>
+        {GCC_EXCHANGES.map((e) => (
+          <Link
+            key={e.id}
+            href={`/markets/${e.id}`}
+            className="border-hairline text-ink-2 hover:text-brand rounded-full border px-3 py-1 text-[12px]"
+          >
+            {e.shortName}
+          </Link>
+        ))}
       </section>
 
       {/* Sector heatmap — treemap sized by market cap, coloured by change. */}
