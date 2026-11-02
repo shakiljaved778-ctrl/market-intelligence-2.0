@@ -24,7 +24,7 @@ unapproved diff above 0.5% (outside masked live data).
 | 1 | Market data integrity | ✅ done | `claude/wonderful-davinci-3fxwpg` | Sanity layer + tests; GCC spotlight hidden (no real source); recap ≥80% gate; peg already centralised |
 | 2 | News feed quality | ✅ done | `claude/wonderful-davinci-3fxwpg` | Classifier fix + 20 tests; quality gate, Jaccard dedupe, freshness modules (+tests); generic world headlines reworded |
 | 3 | Technical SEO | ✅ done | `claude/wonderful-davinci-3fxwpg` | Per-route titles/canonicals, JSON-LD (+test), sitemap index+4 children, robots, clean section routes, per-slug OG, per-section RSS |
-| 4 | Google News / E-E-A-T | ⏳ pending | | Author entity, trust pages, bylines, corrections log |
+| 4 | Google News / E-E-A-T | ✅ done | `claude/wonderful-davinci-3fxwpg` | news-sitemap, author entity + page, byline + AST dates, trust pages, corrections, contact form, Org/Person schema |
 | 5 | Programmatic GCC stock pages | ⏳ pending | | Needs a GCC EOD data source (none configured yet) |
 | 6 | Newsletter + daily briefing | ⏳ pending | | Resend; env RESEND_* |
 | 7 | Analytics | ⏳ pending | | GA4/Vercel/Clarity/GSC + consent notice |
@@ -150,6 +150,36 @@ unapproved diff above 0.5% (outside masked live data).
 - **410 for removed articles**: no "removed" store exists yet; 404 is correct until one does.
 - **noindex on search/pagination**: no user-facing search-results route or paginated route
   exists (search is a modal over `/api/market/search`, already disallowed), so nothing to tag.
+
+## Phase 4 — what was built (Google News / E-E-A-T)
+
+- **Author entity** (`lib/author.ts`): Shakil Javed, Founder & Editor, `editor@mizaan.tech`.
+  Bio + LinkedIn left as `[CHECK]` placeholders (owner inputs blank).
+- **`/author/shakil-javed`**: bio, contact, latest stories, **Person JSON-LD**.
+- **Article byline** (existing meta style): "Edited by Shakil Javed · AI-assisted summary
+  from N cited sources · <published> AST", linked to the author page; NewsArticle now
+  lists the editor as author/editor and the page emits the Person entity.
+- **Visible dates**: published time in **Asia/Qatar (AST)** via `lib/format/datetime.ts`.
+- **"Report an error"** link on every article → `/corrections?url=<article>`.
+- **Trust pages** (Prose template, linked as plain footer links): `/editorial-policy`,
+  `/ai-disclosure`, `/corrections` (report flow + log, `lib/corrections.ts`), `/contact`
+  (email + native form → `lib/contact.ts` Resend-REST sender, honeypot, env-gated).
+- **Google News sitemap** `/news-sitemap.xml` (last 48h, `news:` namespace, ≤1000),
+  referenced from robots.txt; new pages added to the main sitemap.
+- **Organization schema** gains `publishingPrinciples`, `correctionsPolicy`, `contactPoint`,
+  `email` (`lib/seo.ts`).
+- Verified: `tsc`, `eslint`, `prettier` clean; **145 unit tests**; live curl of all new
+  pages (200), news-sitemap XML, and the article byline/Person schema; `visual:compare`
+  **36/36** after re-baselining the footer-links + article-byline additions (approved).
+
+### Owner inputs still needed (marked `[CHECK]` in code)
+- Editor **bio** (`lib/author.ts`) and **LinkedIn URL** (also feeds Person `sameAs`).
+- Contact-form delivery: `RESEND_API_KEY` + `CONTACT_INBOX` + a verified `CONTACT_FROM`
+  (until set, the form says "email us directly"). `editor@mizaan.tech` is the public address.
+
+### Deferred from Phase 4 (reported)
+- **Corrections DB table**: the log reads a committed (empty) list; wire the `corrections`
+  table in live mode. Rendering + report flow already work.
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch

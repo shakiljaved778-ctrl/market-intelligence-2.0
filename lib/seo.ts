@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "./site";
+import { EDITOR, authorSameAs, authorUrl, type Author } from "./author";
 
 /**
  * SEO helpers (Phase 3). One place for canonical URLs, the OG-image URL on our
@@ -48,7 +49,30 @@ export function organizationLd(): Record<string, unknown> {
     logo: { "@type": "ImageObject", url: `${SITE_URL}/icon.svg` },
     description:
       "Signal-ranked market intelligence across global and GCC markets — computed rankings and cited, AI-written summaries.",
+    email: EDITOR.email,
+    publishingPrinciples: `${SITE_URL}/editorial-policy`,
+    correctionsPolicy: `${SITE_URL}/corrections`,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "editorial",
+      email: EDITOR.email,
+      url: `${SITE_URL}/contact`,
+    },
     ...(SOCIAL_LINKS.length > 0 ? { sameAs: SOCIAL_LINKS } : {}),
+  };
+}
+
+/** Person schema for the editor (author page + NewsArticle author/editor). */
+export function personLd(a: Author = EDITOR): Record<string, unknown> {
+  const sameAs = authorSameAs(a);
+  return {
+    "@type": "Person",
+    "@id": `${authorUrl(a)}#person`,
+    name: a.name,
+    jobTitle: a.role,
+    url: authorUrl(a),
+    worksFor: { "@id": `${SITE_URL}/#organization` },
+    ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 }
 
@@ -117,7 +141,8 @@ export function newsArticleLd(a: NewsArticleInput): Record<string, unknown> {
     mainEntityOfPage: url,
     isAccessibleForFree: true,
     image: [a.imageUrl ?? ogImage(a.headline, a.section)],
-    author: { "@id": `${SITE_URL}/#organization` },
+    author: { "@id": `${authorUrl()}#person` },
+    editor: { "@id": `${authorUrl()}#person` },
     publisher: { "@id": `${SITE_URL}/#organization` },
     ...(a.sources && a.sources.length > 0 ? { isBasedOn: a.sources } : {}),
   };

@@ -37,6 +37,11 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
       "/economy/calendar",
       "/methodology",
       "/about",
+      "/editorial-policy",
+      "/ai-disclosure",
+      "/corrections",
+      "/contact",
+      "/author/shakil-javed",
       "/terms",
       "/privacy",
     ].map((p) => ({ loc: `${SITE}${p}`, lastmod: now }));

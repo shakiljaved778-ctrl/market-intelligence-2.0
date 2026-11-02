@@ -27,6 +27,10 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
     links: [
       { href: "/about", label: "About" },
       { href: "/methodology", label: "Methodology" },
+      { href: "/editorial-policy", label: "Editorial policy" },
+      { href: "/ai-disclosure", label: "AI disclosure" },
+      { href: "/corrections", label: "Corrections" },
+      { href: "/contact", label: "Contact" },
       { href: "/terms", label: "Terms" },
       { href: "/privacy", label: "Privacy" },
     ],

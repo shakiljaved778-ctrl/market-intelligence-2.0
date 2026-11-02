@@ -15,7 +15,16 @@ import { ReadingProgress } from "@/components/news/ReadingProgress";
 import { ShareButtons } from "@/components/ui/ShareButtons";
 import { SignalScore } from "@/components/ui/SignalScore";
 import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
-import { breadcrumbLd, canonical, graph, newsArticleLd, ogImage } from "@/lib/seo";
+import {
+  breadcrumbLd,
+  canonical,
+  graph,
+  newsArticleLd,
+  ogImage,
+  personLd,
+} from "@/lib/seo";
+import { EDITOR } from "@/lib/author";
+import { formatAst } from "@/lib/format/datetime";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -69,6 +78,7 @@ export default async function ClusterPage({ params }: Params) {
 
   // NewsArticle + BreadcrumbList structured data (§6 SEO) — from our own fields.
   const jsonLd = graph(
+    personLd(EDITOR),
     newsArticleLd({
       headline: cluster.title,
       description: cluster.dek,
@@ -152,6 +162,20 @@ export default async function ClusterPage({ params }: Params) {
         </div>
       </div>
 
+      {/* Editorial byline + visible published date in AST (§4 E-E-A-T). */}
+      <p className="text-ink-3 mt-2 text-[12px]">
+        Edited by{" "}
+        <Link
+          href={`/author/${EDITOR.slug}`}
+          className="hover:text-brand underline-offset-2 hover:underline"
+        >
+          {EDITOR.name}
+        </Link>{" "}
+        · AI-assisted summary from {cluster.sourceCount} cited{" "}
+        {cluster.sourceCount === 1 ? "source" : "sources"} ·{" "}
+        <time dateTime={cluster.eventTime}>{formatAst(cluster.eventTime)} AST</time>
+      </p>
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {cluster.tickers.map((t) => (
           <Link
@@ -226,6 +250,14 @@ export default async function ClusterPage({ params }: Params) {
           <p className="text-ink-3 mt-3 text-[11px]">
             Headlines and short deks only, each linked to its source. We never republish
             article text.
+          </p>
+          <p className="text-ink-4 mt-4 text-[11px]">
+            <Link
+              href={`/corrections?url=${encodeURIComponent(canonical(`/news/${cluster.slug}`))}`}
+              className="hover:text-brand underline-offset-2 hover:underline"
+            >
+              Report an error
+            </Link>
           </p>
         </section>
 
