@@ -26,7 +26,7 @@ unapproved diff above 0.5% (outside masked live data).
 | 3 | Technical SEO | ✅ done | `claude/wonderful-davinci-3fxwpg` | Per-route titles/canonicals, JSON-LD (+test), sitemap index+4 children, robots, clean section routes, per-slug OG, per-section RSS |
 | 4 | Google News / E-E-A-T | ✅ done | `claude/wonderful-davinci-3fxwpg` | news-sitemap, author entity + page, byline + AST dates, trust pages, corrections, contact form, Org/Person schema |
 | 5 | Programmatic GCC stock pages | ✅ done | `claude/wonderful-davinci-3fxwpg` | QSE master list (20), exchange hubs, GCC company pages (profile/peers/coverage, price+index only with real data) |
-| 6 | Newsletter + daily briefing | ⏳ pending | | Resend; env RESEND_* |
+| 6 | Newsletter + daily briefing | ✅ done | `claude/wonderful-davinci-3fxwpg` | Signup (article+footer), double opt-in, confirm/unsubscribe, briefing builder+archive, send cron+workflow — all Resend env-gated |
 | 7 | Analytics | ⏳ pending | | GA4/Vercel/Clarity/GSC + consent notice |
 | 8 | Performance (pixel-identical) | ⏳ pending | | Lighthouse before/after |
 | 9 | Security & licences | ⏳ pending | | Rate limits, headers, .env.example, licence audit |
@@ -208,6 +208,34 @@ unapproved diff above 0.5% (outside masked live data).
   once real data flows.
 - Note: QSE fixtures already in the universe still show as *labelled samples* in Movers/screener
   (pre-existing Phase 1 behaviour) — the dedicated GCC pages correctly hide that fixture price.
+
+## Phase 6 — what was built (Mizaan Morning newsletter + briefing)
+
+- **Signup form** (`components/news/NewsletterSignup.tsx`): article-end card + one footer
+  row only (no pop-ups). Email + consent + honeypot → `subscribeAction` server action.
+- **Backend** (`lib/newsletter.ts` + tests): HMAC double-opt-in tokens, per-IP rate limit,
+  Resend REST (audience add with signup source, confirm, unsubscribe) — **env-gated**
+  (inert without `RESEND_API_KEY`/`RESEND_AUDIENCE_ID`), kill switch `NEWSLETTER_ENABLED`.
+- **Routes**: `/api/newsletter/confirm` (opt-in link) + `/api/newsletter/unsubscribe`
+  (one-click, GET+POST for RFC 8058); `/newsletter` state page (pending/confirmed/…).
+- **Daily briefing** (`lib/briefing.ts` + test): deterministic builder (validated index
+  closes + ranked top stories), branded HTML email, `sendBriefing` (dry-run → editor,
+  else Resend broadcast), `recentBriefingDates`.
+- **Web archive** `/briefing` + `/briefing/[date]` (Prose template, NewsArticle schema,
+  indexable) — feeds SEO; added to the sitemap with `/newsletter`.
+- **Send job** `/api/cron/briefing` (CRON_SECRET-authed) + `.github/workflows/briefing.yml`
+  (04:00 UTC Sun–Thu + Sat weekly wrap).
+- Verified: `tsc`, `eslint`, `prettier`, `check:colors` clean; **149 unit tests** (+4);
+  `visual:compare` **36/36** after re-baselining the signup additions; live curl of
+  `/newsletter`, `/briefing`, `/briefing/<date>`, the env-gated cron (returns "disabled"),
+  and the confirm/unsubscribe redirects.
+
+### Owner inputs needed to go live (Phase 6)
+- `RESEND_API_KEY`, `RESEND_AUDIENCE_ID` ("Mizaan Subscribers"),
+  `NEWSLETTER_FROM="Mizaan Morning <briefing@mizaan.tech>"`, `NEWSLETTER_SECRET`.
+- Verify `mizaan.tech` as a Resend sending domain (SPF/DKIM/DMARC) before enabling.
+- Keep `NEWSLETTER_DRYRUN=1` for the first few days (sends only to the editor).
+- Add `APP_URL` + `CRON_SECRET` as GitHub Actions secrets so `briefing.yml` can fire.
 
 ### Decisions & open items
 - **Branch strategy: decided** — all phases commit to the single branch

@@ -38,6 +38,8 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
       "/economy/calendar",
       "/methodology",
       "/about",
+      "/newsletter",
+      "/briefing",
       "/editorial-policy",
       "/ai-disclosure",
       "/corrections",

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { pegReviewedOn, QAR_PER_USD } from "@/lib/currency/peg";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 
 const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] = [
   {
@@ -73,7 +74,12 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Newsletter signup row (§6) — one row above the legal text. */}
         <div className="border-hairline mt-10 border-t pt-6">
+          <NewsletterSignup source="footer" variant="footer" />
+        </div>
+
+        <div className="border-hairline mt-6 border-t pt-6">
           <p className="text-ink-3 text-[13px]">
             <span className="text-ink-2 font-medium">Market &amp; macro data</span> from
             FMP, Finnhub, FRED and the World Bank.{" "}

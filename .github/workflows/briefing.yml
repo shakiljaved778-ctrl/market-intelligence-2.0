@@ -1,0 +1,41 @@
+name: briefing
+
+# Mizaan Morning send (§6). 04:00 UTC (07:00 Doha): daily Sun–Thu, plus a lighter
+# weekly wrap on Saturday. Vercel Hobby caps cron at once/day, so a GitHub Action
+# calls the authenticated route (env-gated — inert until Resend keys are set).
+on:
+  schedule:
+    - cron: "0 4 * * 0-4" # Sun–Thu daily briefing
+    - cron: "0 4 * * 6" # Saturday weekly wrap
+  workflow_dispatch:
+
+concurrency:
+  group: cron-briefing
+  cancel-in-progress: false
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /api/cron/briefing
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::APP_URL and CRON_SECRET secrets are required (see DEPLOY.md)."
+            exit 1
+          fi
+          # Saturday (ISO day 6) sends the weekly wrap.
+          WEEKLY=""
+          if [ "$(date -u +%u)" = "6" ]; then WEEKLY="?weekly=1"; fi
+          code=$(curl --show-error --silent --retry 3 --retry-delay 4 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -o response.txt -w '%{http_code}' \
+            "${APP_URL%/}/api/cron/briefing${WEEKLY}") || true
+          echo "HTTP ${code}"
+          head -c 600 response.txt || true; echo
+          if [ "${code}" != "200" ]; then
+            echo "::error::Expected 200 from /api/cron/briefing."
+            exit 1
+          fi

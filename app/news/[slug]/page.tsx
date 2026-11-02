@@ -12,6 +12,7 @@ import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
 import { ReadingProgress } from "@/components/news/ReadingProgress";
+import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 import { ShareButtons } from "@/components/ui/ShareButtons";
 import { SignalScore } from "@/components/ui/SignalScore";
 import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
@@ -259,6 +260,11 @@ export default async function ClusterPage({ params }: Params) {
               Report an error
             </Link>
           </p>
+
+          {/* Newsletter signup (§6) — article end, inside a card. */}
+          <div className="mt-8">
+            <NewsletterSignup source={`article:${cluster.slug}`} />
+          </div>
         </section>
 
         <aside className="lg:col-span-4">
