@@ -1,0 +1,25 @@
+name: lighthouse
+
+# Phase 8 performance measurement. Runs mobile Lighthouse against the PRODUCTION
+# deploy (the §8 routes) and records the numbers. Manual-only (workflow_dispatch)
+# so it never gates PRs and always measures an already-live deploy on a clean
+# network — lab numbers from a sandboxed agent are inflated by proxy latency, so
+# the headline scores must come from here, not from a local agent run.
+#
+# Assertions are "warn" (see lighthouserc.json): the run reports against the §8
+# targets without failing the build. Reports are uploaded to Lighthouse CI's
+# temporary public storage; the URLs are printed in the job log.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run Lighthouse (mobile) against the production deploy
+        run: npx --yes @lhci/cli@0.14.0 autorun --config=./lighthouserc.json

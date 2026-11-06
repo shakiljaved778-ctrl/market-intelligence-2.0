@@ -1,0 +1,40 @@
+name: keepalive
+
+# GitHub automatically DISABLES scheduled workflows after 60 days with no
+# repository activity (commits) — which would silently pause ingest / cluster /
+# quotes / macro / eod / briefing and stop news auto-updating. The jobs write to
+# Postgres, not the repo, so the repo can look idle. This workflow commits a
+# dated marker on the 1st of each month (well under 60 days) so the repo is never
+# idle long enough to trip that rule, keeping every schedule enabled with no
+# manual intervention.
+#
+# The commit uses [skip ci] so it doesn't trigger the CI gate. It only ever
+# touches .github/keepalive.txt.
+on:
+  schedule:
+    - cron: "17 3 1 * *" # 06:17 Asia/Qatar on the 1st of each month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Commit keepalive marker
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/keepalive.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive.txt
+          git commit -m "chore(keepalive): keep scheduled workflows enabled [skip ci]" || {
+            echo "No change to commit — repo already active."
+            exit 0
+          }
+          git push
