@@ -1,10 +1,12 @@
 # Performance — baseline (before Phase 8)
 
-> **Measurement note.** This sandbox blocks the CDNs Lighthouse pulls, so the numeric
-> run must be captured in CI or against the Vercel deploy:
+> **Measurement note.** Lab Lighthouse numbers must be captured off a clean network:
+> a sandboxed agent proxies every request, which inflates the score. Use the
+> **`lighthouse` GitHub Actions workflow** (manual `workflow_dispatch`, config
+> `lighthouserc.json`) or, on a normal network:
 > `npx lighthouse https://www.mizaan.tech/ --preset=perf --form-factor=mobile --quiet`
-> for `/`, `/markets`, `/news`, one `/news/<slug>`, one `/quote/<symbol>`. Record the
-> numbers in the table below, then re-run after the Phase 8 changes (PERF-AFTER.md).
+> for `/`, `/markets`, `/news`, one `/news/<slug>`, one `/quote/<symbol>`. The
+> after-state numbers and the deterministic bundle evidence live in `PERF-AFTER.md`.
 
 ## Already-strong posture (pre-Phase 8)
 
