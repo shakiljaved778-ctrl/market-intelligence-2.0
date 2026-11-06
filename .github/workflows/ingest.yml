@@ -6,6 +6,10 @@ name: ingest
 on:
   schedule:
     - cron: "*/10 * * * *"
+    # Guaranteed morning refresh at 07:00 Asia/Qatar (AST = UTC+3). This overlaps
+    # the every-10-min cadence above, but makes the morning pull explicit; the
+    # cluster job (*/20) ranks the new stories within ~20 min so they surface.
+    - cron: "0 4 * * *"
   workflow_dispatch:
 
 concurrency:
