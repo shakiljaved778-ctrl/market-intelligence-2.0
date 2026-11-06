@@ -99,6 +99,13 @@ export function GET(request: Request) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    {
+      width: 1200,
+      height: 630,
+      headers: {
+        // OG cards change rarely; let CDNs cache them hard (§8 Cache-Control).
+        "Cache-Control": "public, max-age=86400, s-maxage=86400, immutable",
+      },
+    },
   );
 }

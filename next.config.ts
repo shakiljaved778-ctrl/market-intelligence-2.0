@@ -38,6 +38,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  // Image optimisation (§8): modern formats + the only remote host we reference
+  // (Pexels cover photos). Covers are mostly on-brand SVG, so this is future-proofing.
+  images: {
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [{ protocol: "https", hostname: "images.pexels.com" }],
+  },
   experimental: {
     optimizePackageImports: ["lucide-react"],
     viewTransition: true,

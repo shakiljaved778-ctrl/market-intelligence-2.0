@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PriceChart } from "@/components/chart/PriceChart";
+import dynamic from "next/dynamic";
 import { QuoteProvenance } from "@/components/market/Provenance";
 import { FundamentalsPanel } from "@/components/market/Fundamentals";
 import { getDisplayCurrency } from "@/lib/currency/server";
@@ -18,6 +18,12 @@ import { universeBySymbol } from "@/fixtures/universe";
 import { breadcrumbLd, canonical, corporationLd, graph, ogImage } from "@/lib/seo";
 import { exchangeMeta, gccCompany, gccSectorPeers } from "@/lib/market/gcc";
 import { GccCompanyView } from "@/components/market/GccCompanyView";
+
+// lightweight-charts is heavy; code-split it out of the main bundle (§8). SSR is
+// kept, so the rendered output is identical.
+const PriceChart = dynamic(() =>
+  import("@/components/chart/PriceChart").then((m) => m.PriceChart),
+);
 
 interface Params {
   params: Promise<{ symbol: string }>;

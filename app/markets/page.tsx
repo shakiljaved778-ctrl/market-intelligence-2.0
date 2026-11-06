@@ -1,12 +1,15 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { GCC_EXCHANGES } from "@/content/gcc-companies";
 import { pageMeta } from "@/lib/seo";
 import { Movers } from "@/components/market/Movers";
-import {
-  SectorHeatmap,
-  type HeatGroup,
-  type HeatTile,
-} from "@/components/market/SectorHeatmap";
+import type { HeatGroup, HeatTile } from "@/components/market/SectorHeatmap";
+
+// Recharts is heavy; code-split it out of the main bundle (§8). SSR is kept, so
+// the rendered output is identical.
+const SectorHeatmap = dynamic(() =>
+  import("@/components/market/SectorHeatmap").then((m) => m.SectorHeatmap),
+);
 import { AssetTabs } from "@/components/market/AssetTabs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
