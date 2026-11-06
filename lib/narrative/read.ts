@@ -2,6 +2,7 @@ import { FIXTURE_ARTICLES } from "@/fixtures/articles";
 import { INDEX_STRIP, type IndexStripItem } from "@/fixtures/indices";
 import { UNIVERSE } from "@/fixtures/universe";
 import type { DisplayCurrency } from "@/lib/currency/peg";
+import { shiftFixtureDate } from "@/lib/demo-clock";
 import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
 
 /**
@@ -10,16 +11,18 @@ import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
  * jobs writing to the `recaps` table; the generators and inputs are identical,
  * so each recap stays reproducible from its stored inputs.
  *
- * The demo date tracks the NEWEST story in the wire, so the "latest session
- * recap" link always resolves to the current recap rather than a frozen date.
+ * The demo date tracks the NEWEST story in the wire, shifted onto the current
+ * demo window (lib/demo-clock.ts), so the recap is dated today and the "latest
+ * session recap" link always resolves to the current recap rather than a frozen
+ * date. It is recomputed per call so it rolls forward with the real date.
  */
-const DEMO_DATE = (() => {
+function demoDate(): string {
   const newest = FIXTURE_ARTICLES.reduce(
     (max, a) => (a.publishedAt > max ? a.publishedAt : max),
     "2000-01-01",
   );
-  return newest.slice(0, 10); // YYYY-MM-DD
-})();
+  return shiftFixtureDate(newest).slice(0, 10); // YYYY-MM-DD
+}
 
 export interface NamedRecap {
   slug: string;
@@ -47,6 +50,8 @@ function indexValid(i: IndexStripItem): boolean {
 }
 
 export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
+  // Snapshot the demo date once so every recap in this call shares it.
+  const date = demoDate();
   // Phase 1 §5: a session recap is published only when ≥80% of the tracked
   // (non-GCC) indices have a valid close; otherwise the day's data is too
   // incomplete to summarise honestly. GCC is excluded (EOD-only, separate rail).
@@ -64,7 +69,7 @@ export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
     const close = sessionRecap({
       kind: "session_close",
       currency,
-      date: DEMO_DATE,
+      date,
       indices,
       breadth: { advancers, decliners },
       topMover: topMover(),
@@ -73,19 +78,19 @@ export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
     const open = sessionRecap({
       kind: "session_open",
       currency,
-      date: DEMO_DATE,
+      date,
       indices,
       topMover: topMover(),
     });
     recaps.push(
       {
-        slug: `session-close-${DEMO_DATE}`,
+        slug: `session-close-${date}`,
         kind: "session_close",
         title: "US session close",
         output: close,
       },
       {
-        slug: `session-open-${DEMO_DATE}`,
+        slug: `session-open-${date}`,
         kind: "session_open",
         title: "US session open",
         output: open,
@@ -98,7 +103,7 @@ export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
   if (spx && indexValid(spx)) {
     const week = weeklyRecap({
       currency,
-      weekEnding: DEMO_DATE,
+      weekEnding: date,
       index: { name: spx.name, changePct: spx.changePct * 3 },
       best: topMover(),
       worst: (() => {
@@ -107,7 +112,7 @@ export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
       })(),
     });
     recaps.push({
-      slug: `weekly-${DEMO_DATE}`,
+      slug: `weekly-${date}`,
       kind: "weekly",
       title: "Weekly wrap",
       output: week,

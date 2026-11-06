@@ -141,7 +141,8 @@ export default async function BoardPage() {
         <div className="mb-5 flex items-baseline justify-between">
           <p className="t-micro text-ink-3 inline-flex items-center gap-2">
             <span className="live-dot inline-block align-middle" aria-hidden />
-            Today on Mizaan · {new Date(lead.eventTime).toUTCString().slice(5, 16)}
+            Today on Mizaan ·{" "}
+            {new Date((latest[0] ?? lead).eventTime).toUTCString().slice(5, 16)}
           </p>
           <Link href="/news" className="text-brand text-[12px]">
             The wire <span aria-hidden>→</span>
