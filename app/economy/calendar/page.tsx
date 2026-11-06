@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { pageMeta } from "@/lib/seo";
 import { readCalendar } from "@/lib/economy/read";
 
-export const metadata = { title: "Calendar" };
+export const metadata = pageMeta(
+  "/economy/calendar",
+  "Economic calendar",
+  "The macro calendar: central-bank decisions, inflation and jobs releases and other scheduled events that move global and GCC markets.",
+);
 
 function fmt(ts: string): string {
   const d = new Date(ts);

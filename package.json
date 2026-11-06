@@ -19,6 +19,8 @@
     "job:ingest": "tsx jobs/ingest.ts",
     "job:cluster": "tsx jobs/cluster.ts",
     "test:e2e": "playwright test",
+    "visual:baseline": "playwright test --config playwright.visual.config.ts --update-snapshots",
+    "visual:compare": "playwright test --config playwright.visual.config.ts",
     "check:colors": "node scripts/check-colors.mjs"
   },
   "dependencies": {
@@ -32,7 +34,7 @@
     "recharts": "2.15.0",
     "rss-parser": "3.13.0",
     "yaml": "2.6.1",
-    "zod": "3.24.1"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.2.0",

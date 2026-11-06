@@ -40,6 +40,11 @@ sections:
         index,
         nasdaq,
         s&p,
+        ftse,
+        dow jones,
+        nikkei,
+        dax,
+        hang seng,
         earnings,
         ipo,
         dividend,
@@ -169,8 +174,6 @@ sections:
         cybersecurity,
         data center,
         robotics,
-        space launch,
-        satellite,
       ]
 
   - id: health
@@ -273,4 +276,11 @@ sections:
         breakthrough,
         environment,
         wildlife,
+        space launch,
+        satellite,
+        space agency,
+        spacecraft,
+        rocket launch,
+        asteroid,
+        astronomy,
       ]

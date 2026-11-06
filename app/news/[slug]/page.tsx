@@ -12,10 +12,20 @@ import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
 import { ReadingProgress } from "@/components/news/ReadingProgress";
+import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 import { ShareButtons } from "@/components/ui/ShareButtons";
 import { SignalScore } from "@/components/ui/SignalScore";
 import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
-import { SITE_URL } from "@/lib/site";
+import {
+  breadcrumbLd,
+  canonical,
+  graph,
+  newsArticleLd,
+  ogImage,
+  personLd,
+} from "@/lib/seo";
+import { EDITOR } from "@/lib/author";
+import { formatAst } from "@/lib/format/datetime";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -24,7 +34,25 @@ interface Params {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const detail = await readCluster(slug);
-  return { title: detail?.cluster.title ?? "Story" };
+  if (!detail) return { title: "Story" };
+  const { cluster } = detail;
+  const description = (cluster.dek ?? cluster.title).slice(0, 150);
+  const section = sectionMeta(cluster.section).label;
+  const image = ogImage(cluster.title, section);
+  const url = canonical(`/news/${slug}`);
+  return {
+    title: cluster.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: cluster.title,
+      description,
+      url,
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: { card: "summary_large_image", title: cluster.title, images: [image] },
+  };
 }
 
 export default async function ClusterPage({ params }: Params) {
@@ -49,20 +77,29 @@ export default async function ClusterPage({ params }: Params) {
   ).filter((x): x is { symbol: string; quote: Quote } => x !== null);
   const more = sectionWire.filter((c) => c.slug !== cluster.slug).slice(0, 4);
 
-  // NewsArticle structured data (§6 SEO) — built from our own fields.
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: cluster.title,
-    description: cluster.dek ?? undefined,
-    datePublished: cluster.eventTime,
-    dateModified: cluster.eventTime,
-    articleSection: sectionMeta(cluster.section).label,
-    url: `${SITE_URL}/news/${cluster.slug}`,
-    isAccessibleForFree: true,
-    author: { "@type": "Organization", name: "Mizaan Intelligence" },
-    publisher: { "@type": "Organization", name: "Mizaan Intelligence" },
-  };
+  // NewsArticle + BreadcrumbList structured data (§6 SEO) — from our own fields.
+  const jsonLd = graph(
+    personLd(EDITOR),
+    newsArticleLd({
+      headline: cluster.title,
+      description: cluster.dek,
+      slug: cluster.slug,
+      datePublished: cluster.eventTime,
+      dateModified: cluster.eventTime,
+      section: sectionMeta(cluster.section).label,
+      sources: members.map((m) => m.url),
+      imageUrl: cluster.imageUrl,
+    }),
+    breadcrumbLd([
+      { name: "Home", path: "/" },
+      { name: "Wire", path: "/news" },
+      {
+        name: sectionMeta(cluster.section).label,
+        path: `/news/section/${cluster.section}`,
+      },
+      { name: cluster.title, path: `/news/${cluster.slug}` },
+    ]),
+  );
 
   return (
     <div className="py-8">
@@ -125,6 +162,20 @@ export default async function ClusterPage({ params }: Params) {
           <ShareButtons title={cluster.title} />
         </div>
       </div>
+
+      {/* Editorial byline + visible published date in AST (§4 E-E-A-T). */}
+      <p className="text-ink-3 mt-2 text-[12px]">
+        Edited by{" "}
+        <Link
+          href={`/author/${EDITOR.slug}`}
+          className="hover:text-brand underline-offset-2 hover:underline"
+        >
+          {EDITOR.name}
+        </Link>{" "}
+        · AI-assisted summary from {cluster.sourceCount} cited{" "}
+        {cluster.sourceCount === 1 ? "source" : "sources"} ·{" "}
+        <time dateTime={cluster.eventTime}>{formatAst(cluster.eventTime)} AST</time>
+      </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {cluster.tickers.map((t) => (
@@ -201,6 +252,19 @@ export default async function ClusterPage({ params }: Params) {
             Headlines and short deks only, each linked to its source. We never republish
             article text.
           </p>
+          <p className="text-ink-4 mt-4 text-[11px]">
+            <Link
+              href={`/corrections?url=${encodeURIComponent(canonical(`/news/${cluster.slug}`))}`}
+              className="hover:text-brand underline-offset-2 hover:underline"
+            >
+              Report an error
+            </Link>
+          </p>
+
+          {/* Newsletter signup (§6) — article end, inside a card. */}
+          <div className="mt-8">
+            <NewsletterSignup source={`article:${cluster.slug}`} />
+          </div>
         </section>
 
         <aside className="lg:col-span-4">

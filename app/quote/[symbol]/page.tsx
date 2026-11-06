@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PriceChart } from "@/components/chart/PriceChart";
+import dynamic from "next/dynamic";
 import { QuoteProvenance } from "@/components/market/Provenance";
 import { FundamentalsPanel } from "@/components/market/Fundamentals";
 import { getDisplayCurrency } from "@/lib/currency/server";
@@ -15,6 +15,15 @@ import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent
 import { relativeTime } from "@/lib/format/relative-time";
 import { sessionFor } from "@/lib/format/session";
 import { universeBySymbol } from "@/fixtures/universe";
+import { breadcrumbLd, canonical, corporationLd, graph, ogImage } from "@/lib/seo";
+import { exchangeMeta, gccCompany, gccSectorPeers } from "@/lib/market/gcc";
+import { GccCompanyView } from "@/components/market/GccCompanyView";
+
+// lightweight-charts is heavy; code-split it out of the main bundle (§8). SSR is
+// kept, so the rendered output is identical.
+const PriceChart = dynamic(() =>
+  import("@/components/chart/PriceChart").then((m) => m.PriceChart),
+);
 
 interface Params {
   params: Promise<{ symbol: string }>;
@@ -23,13 +32,92 @@ interface Params {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { symbol } = await params;
   const sym = symbol.toUpperCase();
-  return { title: `${sym} — quote` };
+
+  // GCC company pages (Phase 5): index only with a real price AND a profile or a
+  // related story; otherwise noindex (never an invented price).
+  const gcc = gccCompany(sym);
+  if (gcc) {
+    const ex = exchangeMeta(gcc.exchange);
+    const raw = await readQuote(sym);
+    // Only a REAL quote counts (never the illustrative fixture a GCC symbol may
+    // carry in the universe) — GCC is real-or-hidden, like the GCC spotlight (§1).
+    const quote = raw && raw.provider.toLowerCase() !== "fixture" ? raw : null;
+    const related = await readWire({ ticker: sym });
+    const indexable = Boolean(quote) && (Boolean(gcc.profile) || related.length > 0);
+    const title = `${gcc.nameEn} (${sym}) Share Price Today | ${ex?.shortName ?? "GCC"}`;
+    return {
+      title,
+      description: `${gcc.nameEn} (${sym}) on the ${ex?.name ?? "GCC exchange"} — share price, company profile and the latest Mizaan coverage. ${quote ? "Delayed, source-stamped." : "End-of-day pricing pending."}`,
+      alternates: { canonical: canonical(`/quote/${sym}`) },
+      robots: indexable ? undefined : { index: false, follow: true },
+    };
+  }
+
+  const meta = universeBySymbol(sym);
+  const name = meta?.name ?? sym;
+  const title = `${name} (${sym}) Share Price Today, News & Chart`;
+  const description = `Live ${name} (${sym}) price, chart and the latest Mizaan news coverage across global and GCC markets. Delayed data, source-stamped.`;
+  const url = canonical(`/quote/${sym}`);
+  const image = ogImage(`${name} (${sym})`, "quote");
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url,
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: { card: "summary_large_image", title, images: [image] },
+  };
 }
 
 export default async function QuotePage({ params }: Params) {
   const { symbol } = await params;
   const sym = symbol.toUpperCase();
   const [quote, currency] = await Promise.all([readQuote(sym), getDisplayCurrency()]);
+
+  // GCC company pages (Phase 5): a dedicated profile/peers/coverage view in the
+  // same layout. Price block shows only when a real quote exists. Non-GCC symbols
+  // fall through to the unchanged universe path below.
+  const gcc = gccCompany(sym);
+  if (gcc) {
+    // GCC is real-or-hidden: ignore any illustrative fixture price in the universe.
+    const realQuote =
+      quote && quote.provider.toLowerCase() !== "fixture" ? quote : null;
+    const [related, peers] = [
+      (await readWire({ ticker: sym })).slice(0, 6),
+      gccSectorPeers(gcc, 5),
+    ];
+    const ex = exchangeMeta(gcc.exchange);
+    const jsonLd = graph(
+      breadcrumbLd([
+        { name: "Home", path: "/" },
+        { name: "Markets", path: "/markets" },
+        { name: ex?.shortName ?? gcc.exchange, path: `/markets/${gcc.exchange}` },
+        { name: gcc.nameEn, path: `/quote/${sym}` },
+      ]),
+      corporationLd({ name: gcc.nameEn, ticker: sym, url: canonical(`/quote/${sym}`) }),
+    );
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <GccCompanyView
+          company={gcc}
+          quote={realQuote}
+          currency={currency}
+          peers={peers}
+          related={related}
+        />
+      </>
+    );
+  }
+
   if (!quote) notFound();
 
   const meta = universeBySymbol(sym);
@@ -74,8 +162,26 @@ export default async function QuotePage({ params }: Params) {
     },
   ];
 
+  // BreadcrumbList + Corporation structured data (§6 SEO).
+  const jsonLd = graph(
+    breadcrumbLd([
+      { name: "Home", path: "/" },
+      { name: "Markets", path: "/markets" },
+      { name: meta?.name ?? sym, path: `/quote/${sym}` },
+    ]),
+    corporationLd({
+      name: meta?.name ?? sym,
+      ticker: sym,
+      url: canonical(`/quote/${sym}`),
+    }),
+  );
+
   return (
     <div className="pb-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Price header with session state and delay label (§13). */}
       <div className="header-band bleed">
         <div className="mx-auto max-w-[1280px] px-4 py-8">

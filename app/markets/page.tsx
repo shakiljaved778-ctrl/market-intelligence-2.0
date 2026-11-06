@@ -1,10 +1,15 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { GCC_EXCHANGES } from "@/content/gcc-companies";
+import { pageMeta } from "@/lib/seo";
 import { Movers } from "@/components/market/Movers";
-import {
-  SectorHeatmap,
-  type HeatGroup,
-  type HeatTile,
-} from "@/components/market/SectorHeatmap";
+import type { HeatGroup, HeatTile } from "@/components/market/SectorHeatmap";
+
+// Recharts is heavy; code-split it out of the main bundle (§8). SSR is kept, so
+// the rendered output is identical.
+const SectorHeatmap = dynamic(() =>
+  import("@/components/market/SectorHeatmap").then((m) => m.SectorHeatmap),
+);
 import { AssetTabs } from "@/components/market/AssetTabs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
@@ -24,7 +29,11 @@ function cryptoRows(): MarketQuoteRow[] {
     }));
 }
 
-export const metadata = { title: "Markets" };
+export const metadata = pageMeta(
+  "/markets",
+  "Markets — global & GCC",
+  "Global and GCC markets: session clocks, movers, a sector heatmap and a server-side screener. Index levels are currency-neutral and never converted.",
+);
 
 /** Heatmap data: equities grouped by sector, sized by market cap. */
 function heatmapData(): HeatGroup[] {
@@ -100,6 +109,23 @@ export default async function MarketsPage() {
             </div>
           );
         })}
+      </section>
+
+      {/* GCC exchange hubs (§5) — plain links to the per-exchange company lists. */}
+      <section
+        className="fade-up mt-5 flex flex-wrap items-center gap-2"
+        style={{ "--d": "120ms" } as React.CSSProperties}
+      >
+        <span className="t-micro text-ink-3">GCC exchanges:</span>
+        {GCC_EXCHANGES.map((e) => (
+          <Link
+            key={e.id}
+            href={`/markets/${e.id}`}
+            className="border-hairline text-ink-2 hover:text-brand rounded-full border px-3 py-1 text-[12px]"
+          >
+            {e.shortName}
+          </Link>
+        ))}
       </section>
 
       {/* Sector heatmap — treemap sized by market cap, coloured by change. */}

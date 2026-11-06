@@ -184,3 +184,15 @@ never touches chrome or data, so §12 holds.
 
 Work **phase by phase**. At each gate: stop, report what was built, show acceptance
 evidence, **wait for approval**. Conventional commits, one feature branch per phase.
+
+## Non-negotiable rules for every task
+
+- Do not change the visual design: no changes to colours, colour tokens, CSS variables, theme files, fonts, font sizes, spacing, layout, grid, component styling, animations, icons or the light/dark/system theme behaviour.
+- Do not change navigation structure, page order, section order or the homepage layout.
+- Do not remove or rename any existing section (Markets, Wire, Sections, Economy, Crypto, Real Estate, World, Eureka, Tech & AI, Health, Science, Methodology).
+- Brand positioning stays: "GCC and global market intelligence". Do not rewrite brand copy, taglines or the logo.
+- If a task needs a new visible element, reuse existing components, class names and design tokens only. Never introduce a new colour, font or spacing value.
+- Prefer server-side, data-layer, metadata and config changes over UI changes.
+- Before editing, show a plan listing every file you will touch. After editing, list what changed and why.
+- Never expose API keys to the client. Never commit secrets.
+- Run lint, type-check and a production build before declaring a task done.

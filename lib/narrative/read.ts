@@ -1,7 +1,8 @@
 import { FIXTURE_ARTICLES } from "@/fixtures/articles";
-import { INDEX_STRIP } from "@/fixtures/indices";
+import { INDEX_STRIP, type IndexStripItem } from "@/fixtures/indices";
 import { UNIVERSE } from "@/fixtures/universe";
 import type { DisplayCurrency } from "@/lib/currency/peg";
+import { shiftFixtureDate } from "@/lib/demo-clock";
 import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
 
 /**
@@ -10,16 +11,18 @@ import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
  * jobs writing to the `recaps` table; the generators and inputs are identical,
  * so each recap stays reproducible from its stored inputs.
  *
- * The demo date tracks the NEWEST story in the wire, so the "latest session
- * recap" link always resolves to the current recap rather than a frozen date.
+ * The demo date tracks the NEWEST story in the wire, shifted onto the current
+ * demo window (lib/demo-clock.ts), so the recap is dated today and the "latest
+ * session recap" link always resolves to the current recap rather than a frozen
+ * date. It is recomputed per call so it rolls forward with the real date.
  */
-const DEMO_DATE = (() => {
+function demoDate(): string {
   const newest = FIXTURE_ARTICLES.reduce(
     (max, a) => (a.publishedAt > max ? a.publishedAt : max),
     "2000-01-01",
   );
-  return newest.slice(0, 10); // YYYY-MM-DD
-})();
+  return shiftFixtureDate(newest).slice(0, 10); // YYYY-MM-DD
+}
 
 export interface NamedRecap {
   slug: string;
@@ -41,59 +44,82 @@ function topMover() {
   return m ? { name: m.name, changePct: m.changePct } : undefined;
 }
 
+/** A tracked index has a valid close only with a finite positive level + change. */
+function indexValid(i: IndexStripItem): boolean {
+  return Number.isFinite(i.level) && i.level > 0 && Number.isFinite(i.changePct);
+}
+
 export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
-  const indices = INDEX_STRIP.filter((i) => i.region !== "GCC").map((i) => ({
-    name: i.name,
-    changePct: i.changePct,
-  }));
+  // Snapshot the demo date once so every recap in this call shares it.
+  const date = demoDate();
+  // Phase 1 §5: a session recap is published only when ≥80% of the tracked
+  // (non-GCC) indices have a valid close; otherwise the day's data is too
+  // incomplete to summarise honestly. GCC is excluded (EOD-only, separate rail).
+  const tracked = INDEX_STRIP.filter((i) => i.region !== "GCC");
+  const valid = tracked.filter(indexValid);
+  const enoughValid = tracked.length > 0 && valid.length / tracked.length >= 0.8;
+
+  const indices = valid.map((i) => ({ name: i.name, changePct: i.changePct }));
   const advancers = UNIVERSE.filter((r) => r.changePct > 0).length;
   const decliners = UNIVERSE.filter((r) => r.changePct < 0).length;
 
-  const close = sessionRecap({
-    kind: "session_close",
-    currency,
-    date: DEMO_DATE,
-    indices,
-    breadth: { advancers, decliners },
-    topMover: topMover(),
-    weakestSector: weakestSector(),
-  });
+  const recaps: NamedRecap[] = [];
 
-  const open = sessionRecap({
-    kind: "session_open",
-    currency,
-    date: DEMO_DATE,
-    indices,
-    topMover: topMover(),
-  });
-
-  const spx = INDEX_STRIP.find((i) => i.symbol === "SPX");
-  const week = weeklyRecap({
-    currency,
-    weekEnding: DEMO_DATE,
-    index: { name: spx?.name ?? "S&P 500", changePct: (spx?.changePct ?? 0) * 3 },
-    best: topMover(),
-    worst: (() => {
-      const w = [...UNIVERSE].sort((a, b) => a.changePct - b.changePct)[0];
-      return w ? { name: w.name, changePct: w.changePct } : undefined;
-    })(),
-  });
-
-  return [
-    {
-      slug: `session-close-${DEMO_DATE}`,
+  if (enoughValid) {
+    const close = sessionRecap({
       kind: "session_close",
-      title: "US session close",
-      output: close,
-    },
-    {
-      slug: `session-open-${DEMO_DATE}`,
+      currency,
+      date,
+      indices,
+      breadth: { advancers, decliners },
+      topMover: topMover(),
+      weakestSector: weakestSector(),
+    });
+    const open = sessionRecap({
       kind: "session_open",
-      title: "US session open",
-      output: open,
-    },
-    { slug: `weekly-${DEMO_DATE}`, kind: "weekly", title: "Weekly wrap", output: week },
-  ];
+      currency,
+      date,
+      indices,
+      topMover: topMover(),
+    });
+    recaps.push(
+      {
+        slug: `session-close-${date}`,
+        kind: "session_close",
+        title: "US session close",
+        output: close,
+      },
+      {
+        slug: `session-open-${date}`,
+        kind: "session_open",
+        title: "US session open",
+        output: open,
+      },
+    );
+  }
+
+  // The weekly wrap needs only its own index to be valid.
+  const spx = INDEX_STRIP.find((i) => i.symbol === "SPX");
+  if (spx && indexValid(spx)) {
+    const week = weeklyRecap({
+      currency,
+      weekEnding: date,
+      index: { name: spx.name, changePct: spx.changePct * 3 },
+      best: topMover(),
+      worst: (() => {
+        const w = [...UNIVERSE].sort((a, b) => a.changePct - b.changePct)[0];
+        return w ? { name: w.name, changePct: w.changePct } : undefined;
+      })(),
+    });
+    recaps.push({
+      slug: `weekly-${date}`,
+      kind: "weekly",
+      title: "Weekly wrap",
+      output: week,
+    });
+  }
+
+  return recaps;
 }
 
 export function listRecaps(currency?: DisplayCurrency): NamedRecap[] {

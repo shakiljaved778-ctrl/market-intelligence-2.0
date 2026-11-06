@@ -80,11 +80,11 @@ Cooler inflation strengthens the case for eventual rate relief, though a single 
   },
   15: {
     model: "editorial-demo",
-    md: `Bitcoin climbed to a fresh high, extending a rally that participants attributed to steady institutional inflows. The move continued a stretch of strength for the largest cryptocurrency as demand outpaced available supply.
+    md: `Regulators cleared the first listed options on spot bitcoin exchange-traded funds, giving investors a standardised way to hedge or express a view without holding the asset directly. The approval extends the market infrastructure that has built up around the funds since their launch.
 
-Crypto remains among the most volatile corners of the market, and rallies driven by inflows can reverse quickly if that demand fades. Mizan reports the move; it does not endorse the asset class.
+Options add a liquid risk-management layer that institutions in particular tend to want before committing larger positions. Mizan reports the development; it does not endorse the asset class.
 
-**Why it matters:** Institutional flows have become the swing factor for Bitcoin — and they can turn as fast as they arrived.`,
+**Why it matters:** Deeper derivatives plumbing tends to draw more institutional capital into an asset — and makes its price swings easier to manage.`,
   },
   16: {
     model: "editorial-demo",

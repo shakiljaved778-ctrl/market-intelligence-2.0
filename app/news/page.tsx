@@ -1,9 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Wire } from "@/components/news/Wire";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { allSections, allTopics, readWire } from "@/lib/news/read";
-
-export const metadata = { title: "The wire" };
+import { canonical } from "@/lib/seo";
 
 interface SearchParams {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -11,6 +11,30 @@ interface SearchParams {
 
 function one(v: string | string[] | undefined): string {
   return (Array.isArray(v) ? v[0] : v) ?? "";
+}
+
+export async function generateMetadata({
+  searchParams,
+}: SearchParams): Promise<Metadata> {
+  const sp = await searchParams;
+  const section = one(sp.section);
+  if (section) {
+    const s = allSections().find((x) => x.id === section);
+    if (s) {
+      return {
+        title: `${s.label} news`,
+        description: `${s.blurb} Ranking computed from coverage; summaries AI-written from cited sources.`,
+        // Consolidate the query-string view onto the clean section URL.
+        alternates: { canonical: canonical(`/news/section/${section}`) },
+      };
+    }
+  }
+  return {
+    title: "The wire — ranked market & world news",
+    description:
+      "Stories ranked by how many independent outlets cover them, across global and GCC markets and the wider world.",
+    alternates: { canonical: canonical("/news") },
+  };
 }
 
 export default async function NewsPage({ searchParams }: SearchParams) {

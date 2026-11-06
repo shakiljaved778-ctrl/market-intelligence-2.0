@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { pegReviewedOn, QAR_PER_USD } from "@/lib/currency/peg";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 
 const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] = [
   {
@@ -27,6 +28,10 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
     links: [
       { href: "/about", label: "About" },
       { href: "/methodology", label: "Methodology" },
+      { href: "/editorial-policy", label: "Editorial policy" },
+      { href: "/ai-disclosure", label: "AI disclosure" },
+      { href: "/corrections", label: "Corrections" },
+      { href: "/contact", label: "Contact" },
       { href: "/terms", label: "Terms" },
       { href: "/privacy", label: "Privacy" },
     ],
@@ -69,7 +74,12 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Newsletter signup row (§6) — one row above the legal text. */}
         <div className="border-hairline mt-10 border-t pt-6">
+          <NewsletterSignup source="footer" variant="footer" />
+        </div>
+
+        <div className="border-hairline mt-6 border-t pt-6">
           <p className="text-ink-3 text-[13px]">
             <span className="text-ink-2 font-medium">Market &amp; macro data</span> from
             FMP, Finnhub, FRED and the World Bank.{" "}
@@ -84,6 +94,9 @@ export function Footer() {
             {pegReviewedOn}). Rankings and clustering are computed from market data;
             story summaries are AI-written from the cited sources and may contain errors
             — verify against the originals.
+          </p>
+          <p className="text-ink-4 mt-4 text-[12px]">
+            © 2026 Mizaan Intelligence. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import Parser from "rss-parser";
 import { loadSources, type SourceConfig } from "./config";
+import { evaluateQuality } from "./quality";
 import { isAllowed } from "./robots";
 import {
   canonicalizeUrl,
@@ -91,5 +92,19 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
     }
   }
 
-  return { articles: dedupe(collected), perSource, skippedByRobots };
+  // Quality gate (Phase 2 §3/§4): drop seed-style headlines that name nothing
+  // specific, but KEEP raw institutional titles — the summariser rewrites those
+  // downstream into factual headlines. Every drop is logged.
+  const articles = dedupe(collected).filter((a) => {
+    const q = evaluateQuality({ headline: a.headline });
+    if (!q.ok && !q.needsRewrite) {
+      console.warn(
+        `[ingest] dropped low-quality headline: "${a.headline}" (${q.reasons.join(",")})`,
+      );
+      return false;
+    }
+    return true;
+  });
+
+  return { articles, perSource, skippedByRobots };
 }

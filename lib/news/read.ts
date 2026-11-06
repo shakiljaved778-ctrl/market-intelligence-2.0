@@ -6,6 +6,8 @@ import { UNIVERSE } from "@/fixtures/universe";
 import { isDbConfigured } from "@/lib/db/client";
 import { dbReadWire, type DbWireRow } from "@/lib/db/queries/wire";
 import { HashEmbedder } from "@/lib/curation/embed";
+import { demoNow, shiftFixtureDate } from "@/lib/demo-clock";
+import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedupe";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
 import {
@@ -26,17 +28,6 @@ import {
  * demo is stable. Each cluster is tagged with a section (deterministic,
  * keyword-driven) and an optional image reference.
  */
-// Rank the fixture wire against a clock pinned just after the newest fixture
-// story, so the most recently dated batch always surfaces at the top of the
-// wire (older stories age down to the recency floor, exactly like a live wire).
-// Previously this was frozen at 2026-09-16, so freshly dated stories got no
-// recency credit and ranked far down — added content never reached the
-// homepage or the top of /news.
-const DEMO_NOW = new Date(
-  Math.max(...FIXTURE_ARTICLES.map((a) => new Date(a.publishedAt).getTime())) +
-    60 * 60 * 1000,
-);
-
 /** A ranked cluster enriched with its editorial section + cover image. */
 export interface WireCluster extends SluggedCluster {
   section: string;
@@ -62,12 +53,12 @@ interface LoadedCluster {
   body: ArticleBody | null;
 }
 
-function context(): RankContext {
+function context(nowMs: number): RankContext {
   const tiers: Record<string, string> = {};
   for (const a of FIXTURE_ARTICLES) tiers[a.sourceId] = a.tier;
   const tickerMovePct: Record<string, number> = {};
   for (const row of UNIVERSE) tickerMovePct[row.symbol] = Math.abs(row.changePct);
-  return { tiers, tickerMovePct, now: DEMO_NOW };
+  return { tiers, tickerMovePct, now: demoNow(nowMs) };
 }
 
 function toMember(a: RawArticle): ClusterMember {
@@ -80,9 +71,12 @@ function toMember(a: RawArticle): ClusterMember {
   };
 }
 
-/** Enrich a fixture-computed cluster with section + cover + members. */
-function fixtureLoaded(cluster: SluggedCluster): LoadedCluster {
-  const byId = new Map<number, RawArticle>(FIXTURE_ARTICLES.map((a) => [a.id, a]));
+/** Enrich a fixture-computed cluster with section + cover + members. The
+ * `byId` map carries the demo-shifted articles so members report current dates. */
+function fixtureLoaded(
+  cluster: SluggedCluster,
+  byId: Map<number, RawArticle>,
+): LoadedCluster {
   const primary = byId.get(cluster.primaryId);
   const section = classifySection({
     title: cluster.title,
@@ -148,10 +142,39 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
   };
 }
 
+/**
+ * Collapse near-duplicate clusters on the live wire (Phase 2 §2): keep the first
+ * of any same-section group whose titles are near-identical (token Jaccard ≥
+ * threshold), dropping the rest so a paraphrase never appears as a second card.
+ * Input is assumed importance-ranked, so the kept one is the stronger cluster.
+ */
+function collapseNearDuplicates(list: LoadedCluster[]): LoadedCluster[] {
+  const kept: LoadedCluster[] = [];
+  for (const l of list) {
+    const dup = kept.some(
+      (k) =>
+        k.cluster.section === l.cluster.section &&
+        titleSimilarity(k.cluster.title, l.cluster.title) >= DEFAULT_JACCARD_THRESHOLD,
+    );
+    if (!dup) kept.push(l);
+  }
+  return kept;
+}
+
 /** Compute the ranked wire deterministically from the fixture articles. */
 async function computeFixtureClusters(): Promise<LoadedCluster[]> {
+  // Snapshot "now" once so the whole wire shares one demo offset, then shift the
+  // fixture dates forward onto the current demo window (lib/demo-clock.ts). The
+  // shift is uniform, so ranking order and cluster slugs are unchanged — only
+  // the timestamps move, keeping the zero-key demo looking current.
+  const now = Date.now();
+  const shifted = FIXTURE_ARTICLES.map((a) => ({
+    ...a,
+    publishedAt: shiftFixtureDate(a.publishedAt, now),
+  }));
+  const byId = new Map<number, RawArticle>(shifted.map((a) => [a.id, a]));
   const ranked = await runPipeline(
-    FIXTURE_ARTICLES.map((a) => ({
+    shifted.map((a) => ({
       id: a.id,
       sourceId: a.sourceId,
       trustScore: a.trustScore,
@@ -159,10 +182,10 @@ async function computeFixtureClusters(): Promise<LoadedCluster[]> {
       dek: a.dek,
       publishedAt: a.publishedAt,
     })),
-    context(),
+    context(now),
     new HashEmbedder(),
   );
-  return ranked.map(fixtureLoaded);
+  return ranked.map((c) => fixtureLoaded(c, byId));
 }
 
 /**
@@ -182,7 +205,13 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
     try {
       const rows = await dbReadWire();
       if (rows.length > 0) {
-        const live = rows.map(dbLoaded);
+        // Phase 2 §2: on the LIVE wire, collapse near-duplicate clusters (same
+        // section, title Jaccard ≥ threshold) so a paraphrase never shows twice.
+        // The curated fixtures below are authored demo content and are exempt, so
+        // the zero-key demo is unchanged. (Per-section freshness windows —
+        // lib/curation/freshness.ts — gate the homepage/section fronts, not the
+        // full /news wire, and are applied at the rendering layer in live mode.)
+        const live = collapseNearDuplicates(rows.map(dbLoaded));
         const liveSlugs = new Set(live.map((l) => l.cluster.slug));
         const curated = (await computeFixtureClusters()).filter(
           (l) => !liveSlugs.has(l.cluster.slug),

@@ -1,4 +1,5 @@
 import { ScreenerTable } from "@/components/market/ScreenerTable";
+import { pageMeta } from "@/lib/seo";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import {
@@ -8,7 +9,11 @@ import {
   type MarketRow,
 } from "@/lib/market/read";
 
-export const metadata = { title: "Screener" };
+export const metadata = pageMeta(
+  "/markets/screener",
+  "Stock screener",
+  "A server-side screener across global and GCC instruments — filter by sector, move and Shariah-compliance, sorted on the fields that matter.",
+);
 
 interface SearchParams {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

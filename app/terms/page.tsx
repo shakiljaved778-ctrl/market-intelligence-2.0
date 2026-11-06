@@ -24,10 +24,24 @@ export default function TermsPage() {
       </p>
       <h2>Acceptable use</h2>
       <p>
-        Don&rsquo;t scrape, overload or attempt to disrupt the service, and don&rsquo;t
+        Don&rsquo;t overload or attempt to disrupt the service, and don&rsquo;t
         misrepresent our computed content as licensed or official data. Outbound links
         point to third-party sites we don&rsquo;t control and aren&rsquo;t responsible
         for.
+      </p>
+      <h2>No scraping or republication</h2>
+      <p>
+        Automated scraping, crawling or bulk extraction of the site or its APIs is
+        prohibited except by major search engines obeying our <code>robots.txt</code>.
+        You may not republish, redistribute or resell our computed rankings, scores,
+        summaries or data — in whole or in part — without our prior written permission.
+        For content-licensing or data-feed enquiries, contact{" "}
+        <a href="mailto:editor@mizaan.tech">editor@mizaan.tech</a>.
+      </p>
+      <h2>Copyright</h2>
+      <p>
+        © 2026 Mizaan Intelligence. All rights reserved. Our wordmark, computed figures
+        and original prose are our property.
       </p>
       <h2>Attribution</h2>
       <p>
