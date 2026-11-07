@@ -1,20 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Regression: our curated fixture wire (the Eureka Nobel explainers AND the
- * wider editorial stories) is our own authored content, never ingested into
- * Postgres. When the live DB wire is served it must still be merged in from
- * fixtures — otherwise added stories vanish the moment POSTGRES_URL is set (the
- * bug this covers). See lib/news/read.ts (loadAll merges both, deduped by slug).
+ * Live-mode wire contract (lib/news/read.ts, loadAll):
+ *   - Real ingested news (the clusters the ingest/cluster jobs persist to
+ *     Postgres) LEADS — ranked by importance, never buried beneath fixtures.
+ *   - The evergreen Eureka explainers are still merged in (they're our own
+ *     authored content, never ingested, so the Eureka section would otherwise
+ *     be empty) — but un-shifted, so they age against the real clock and fall to
+ *     their natural low rank instead of masquerading as today's news.
+ *   - The authored DEMO stories (non-Eureka fixtures) are dropped in live mode.
+ * With no DB the full, date-shifted fixture wire renders on its own (§2).
  */
-describe("wire read — curated fixture merge into the live DB wire", () => {
+describe("wire read — live mode: real news leads, demo fixtures dropped, Eureka kept", () => {
   afterEach(() => {
     vi.resetModules();
     vi.doUnmock("@/lib/db/client");
     vi.doUnmock("@/lib/db/queries/wire");
   });
 
-  it("merges the curated fixture wire into the live DB wire", async () => {
+  it("leads with real DB news, keeps Eureka, and drops the demo fixtures", async () => {
     vi.resetModules();
     vi.doMock("@/lib/db/client", () => ({
       isDbConfigured: () => true,
@@ -31,8 +35,7 @@ describe("wire read — curated fixture merge into the live DB wire", () => {
           sourceIds: ["reuters"],
           sourceCount: 3,
           eventTime: "2026-09-26T12:00:00.000Z",
-          // Deliberately high importance — a recent, well-sourced live story.
-          // The fresh curated batch must still lead it (see assertion below).
+          // A recent, well-sourced live story — it must LEAD the wire.
           importanceScore: 99,
           articleIds: [9001],
           primaryId: 9001,
@@ -55,25 +58,23 @@ describe("wire read — curated fixture merge into the live DB wire", () => {
 
     const { readWire } = await import("./read");
 
-    // The live DB wire story is served...
     const all = await readWire();
+    // The live DB story is served AND leads — real news first, not a fixture.
     expect(all.some((c) => c.slug === "live-markets-story")).toBe(true);
-    // ...alongside the curated fixture wire (many more stories than the 1 in DB).
-    expect(all.length).toBeGreaterThan(1);
+    expect(all[0]!.slug).toBe("live-markets-story");
 
-    // The freshest curated stories LEAD, even over a high-importance live story,
-    // so newly added content is visible at the top instead of being buried.
-    const liveIdx = all.findIndex((c) => c.slug === "live-markets-story");
-    expect(all[0]!.slug).not.toBe("live-markets-story");
-    expect(liveIdx).toBeGreaterThan(5);
-
-    // The Eureka explainers (never in the DB) are merged in...
+    // The Eureka explainers (never in the DB) are still merged in...
     const eureka = await readWire({ section: "eureka" });
     expect(eureka.length).toBeGreaterThan(0);
     expect(eureka.some((c) => /nash/i.test(c.title))).toBe(true);
 
-    // ...and so are the wider curated markets stories (not just Eureka).
+    // ...but the authored DEMO stories (non-Eureka fixtures) are dropped, so
+    // ingested news isn't buried. The Fed/OPEC demo clusters must be gone.
+    expect(all.some((c) => /opec/i.test(c.title))).toBe(false);
+    expect(all.some((c) => /federal reserve|fomc/i.test(c.title))).toBe(false);
+
+    // The only markets-section story is the live one (demo markets fixtures gone).
     const markets = await readWire({ section: "markets" });
-    expect(markets.length).toBeGreaterThan(1);
+    expect(markets.every((c) => c.slug === "live-markets-story")).toBe(true);
   });
 });
