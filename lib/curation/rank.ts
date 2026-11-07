@@ -22,13 +22,19 @@ export const W_PRIMARY = 0.15;
 export const MAX_SOURCES = 8;
 export const MOVE_CAP_PCT = 5;
 export const RECENCY_HALF_LIFE_H = 18;
-export const RECENCY_FLOOR = 0.3;
+// Floor lowered 0.30 → 0.18 so a well-covered but days-old story (e.g. last
+// week's regulator minutes) decays further and no longer crowds fresh content
+// off the homepage, while still never vanishing entirely.
+export const RECENCY_FLOOR = 0.18;
 
 export const TIER_WEIGHT: Record<string, number> = {
   regulator: 1.0,
   primary: 1.0,
   wire: 0.7,
-  outlet: 0.4,
+  // outlet raised 0.4 → 0.55 so a fresh, reputable outlet story (e.g. The
+  // Conversation) can surface on the homepage rather than sitting far below the
+  // institutional feeds. Still below wire (0.7) and regulator/primary (1.0).
+  outlet: 0.55,
 };
 
 export interface RankContext {
