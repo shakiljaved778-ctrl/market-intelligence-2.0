@@ -146,7 +146,7 @@ export async function clusterTask(): Promise<JobSummary> {
       existingClusterCovers,
       setClusterCover,
     } = await import("@/lib/db/queries/articles");
-    const top = ranked.slice(0, 24);
+    const top = ranked.slice(0, 48);
     const slugs = top.map((c) => c.slug);
     const empty = new Set<string>();
     const [haveBrief, haveCover] = await Promise.all([
@@ -171,6 +171,11 @@ export async function clusterTask(): Promise<JobSummary> {
           const m = tickerMovePct[t];
           if (typeof m === "number") moves[t] = m;
         }
+        // Every clustered report's dek — more cited facts for the model to
+        // synthesise a full 2–3 paragraph brief (never copied; §10).
+        const sourceDeks = c.articleIds
+          .map((id) => dekById.get(id))
+          .filter((d): d is string => Boolean(d && d.trim()));
         const brief = await generateBrief(String(c.primaryId), {
           title: c.title,
           dek,
@@ -178,6 +183,7 @@ export async function clusterTask(): Promise<JobSummary> {
           tickers: c.tickers,
           sources: c.sourceIds,
           moves,
+          sourceDeks,
         });
         if (brief) {
           await setClusterBrief(c.slug, brief.body, brief.model);

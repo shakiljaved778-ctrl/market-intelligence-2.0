@@ -143,9 +143,12 @@ to ≈0.12 and raise `SIM_THRESHOLD` toward ~0.68 pure cosine.
 
 **Ranking** (`lib/curation/rank.ts`), weights sum to 1, one place, tunable:
 `W_SOURCES=0.40` (distinct sources, log-scaled), `W_TIER=0.20` (regulator/primary
-1.0, wire 0.7, outlet 0.4), `W_MARKET=0.25` (max |move| of tickers / 5%),
+1.0, wire 0.7, outlet 0.55), `W_MARKET=0.25` (max |move| of tickers / 5%),
 `W_PRIMARY=0.15` (a regulator/primary source present). Multiplied by a recency
-factor (18h half-life, floored at 0.30 so covered news doesn't vanish).
+factor (18h half-life, floored at 0.18 so covered news doesn't vanish but stale
+stories decay below fresh ones). The outlet tier (0.55) and floor (0.18) were
+tuned up/down from 0.4/0.30 so fresh reputable-outlet stories (e.g. The
+Conversation) surface on the homepage instead of sitting under week-old feeds.
 
 **Legal invariant.** `articles` has no body column — guarded by
 `lib/db/schema.test.ts`. robots.txt is checked inside the fetcher
