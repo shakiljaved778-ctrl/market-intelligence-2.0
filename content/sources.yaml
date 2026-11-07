@@ -71,7 +71,7 @@ sources:
     tier: regulator
     trust_score: 96
     license_note: Official Qatari regulator publication; headline + link only.
-    active: true # enabled per owner decision 2026-11-07; robots + URL checked in the fetcher (§6, §10)
+    active: false # owner decision 2026-11-07: skip QCB News for now
 
   - id: qse-disclosures
     name: Qatar Stock Exchange — Disclosures
