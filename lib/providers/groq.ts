@@ -48,6 +48,9 @@ export interface BriefInput {
   sources?: string[];
   /** ticker -> latest % move, for grounding the "market response" line. */
   moves?: Record<string, number>;
+  /** Deks from every clustered report — more cited facts to synthesise from,
+   * so multi-source stories get a full, grounded 2–3 paragraph brief. */
+  sourceDeks?: string[];
 }
 
 export interface Brief {
@@ -69,9 +72,21 @@ function prompt(input: BriefInput): string {
         .map(([s, m]) => `${s} ${m >= 0 ? "+" : ""}${m.toFixed(2)}%`)
         .join(", ")
     : "";
+  // De-duplicate the cited deks (drop one identical to the headline/summary).
+  const seen = new Set([
+    input.title.trim().toLowerCase(),
+    input.dek?.trim().toLowerCase(),
+  ]);
+  const details = (input.sourceDeks ?? [])
+    .map((d) => d.trim())
+    .filter((d) => d && !seen.has(d.toLowerCase()))
+    .slice(0, 8);
   return [
     `Headline: ${input.title}`,
     input.dek ? `Summary: ${input.dek}` : "",
+    details.length
+      ? `Reported facts (synthesise, do not copy):\n- ${details.join("\n- ")}`
+      : "",
     input.tickers?.length ? `Instruments: ${input.tickers.join(", ")}` : "",
     moves ? `Latest moves: ${moves}` : "",
     input.sources?.length ? `Reported by: ${input.sources.join(", ")}` : "",

@@ -201,6 +201,23 @@ async function computeFixtureClusters(shift = true): Promise<LoadedCluster[]> {
 }
 
 /**
+ * A cluster is shown only when a reader actually gets an article: either an
+ * AI-written brief (2–3 paragraphs), OR a genuine dek — a real sentence, not a
+ * government feed's description that just repeats the headline. Content-free
+ * stubs (bare headline, no brief) are hidden until their brief is generated, so
+ * the wire never shows a two-line "article". Applied to LIVE data only; the
+ * authored fixtures all carry real deks, so the zero-key demo is unaffected.
+ */
+function isSubstantive(l: LoadedCluster): boolean {
+  if (l.body && l.body.md.trim().length > 0) return true;
+  const dek = l.cluster.dek?.trim() ?? "";
+  const title = l.cluster.title.trim();
+  if (!dek || dek.toLowerCase() === title.toLowerCase()) return false;
+  const words = dek.split(/\s+/).filter(Boolean).length;
+  return words >= 6 && dek.length >= 40;
+}
+
+/**
  * Load the whole ranked wire once per request (React `cache` dedupes the calls
  * from readWire / readCluster / readSectionSummaries in a single render).
  *
@@ -232,8 +249,9 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
         const byImportance = (a: LoadedCluster, b: LoadedCluster) =>
           b.cluster.importanceScore - a.cluster.importanceScore;
         // Real news leads; the evergreen explainers fall to their natural (low)
-        // rank by importance.
-        return [...live, ...eureka].sort(byImportance);
+        // rank by importance. Stub stories (no brief, no real dek) are hidden so
+        // readers never get a two-line "article" (§13 quality).
+        return [...live, ...eureka].filter(isSubstantive).sort(byImportance);
       }
     } catch (err) {
       console.error("[wire] DB read failed, falling back to fixtures:", err);
