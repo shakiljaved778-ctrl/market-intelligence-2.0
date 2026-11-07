@@ -71,7 +71,7 @@ sources:
     tier: regulator
     trust_score: 96
     license_note: Official Qatari regulator publication; headline + link only.
-    active: false # owner decision 2026-11-07: skip QCB News for now
+    active: false # 2026-11-07: skipped by owner; feed also returned 0 items (URL/robots unverified)
 
   - id: qse-disclosures
     name: Qatar Stock Exchange — Disclosures
@@ -82,7 +82,23 @@ sources:
     tier: primary
     trust_score: 96
     license_note: Exchange regulatory disclosures; headline + link only.
-    active: true # enabled per owner decision 2026-11-07; robots + URL checked in the fetcher (§6, §10)
+    active: false # 2026-11-07: disabled — feed returned 0 items (itemsIn unchanged); verify URL before re-enabling
+
+  # The Conversation — expert-authored news & analysis across markets, world,
+  # tech, science, health. CC-BY-ND explicitly permits commercial republication
+  # with attribution; we take headline + dek + link + link-out only (no body
+  # stored, §10). Feed verified 2026-11-07: https://theconversation.com/articles.atom
+  # → HTTP 200, valid Atom, 50 fresh entries, robots.txt allows the path.
+  - id: the-conversation
+    name: The Conversation
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # owner-approved 2026-11-07; feed + robots verified
 
   # ============================================================
   # NON-FINANCIAL verticals (§13 editorial mix). We keep the same bias toward
