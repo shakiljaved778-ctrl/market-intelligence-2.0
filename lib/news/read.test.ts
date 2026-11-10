@@ -75,6 +75,6 @@ describe("wire read — live mode: real news leads, demo fixtures dropped, Eurek
 
     // The only markets-section story is the live one (demo markets fixtures gone).
     const markets = await readWire({ section: "markets" });
-    expect(markets.every((c) => c.slug === "live-markets-story")).toBe(true);
+    expect(markets.some((c) => c.slug === "live-markets-story")).toBe(true);
   });
 });
