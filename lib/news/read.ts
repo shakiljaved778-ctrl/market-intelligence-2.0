@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { FIXTURE_ARTICLES, type RawArticle } from "@/fixtures/articles";
+import { EDITORIAL_ARTICLES } from "@/fixtures/editorial";
 import { ARTICLE_BODIES, type ArticleBody } from "@/fixtures/articles-body";
 import { COVER_IMAGES } from "@/fixtures/cover-images";
 import { UNIVERSE } from "@/fixtures/universe";
@@ -218,6 +219,30 @@ function isSubstantive(l: LoadedCluster): boolean {
 }
 
 /**
+ * Owner-curated editorial stories (fixtures/editorial.ts): real, cited items an
+ * editor promotes into the LIVE wire. Ranked against the real clock like live
+ * news (never date-shifted) and kept in live mode (unlike the demo fixtures), so
+ * an Editor's Pick rule can lead the hero with a hand-picked real story.
+ */
+async function computeEditorialClusters(): Promise<LoadedCluster[]> {
+  if (EDITORIAL_ARTICLES.length === 0) return [];
+  const byId = new Map<number, RawArticle>(EDITORIAL_ARTICLES.map((a) => [a.id, a]));
+  const ranked = await runPipeline(
+    EDITORIAL_ARTICLES.map((a) => ({
+      id: a.id,
+      sourceId: a.sourceId,
+      trustScore: a.trustScore,
+      headline: a.headline,
+      dek: a.dek,
+      publishedAt: a.publishedAt,
+    })),
+    context(new Date()),
+    new HashEmbedder(),
+  );
+  return ranked.map((c) => fixtureLoaded(c, byId));
+}
+
+/**
  * Load the whole ranked wire once per request (React `cache` dedupes the calls
  * from readWire / readCluster / readSectionSummaries in a single render).
  *
@@ -246,12 +271,19 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
         const eureka = (await computeFixtureClusters(false)).filter(
           (l) => l.cluster.section === "eureka" && !liveSlugs.has(l.cluster.slug),
         );
+        // Owner-curated editorial stories (real, cited) — kept in live mode so an
+        // Editor's Pick rule can lead the hero with a hand-picked real story.
+        const editorial = (await computeEditorialClusters()).filter(
+          (l) => !liveSlugs.has(l.cluster.slug),
+        );
         const byImportance = (a: LoadedCluster, b: LoadedCluster) =>
           b.cluster.importanceScore - a.cluster.importanceScore;
-        // Real news leads; the evergreen explainers fall to their natural (low)
-        // rank by importance. Stub stories (no brief, no real dek) are hidden so
-        // readers never get a two-line "article" (§13 quality).
-        return [...live, ...eureka].filter(isSubstantive).sort(byImportance);
+        // Real news leads; the evergreen explainers + curated editorial fall to
+        // their natural rank by importance. Stub stories (no brief, no real dek)
+        // are hidden so readers never get a two-line "article" (§13 quality).
+        return [...live, ...editorial, ...eureka]
+          .filter(isSubstantive)
+          .sort(byImportance);
       }
     } catch (err) {
       console.error("[wire] DB read failed, falling back to fixtures:", err);
