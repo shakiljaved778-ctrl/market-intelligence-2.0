@@ -99,6 +99,26 @@ sources:
     trust_score: 78
     license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
     active: true # owner-approved 2026-11-07; feed + robots verified
+  - id: the-conversation-tech
+    name: The Conversation — Technology
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/us/technology/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # owner-approved 2026-11-10; feed + robots verified (US technology edition)
+  - id: the-conversation-uk
+    name: The Conversation — UK
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/uk/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # owner-approved 2026-11-10; feed + robots verified (UK edition)
 
   # ============================================================
   # NON-FINANCIAL verticals (§13 editorial mix). We keep the same bias toward

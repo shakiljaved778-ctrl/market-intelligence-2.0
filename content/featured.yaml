@@ -1,0 +1,13 @@
+# Editor's Pick (§13) — promote a REAL, already-ingested story to the homepage
+# hero, overriding the automatic signal ranking. Rules are tried in order; the
+# first that matches a story currently in the wire wins. If none match, the hero
+# falls back to the top-ranked story.
+#
+# We never pin a fabricated story — a rule only promotes a story the pipeline
+# already ingested from a cited source, so the hero leads with this topic the
+# moment such a story is on the wire. Match by `title` keywords (any, case-
+# insensitive), `section`, or an exact `slug`.
+picks:
+  - label: Editor's pick
+    match:
+      title: [nvidia, "jensen huang"]
