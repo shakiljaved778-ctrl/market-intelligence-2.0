@@ -15,6 +15,7 @@ import {
   readWire,
   type WireCluster,
 } from "@/lib/news/read";
+import { pickFeatured } from "@/lib/news/featured";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
 import type { IndexStripItem } from "@/fixtures/indices";
@@ -103,9 +104,14 @@ export default async function BoardPage() {
   const totalSources = clusters.reduce((n, c) => n + c.sourceCount, 0);
   const sectionsCount = allSections().length;
 
-  const lead = clusters[0];
-  const heroSide = clusters.slice(1, 4); // secondary stories in the hero rail
-  const threeUp = clusters.slice(4, 7);
+  // Editor's Pick (§13): if a configured rule matches a real story in the wire,
+  // it leads the hero (labelled), overriding the automatic ranking; otherwise
+  // the top-ranked story leads as normal.
+  const featured = pickFeatured(clusters);
+  const lead = featured?.cluster ?? clusters[0];
+  const rest = clusters.filter((c) => c.slug !== lead?.slug);
+  const heroSide = rest.slice(0, 3); // secondary stories in the hero rail
+  const threeUp = rest.slice(3, 6);
   // Latest rail is TIME-ordered (newest first), not rank-ordered.
   const latest = [...clusters]
     .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime())
@@ -162,6 +168,11 @@ export default async function BoardPage() {
                 />
               </div>
               <div className="mt-4 flex items-center gap-3 text-[12px]">
+                {featured ? (
+                  <span className="border-line text-brand inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
+                    <span aria-hidden>◆</span> {featured.label}
+                  </span>
+                ) : null}
                 <SectionTag section={lead.section} />
                 <SignalScore score={lead.importanceScore} />
                 <span className="text-signal-strong tnum">
