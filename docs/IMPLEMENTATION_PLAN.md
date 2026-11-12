@@ -356,3 +356,49 @@ Each has my recommendation. Q1 to Q4 block Phase 1.
 - GCC source terms and robots rules were not yet reviewed; that is the first task of
   Phase 2.
 - Lighthouse was not re-run; this environment's network path inflates the timings.
+
+---
+
+## 12. Phase 1 status (truth and trust) — built, awaiting sign-off
+
+Built on `claude/wonderful-davinci-3fxwpg`. How each finding was addressed:
+
+| # | Finding | Fix |
+| --- | --- | --- |
+| 5 | Sample data under a "live" tagline | One quote service (`lib/market/service.ts`) with source, time and delay; Postgres is the last-known-good store; fixtures are reachable only under `DEMO_MODE=1` and a CI check enforces it. Tagline and description rewritten in `content/site.config.ts`. |
+| 6 | Recap built on sample data | Built in the end-of-day job from real closing quotes, stored with its inputs, and not published below 80% coverage (`lib/narrative/session.ts`). |
+| 7a | Heatmap | Server-rendered from real quotes; empty state otherwise. |
+| 7b | Commodities and Crypto tabs | Every panel is in the HTML; rows are real (ECB reference rates, EIA energy benchmarks via FRED, CoinGecko) or an empty state. |
+| 7c | Session clocks | Open and close shown in Doha time and the reader's time; Gulf venues listed first; UAE venues use a Monday to Friday week. |
+| 7d | "Movers" twice | Inner heading removed. |
+| 8a | Screener trend | Drawn only from stored daily closes; a dash otherwise. |
+| 8b | Sign mismatch | One `ChangePill`; glyph, sign and colour come from one rounded number. |
+| 8c | Sort and pagination | Server-side, through URL parameters. |
+| 9 | Date mismatch | Banner is today's date in Doha; the recap carries its session date. |
+| 11 | "CB" and ticker tags | Control is labelled "Colour-blind-safe colours" in the footer. Tickers match only in market context and are re-derived at read time; chips carry the company name. |
+| 12 | Newsletter field | One visible field and one button. |
+| 13 | About | Reads operator, editor and contact from `content/site.config.ts`. |
+| 15 | Stock photos (first step) | Random `picsum` fallback removed; a story with no credited image shows the generated section cover. |
+| A1, A2 | Economy and calendar | Economy reads stored FRED and World Bank observations with source and date. The calendar shows an empty state and its link is hidden until a source exists. |
+| A3 | Shariah flags | Column and filter removed; methodology states that none is shown yet. |
+| A5 | Job reliability (part) | Cron routes allowed 60 seconds; migrations applied on merge. The scheduler itself is unchanged pending Q3 and Q4. |
+| A6, A7 | Counters, footer, disclaimer | Replaced with true counts and accurate statements. |
+| A8 | Mobile overflow | Fixed and covered by a 380 px smoke test. |
+| A9 | Editor's pick | Removed. Picks now need an exact slug and expire after 72 hours. |
+| A10 | Quote delay lost on storage | `quotes.delay_minutes` added (migration 0005). |
+
+Left for later phases as planned: GCC sources and the classifier (2), ranking decay at
+read time (2), homepage duplicates and mix (2), the Shariah screen and GCC instruments
+(2), cover system and palette (3).
+
+Verification carried out: 212 unit tests, 9 smoke tests, 40 visual baselines, lint,
+type-check, the fixture-import check and a production build. The production build
+was run locally with no data (every surface showed its empty state, and a search of
+the rendered pages for "sample" and "illustrative" found nothing) and against a
+local Postgres populated through the real persistence functions.
+
+**Not verified:** no provider was called from the build environment (its network
+policy blocks them), so the FRED, Frankfurter and World Bank fetches are covered by
+mocked tests only. The first macro and quotes job runs after deployment are the real
+test; check the job output and the Markets and Economy pages after they run.
+

@@ -95,7 +95,11 @@ async function sessionRecapTask(): Promise<boolean> {
     const quote = stored.get(inst.symbol);
     if (quote) rows.push({ instrument: inst, quote });
   }
-  const result = buildSessionClose(rows, nyDate(new Date().toISOString()));
+  // Normally the session is today's (New York). If this run fired late — after
+  // midnight in New York — the closes it holds belong to the previous day.
+  const today = nyDate(new Date().toISOString());
+  const yesterday = nyDate(new Date(Date.now() - 86_400_000).toISOString());
+  const result = buildSessionClose(rows, today) ?? buildSessionClose(rows, yesterday);
   if (!result) {
     console.log("[eod] session recap not published: closing-price coverage below gate");
     return false;
@@ -119,6 +123,16 @@ export async function eodTask(): Promise<JobSummary> {
   // provider returns closing prices — the inputs the recap is built from.
   const quotes = await quotesTask();
 
+  // The recap comes straight after the quotes it is built from, BEFORE the
+  // slower candle and fundamentals steps, so a tight function time limit can
+  // never leave the day without one.
+  let recapWritten = false;
+  try {
+    recapWritten = await sessionRecapTask();
+  } catch (err) {
+    console.error("[eod] session recap failed:", err);
+  }
+
   // EOD candle backfill for the core symbols across the daily ranges (§13).
   // Scoped to BACKFILL_SYMBOLS, not the full live-quote list, to stay within the
   // tight free candle budgets (Polygon ~5/min, EODHD ~100/day).
@@ -141,13 +155,6 @@ export async function eodTask(): Promise<JobSummary> {
       await persistFundamentals(f);
       fundamentalsOut += 1;
     }
-  }
-
-  let recapWritten = false;
-  try {
-    recapWritten = await sessionRecapTask();
-  } catch (err) {
-    console.error("[eod] session recap failed:", err);
   }
 
   const pruned = await pruneRetention();

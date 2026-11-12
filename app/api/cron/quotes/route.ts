@@ -10,3 +10,7 @@ export function GET(request: Request): Promise<Response> {
 
 // GitHub Actions may POST; accept both verbs.
 export const POST = GET;
+
+// These jobs make many sequential provider calls and database writes; allow up
+// to a minute (the platform default is shorter).
+export const maxDuration = 60;
