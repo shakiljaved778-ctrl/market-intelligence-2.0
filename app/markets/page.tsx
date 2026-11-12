@@ -1,83 +1,37 @@
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { GCC_EXCHANGES } from "@/content/gcc-companies";
 import { pageMeta } from "@/lib/seo";
-import { Movers } from "@/components/market/Movers";
-import type { HeatGroup, HeatTile } from "@/components/market/SectorHeatmap";
-
-// Recharts is heavy; code-split it out of the main bundle (§8). SSR is kept, so
-// the rendered output is identical.
-const SectorHeatmap = dynamic(() =>
-  import("@/components/market/SectorHeatmap").then((m) => m.SectorHeatmap),
-);
 import { AssetTabs } from "@/components/market/AssetTabs";
+import { Movers } from "@/components/market/Movers";
+import { SectorHeatmap } from "@/components/market/SectorHeatmap";
+import { SessionClocks } from "@/components/market/SessionClocks";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { sessionFor } from "@/lib/format/session";
-import { UNIVERSE } from "@/fixtures/universe";
-import { COMMODITY_ROWS, FX_ROWS, type MarketQuoteRow } from "@/fixtures/markets-extra";
-
-function cryptoRows(): MarketQuoteRow[] {
-  return UNIVERSE.filter((u) => u.assetClass === "crypto")
-    .sort((a, b) => (b.marketCapUsd ?? 0) - (a.marketCapUsd ?? 0))
-    .slice(0, 6)
-    .map((u) => ({
-      symbol: u.symbol,
-      name: u.name,
-      price: u.priceUsd,
-      changePct: u.changePct,
-    }));
-}
+import { readCommodityRows, readCryptoRows, readFxRows } from "@/lib/market/levels";
+import { readUniverse } from "@/lib/market/read";
 
 export const metadata = pageMeta(
   "/markets",
-  "Markets — global & GCC",
-  "Global and GCC markets: session clocks, movers, a sector heatmap and a server-side screener. Index levels are currency-neutral and never converted.",
+  "Markets — global and GCC",
+  "Session hours for Gulf and global exchanges, the day's largest moves, a sector heatmap, FX reference rates, energy benchmarks and crypto — every figure with its source and time.",
 );
 
-/** Heatmap data: equities grouped by sector, sized by market cap. */
-function heatmapData(): HeatGroup[] {
-  const bySector = new Map<string, HeatTile[]>();
-  for (const u of UNIVERSE) {
-    if (u.assetClass !== "equity" || !u.marketCapUsd) continue;
-    const sec = u.sector ?? "Other";
-    const arr = bySector.get(sec) ?? [];
-    arr.push({ name: u.symbol, size: u.marketCapUsd, changePct: u.changePct });
-    bySector.set(sec, arr);
-  }
-  return [...bySector.entries()]
-    .map(([name, children]) => ({
-      name,
-      children: children.sort((a, b) => b.size - a.size).slice(0, 5),
-    }))
-    .sort(
-      (a, b) =>
-        b.children.reduce((n, c) => n + c.size, 0) -
-        a.children.reduce((n, c) => n + c.size, 0),
-    )
-    .slice(0, 6);
-}
-
-const EXCHANGES: { code: string; label: string }[] = [
-  { code: "NASDAQ", label: "NASDAQ" },
-  { code: "NYSE", label: "NYSE" },
-  { code: "LSE", label: "London" },
-  { code: "TSE", label: "Tokyo" },
-  { code: "QSE", label: "Qatar (EOD)" },
-  { code: "CRYPTO", label: "Crypto" },
-];
-
 export default async function MarketsPage() {
-  const currency = await getDisplayCurrency();
+  const [currency, universe, fx, commodities, crypto] = await Promise.all([
+    getDisplayCurrency(),
+    readUniverse(),
+    readFxRows(),
+    readCommodityRows(),
+    readCryptoRows(6),
+  ]);
   return (
     <div className="pb-4">
       <div className="header-band bleed">
         <div className="mx-auto max-w-[1280px] px-4 py-8">
           <PageHeader
-            live
-            kicker="global markets + GCC rail"
+            kicker="global markets + GCC"
             title="Markets"
-            subtitle="Session clocks, movers and a server-side screener across the global and GCC rails. Index levels are currency-neutral and never converted."
+            subtitle="Session hours, the largest moves, sectors, FX, energy and crypto. Every figure states its source and time; index levels and percentages are never currency-converted."
             action={
               <Link href="/markets/screener" className="btn btn-ghost text-[13px]">
                 Open screener <span aria-hidden>→</span>
@@ -87,31 +41,16 @@ export default async function MarketsPage() {
         </div>
       </div>
 
-      {/* Per-exchange session clocks (§13). Global live; GCC labelled EOD. */}
+      {/* Per-exchange session clocks — Gulf venues first. */}
       <section
-        className="fade-up mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+        className="fade-up mt-6"
         style={{ "--d": "80ms" } as React.CSSProperties}
+        aria-label="Exchange trading hours"
       >
-        {EXCHANGES.map((ex) => {
-          const s = sessionFor(ex.code);
-          const open = s.state === "open";
-          return (
-            <div key={ex.code} className="card card-hover p-3.5">
-              <div className="flex items-center justify-between">
-                <div className="text-text-mid text-[12px]">{ex.label}</div>
-                {open ? <span className="live-dot" aria-hidden /> : null}
-              </div>
-              <div
-                className={`mt-2 text-[13px] ${open ? "dir-gain" : "text-text-low"}`}
-              >
-                {s.label}
-              </div>
-            </div>
-          );
-        })}
+        <SessionClocks nowIso={new Date().toISOString()} />
       </section>
 
-      {/* GCC exchange hubs (§5) — plain links to the per-exchange company lists. */}
+      {/* GCC exchange hubs — links to the per-exchange company lists. */}
       <section
         className="fade-up mt-5 flex flex-wrap items-center gap-2"
         style={{ "--d": "120ms" } as React.CSSProperties}
@@ -128,23 +67,22 @@ export default async function MarketsPage() {
         ))}
       </section>
 
-      {/* Sector heatmap — treemap sized by market cap, coloured by change. */}
       <section
         className="fade-up mt-10"
         style={{ "--d": "160ms" } as React.CSSProperties}
       >
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="t-h3 font-editorial text-ink">Sector heatmap</h2>
-          <span className="t-micro text-ink-3">equities · illustrative</span>
+          <span className="t-micro text-ink-3">US equities</span>
         </div>
-        <SectorHeatmap data={heatmapData()} />
+        <SectorHeatmap rows={universe} />
       </section>
 
       <section
         className="fade-up mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12"
         style={{ "--d": "220ms" } as React.CSSProperties}
       >
-        <div className="lg:col-span-7">
+        <div className="min-w-0 lg:col-span-7">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="t-h3 font-editorial text-ink">Movers</h2>
             <Link href="/markets/screener" className="text-brand text-[12px]">
@@ -153,11 +91,11 @@ export default async function MarketsPage() {
           </div>
           <Movers currency={currency} />
         </div>
-        <div className="lg:col-span-5">
+        <div className="min-w-0 lg:col-span-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="t-h3 font-editorial text-ink">FX · Commodities · Crypto</h2>
           </div>
-          <AssetTabs fx={FX_ROWS} commodities={COMMODITY_ROWS} crypto={cryptoRows()} />
+          <AssetTabs fx={fx} commodities={commodities} crypto={crypto} />
         </div>
       </section>
     </div>

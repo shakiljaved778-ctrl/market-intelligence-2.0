@@ -1,7 +1,7 @@
 import { FIXTURE_ARTICLES } from "@/fixtures/articles";
 
 /**
- * Demo clock for the zero-key fixture wire (§2).
+ * Demo clock for the DEMO_MODE fixture wire.
  *
  * The fixture articles carry fixed authored dates (Sept–Oct 2026) so the build,
  * the tests and the clustering demo are reproducible. But a frozen wire makes

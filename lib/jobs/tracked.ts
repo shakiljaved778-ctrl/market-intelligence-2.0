@@ -11,11 +11,11 @@
  * We keep the equities/ADRs count comfortably under Finnhub's 60/min ceiling so a
  * whole run finishes inside one minute with headroom. Names Finnhub's free tier
  * doesn't cover (LSE `.L`, Qatar QSE) are deliberately NOT tracked — they'd burn
- * a call to return nothing — and stay clearly labelled as sample in the UI.
+ * a call to return nothing — and are simply absent from price surfaces.
  *
  * Every symbol here is US-listed (NYSE/NASDAQ) or a US-listed ADR, plus the major
- * crypto. The full instrument universe still renders (fixtures, honestly marked);
- * this list is just which names carry *live* cached prices.
+ * crypto. Instruments outside this list have no stored price and are not shown on
+ * price surfaces until a feed covers them.
  */
 export const TRACKED_SYMBOLS: readonly string[] = [
   // Mega-cap tech / communication services
@@ -113,7 +113,7 @@ export const TRACKED_SYMBOLS: readonly string[] = [
  * (`eod.yml`). Kept deliberately smaller than the live-quote list: candle
  * providers have much tighter free tiers than quotes (Polygon ~5/min, EODHD
  * ~100/day), and this job fetches `count × BACKFILL_RANGES` series. Symbols not
- * listed here still render price charts from fixtures (honestly labelled) — we
+ * listed here have no stored series, so their chart shows an empty state — we
  * spend the scarce candle budget on the most-viewed names.
  */
 export const BACKFILL_SYMBOLS: readonly string[] = [
@@ -133,21 +133,4 @@ export const BACKFILL_SYMBOLS: readonly string[] = [
   "WMT",
   "XOM",
   "DIS",
-];
-
-/** FRED series refreshed by the macro job. */
-export const TRACKED_MACRO_SERIES: readonly string[] = [
-  "CPIAUCSL",
-  "UNRATE",
-  "DGS10",
-  // Widen macro coverage — all FRED (free, generous limits), refreshed by the
-  // 6-hourly macro job and rendered on /economy.
-  "FEDFUNDS",
-  "DGS2",
-  "DGS30",
-  "MORTGAGE30US",
-  "DGS5",
-  "T10Y2Y",
-  "DGS1",
-  "T10Y3M",
 ];

@@ -37,9 +37,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: No fixture data in production code
+        run: pnpm check:fixtures
+
       - name: Unit tests
         run: pnpm test
 
       - name: Build
-        # Build runs in fixture mode — no keys required (§2).
+        # Production build with no keys and no demo mode: every data surface
+        # must render its empty state rather than a sample value.
         run: pnpm build

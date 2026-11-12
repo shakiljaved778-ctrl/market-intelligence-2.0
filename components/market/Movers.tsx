@@ -1,62 +1,57 @@
 import Link from "next/link";
-import { SampleTag } from "@/components/market/Provenance";
+import { ChangePill } from "@/components/market/ChangePill";
+import { NoData, PriceStamp } from "@/components/market/Provenance";
 import { readMovers } from "@/lib/market/read";
 import { formatMoney } from "@/lib/format/currency";
-import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
-import { provenanceTitle } from "@/lib/market/provenance";
 import type { DisplayCurrency } from "@/lib/currency/peg";
 
-/** Session movers (§13), sorted by absolute move. Cache/fixture-backed. */
+/**
+ * Largest moves among instruments with a real stored price, sorted by absolute
+ * change. Every row prints its own source and time. With nothing stored the
+ * block shows an empty state — never a placeholder price.
+ */
 export async function Movers({ currency }: { currency: DisplayCurrency }) {
   const rows = await readMovers(6);
-  const anyLive = rows.some((r) => r.quote.provider.toLowerCase() !== "fixture");
+  if (rows.length === 0) {
+    return (
+      <NoData>
+        No price data is available right now. Movers appear here as soon as the market
+        feed delivers prices.
+      </NoData>
+    );
+  }
   return (
     <div className="list-card">
-      <div className="border-line flex items-center justify-between border-b px-4 py-2.5">
-        <h2 className="text-text-mid text-[13px] font-medium">Movers</h2>
-        <span className="eyebrow">by absolute move</span>
-      </div>
       <ul>
-        {rows.map((row) => {
-          const dir = directionOf(row.change);
-          const dirClass =
-            dir === "gain" ? "dir-gain" : dir === "loss" ? "dir-loss" : "text-text-mid";
-          return (
-            <li key={row.symbol} className="border-line border-b last:border-b-0">
-              <Link
-                href={`/quote/${row.symbol}`}
-                className="row-spine hover:bg-surface flex items-center justify-between px-4 py-2.5 pl-5"
-              >
-                <span className="min-w-0">
+        {rows.map((row) => (
+          <li key={row.symbol} className="border-line border-b last:border-b-0">
+            <Link
+              href={`/quote/${row.symbol}`}
+              className="row-spine hover:bg-surface flex items-center justify-between gap-3 px-4 py-2.5 pl-5"
+            >
+              <span className="min-w-0">
+                <span className="flex items-baseline gap-2">
                   <span className="tnum text-text-hi text-[13px]">{row.symbol}</span>
-                  <span className="text-text-low ml-2 truncate text-[12px]">
-                    {row.name}
-                  </span>
-                  <SampleTag quote={row.quote} />
+                  <span className="text-text-low truncate text-[12px]">{row.name}</span>
                 </span>
-                <span className="flex items-center gap-3">
-                  <span
-                    className="tnum text-text-hi text-[13px]"
-                    title={provenanceTitle(row.quote)}
-                  >
-                    {formatMoney(row.priceUsd, currency)}
-                  </span>
-                  <span
-                    className={`tnum flex w-16 items-center justify-end gap-1 text-[12px] ${dirClass}`}
-                  >
-                    <span aria-hidden>{directionGlyph(row.change)}</span>
-                    {formatPercent(row.changePct)}
-                  </span>
+                <PriceStamp stamp={row.priced} className="mt-0.5 block" />
+              </span>
+              <span className="flex shrink-0 items-center gap-3">
+                <span className="tnum text-text-hi text-[13px]">
+                  {formatMoney(row.priceUsd, currency)}
                 </span>
-              </Link>
-            </li>
-          );
-        })}
+                <ChangePill
+                  pct={row.changePct}
+                  className="w-[72px] justify-end text-[12px]"
+                />
+              </span>
+            </Link>
+          </li>
+        ))}
       </ul>
       <p className="border-line text-text-low border-t px-4 py-2 text-[11px]">
-        {anyLive
-          ? "Live prices are delayed and stamped with source & time; sample rows are illustrative."
-          : "Illustrative sample prices — no live feed configured."}
+        Ranked by absolute move among the instruments Mizaan has a current price for.
+        Change is versus the prior close (24 hours for crypto).
       </p>
     </div>
   );

@@ -1,0 +1,48 @@
+name: migrate
+
+# Applies committed database migrations (lib/db/migrations) to the production
+# database as soon as they reach main, so a deploy never runs against a schema
+# that is missing a column it reads or writes. `drizzle-kit migrate` is
+# idempotent: already-applied migrations are skipped.
+#
+# Also runnable by hand (workflow_dispatch) — e.g. after restoring a database.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/db/migrations/**"
+      - "lib/db/schema.ts"
+  workflow_dispatch:
+
+concurrency:
+  group: migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+        run: |
+          if [ -z "${POSTGRES_URL:-}" ]; then
+            echo "::error::POSTGRES_URL secret is not set (see DEPLOY.md)."
+            exit 1
+          fi
+          pnpm db:migrate

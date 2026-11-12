@@ -3,7 +3,13 @@
  * TTL — an uncached call to a rate-limited vendor is a bug (§2).
  */
 export const TTL = {
-  quoteLive: 45, // in-session
+  quoteLive: 45, // in-session (provider-level cache)
+  // Last-known-good quote primed by the quotes job. Long-lived on purpose: the
+  // job may run late, and a stored price that states its own time is honest —
+  // an expired one silently replaced by nothing (or a fixture) is not.
+  quoteLastKnown: 7 * 24 * 60 * 60,
+  fxReference: 60 * 60, // ECB reference rates change once a day
+  macroRefresh: 3 * 60 * 60, // job-side refresh window for FRED / World Bank
   quoteClosed: 15 * 60,
   indexStrip: 60,
   fxPair: 5 * 60,

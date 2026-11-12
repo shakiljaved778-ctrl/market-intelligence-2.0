@@ -1,9 +1,10 @@
 /**
- * Per-exchange trading session logic (§13). Uses IANA time zones via Intl so
- * DST is handled correctly. GCC exchanges have no reliable free intraday feed,
- * so they are treated as EOD-only and always labelled delayed (§6).
+ * Per-exchange trading session logic. Uses IANA time zones via Intl so DST is
+ * handled correctly. The state describes the EXCHANGE's regular hours — whether
+ * it is open right now — independently of how delayed our own feed for it is
+ * (`delayed` carries that). Public holidays are not modelled; the UI says so.
  */
-export type SessionState = "open" | "pre" | "post" | "closed" | "eod";
+export type SessionState = "open" | "pre" | "post" | "closed";
 
 export interface SessionInfo {
   state: SessionState;
@@ -16,45 +17,86 @@ interface ExchangeHours {
   tz: string;
   open: [number, number]; // [hour, minute] local
   close: [number, number];
-  /** EOD-only rail (GCC): never "live". */
+  /** Non-trading weekdays, 0 = Sunday … 6 = Saturday. */
+  weekend: number[];
+  /** Our data for this venue is end-of-day only. */
   eodOnly?: boolean;
   /** Trades every day (crypto). */
   alwaysOpen?: boolean;
 }
 
+const SAT_SUN = [6, 0];
+const FRI_SAT = [5, 6];
+
 const EXCHANGES: Record<string, ExchangeHours> = {
-  NASDAQ: { tz: "America/New_York", open: [9, 30], close: [16, 0] },
-  NYSE: { tz: "America/New_York", open: [9, 30], close: [16, 0] },
-  LSE: { tz: "Europe/London", open: [8, 0], close: [16, 30] },
-  XETRA: { tz: "Europe/Berlin", open: [9, 0], close: [17, 30] },
-  TSE: { tz: "Asia/Tokyo", open: [9, 0], close: [15, 0] },
-  QSE: { tz: "Asia/Qatar", open: [9, 30], close: [13, 15], eodOnly: true },
-  TADAWUL: { tz: "Asia/Riyadh", open: [10, 0], close: [15, 0], eodOnly: true },
-  DFM: { tz: "Asia/Dubai", open: [10, 0], close: [15, 0], eodOnly: true },
-  ADX: { tz: "Asia/Dubai", open: [10, 0], close: [15, 0], eodOnly: true },
-  CRYPTO: { tz: "UTC", open: [0, 0], close: [23, 59], alwaysOpen: true },
+  NASDAQ: { tz: "America/New_York", open: [9, 30], close: [16, 0], weekend: SAT_SUN },
+  NYSE: { tz: "America/New_York", open: [9, 30], close: [16, 0], weekend: SAT_SUN },
+  LSE: { tz: "Europe/London", open: [8, 0], close: [16, 30], weekend: SAT_SUN },
+  XETRA: { tz: "Europe/Berlin", open: [9, 0], close: [17, 30], weekend: SAT_SUN },
+  TSE: { tz: "Asia/Tokyo", open: [9, 0], close: [15, 30], weekend: SAT_SUN },
+  // Qatar and Saudi Arabia trade Sunday–Thursday.
+  QSE: {
+    tz: "Asia/Qatar",
+    open: [9, 30],
+    close: [13, 15],
+    weekend: FRI_SAT,
+    eodOnly: true,
+  },
+  TADAWUL: {
+    tz: "Asia/Riyadh",
+    open: [10, 0],
+    close: [15, 0],
+    weekend: FRI_SAT,
+    eodOnly: true,
+  },
+  // The UAE exchanges moved to a Monday–Friday week in January 2022.
+  DFM: {
+    tz: "Asia/Dubai",
+    open: [10, 0],
+    close: [15, 0],
+    weekend: SAT_SUN,
+    eodOnly: true,
+  },
+  ADX: {
+    tz: "Asia/Dubai",
+    open: [10, 0],
+    close: [15, 0],
+    weekend: SAT_SUN,
+    eodOnly: true,
+  },
+  CRYPTO: { tz: "UTC", open: [0, 0], close: [23, 59], weekend: [], alwaysOpen: true },
 };
 
-function localParts(tz: string, now: Date): { minutes: number; weekday: number } {
+interface Local {
+  year: number;
+  month: number;
+  day: number;
+  minutes: number;
+  weekday: number;
+}
+
+function localParts(tz: string, now: Date): Local {
   const fmt = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     weekday: "short",
     hour12: false,
   });
   const parts = fmt.formatToParts(now);
-  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
-  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "0";
+  const hour = Number(get("hour")) % 24;
   const wd = parts.find((p) => p.type === "weekday")?.value ?? "Mon";
-  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(wd);
-  return { minutes: hour * 60 + minute, weekday };
-}
-
-/** Weekend by exchange region. GCC markets trade Sun–Thu; the rest Mon–Fri. */
-function isWeekend(weekday: number, gcc: boolean): boolean {
-  if (gcc) return weekday === 5 || weekday === 6; // Fri, Sat
-  return weekday === 0 || weekday === 6; // Sun, Sat
+  return {
+    year: Number(get("year")),
+    month: Number(get("month")),
+    day: Number(get("day")),
+    minutes: hour * 60 + Number(get("minute")),
+    weekday: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(wd),
+  };
 }
 
 export function sessionFor(
@@ -67,35 +109,26 @@ export function sessionFor(
     return { state: "closed", label: "Session unknown", delayed: true };
   }
   if (hours.alwaysOpen) {
-    return { state: "open", label: "24/7", delayed: false };
+    return { state: "open", label: "Open 24/7", delayed: false };
   }
 
   const { minutes, weekday } = localParts(hours.tz, now);
-  const gcc = Boolean(hours.eodOnly);
+  const delayed = Boolean(hours.eodOnly);
   const openMin = hours.open[0] * 60 + hours.open[1];
   const closeMin = hours.close[0] * 60 + hours.close[1];
-  const withinHours =
-    !isWeekend(weekday, gcc) && minutes >= openMin && minutes < closeMin;
 
-  if (hours.eodOnly) {
-    return {
-      state: "eod",
-      label: withinHours ? "EOD · trading (delayed)" : "EOD · prior close",
-      delayed: true,
-    };
-  }
-  if (isWeekend(weekday, gcc))
-    return { state: "closed", label: "Closed · weekend", delayed: false };
-  if (minutes < openMin) return { state: "pre", label: "Pre-market", delayed: false };
+  if (hours.weekend.includes(weekday))
+    return { state: "closed", label: "Closed · weekend", delayed };
+  if (minutes < openMin) return { state: "pre", label: "Before the open", delayed };
   if (minutes >= closeMin)
-    return { state: "post", label: "After hours", delayed: false };
-  return { state: "open", label: "Open", delayed: false };
+    return { state: "post", label: "Closed for the day", delayed };
+  return { state: "open", label: "Open", delayed };
 }
 
 /**
  * Session state plus minutes to the next relevant boundary (close when open,
- * open when pre-market), for the header market-status pill. etaMin is null when
- * there's no same-day boundary (closed / after hours / EOD / 24-7).
+ * open when before the open), for the header market-status pill. etaMin is null
+ * when there's no same-day boundary (closed / after the close / 24-7).
  */
 export function marketCountdown(
   exchange: string,
@@ -103,7 +136,7 @@ export function marketCountdown(
 ): { state: SessionState; label: string; etaMin: number | null } {
   const info = sessionFor(exchange, now);
   const hours = EXCHANGES[(exchange ?? "").toUpperCase()];
-  if (!hours || hours.alwaysOpen || hours.eodOnly) {
+  if (!hours || hours.alwaysOpen) {
     return { state: info.state, label: info.label, etaMin: null };
   }
   const { minutes } = localParts(hours.tz, now);
@@ -114,4 +147,56 @@ export function marketCountdown(
   if (info.state === "pre")
     return { state: info.state, label: info.label, etaMin: openMin - minutes };
   return { state: info.state, label: info.label, etaMin: null };
+}
+
+/** UTC instant of a wall-clock time in a zone, on that zone's calendar day. */
+function zonedToUtc(
+  tz: string,
+  y: number,
+  m: number,
+  d: number,
+  minutes: number,
+): Date {
+  const guess = Date.UTC(y, m - 1, d, Math.floor(minutes / 60), minutes % 60);
+  const l = localParts(tz, new Date(guess));
+  const asLocal = Date.UTC(
+    l.year,
+    l.month - 1,
+    l.day,
+    Math.floor(l.minutes / 60),
+    l.minutes % 60,
+  );
+  return new Date(guess - (asLocal - guess));
+}
+
+export interface SessionTimes {
+  /** Today's regular open and close for the venue, as UTC instants. */
+  open: Date;
+  close: Date;
+  /** The venue's own time zone (IANA). */
+  tz: string;
+  /** Trading days, e.g. "Sun–Thu". */
+  days: string;
+}
+
+/**
+ * The venue's regular open and close on its current calendar day, as instants a
+ * client can format in the reader's own time zone and in Doha time. Null for
+ * unknown venues and 24/7 markets.
+ */
+export function sessionTimes(
+  exchange: string,
+  now: Date = new Date(),
+): SessionTimes | null {
+  const hours = EXCHANGES[(exchange ?? "").toUpperCase()];
+  if (!hours || hours.alwaysOpen) return null;
+  const l = localParts(hours.tz, now);
+  const openMin = hours.open[0] * 60 + hours.open[1];
+  const closeMin = hours.close[0] * 60 + hours.close[1];
+  return {
+    open: zonedToUtc(hours.tz, l.year, l.month, l.day, openMin),
+    close: zonedToUtc(hours.tz, l.year, l.month, l.day, closeMin),
+    tz: hours.tz,
+    days: hours.weekend.includes(5) ? "Sun–Thu" : "Mon–Fri",
+  };
 }

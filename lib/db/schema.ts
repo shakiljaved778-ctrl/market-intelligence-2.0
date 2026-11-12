@@ -190,6 +190,13 @@ export const quotes = pgTable(
     volume: doublePrecision("volume"),
     marketCapUsd: doublePrecision("market_cap_usd"),
     provider: text("provider").notNull(),
+    /**
+     * The feed's delay in minutes AT FETCH TIME (0 = real-time, 15 = delayed,
+     * 1440 = end-of-day). Stored per quote so a delayed price read back from
+     * Postgres is never presented as real-time. Null on rows written before
+     * this column existed.
+     */
+    delayMinutes: integer("delay_minutes"),
   },
   (t) => [
     primaryKey({ columns: [t.symbol, t.ts] }),
@@ -210,6 +217,8 @@ export const candlesDaily = pgTable(
     c: doublePrecision("c").notNull(),
     v: doublePrecision("v"),
     adjClose: doublePrecision("adj_close"),
+    /** Which provider supplied this bar — shown as the chart's source. */
+    provider: text("provider"),
   },
   (t) => [primaryKey({ columns: [t.symbol, t.date] })],
 );

@@ -13,9 +13,9 @@ import type {
 } from "./types";
 
 /**
- * Fixture provider — always configured, lowest priority. Guarantees the app
- * boots and the quote API answers with ZERO keys (§2). Real providers, when
- * configured, sit ahead of it in the registry and take precedence.
+ * Fixture provider — DEMO MODE ONLY. The registry adds it solely under
+ * DEMO_MODE=1 (lib/providers/index.ts), so in production no fixture quote can
+ * be fetched, cached or persisted.
  */
 export class FixtureProvider implements MarketDataProvider {
   readonly id = "fixture";

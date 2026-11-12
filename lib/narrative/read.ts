@@ -1,131 +1,161 @@
-import { FIXTURE_ARTICLES } from "@/fixtures/articles";
-import { INDEX_STRIP, type IndexStripItem } from "@/fixtures/indices";
-import { UNIVERSE } from "@/fixtures/universe";
 import type { DisplayCurrency } from "@/lib/currency/peg";
-import { shiftFixtureDate } from "@/lib/demo-clock";
+import { dbRecap, dbRecentRecaps, type StoredRecap } from "@/lib/db/queries/market";
+import { demo } from "@/lib/demo/fixtures";
+import { isDemoMode } from "@/lib/demo/mode";
+import { shiftFixtureDate } from "@/lib/demo/clock";
 import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
 
 /**
- * Builds the computed session/weekly recaps deterministically from our own
- * fixture numbers (§9 Stage 5). In production these come from the cluster/eod
- * jobs writing to the `recaps` table; the generators and inputs are identical,
- * so each recap stays reproducible from its stored inputs.
- *
- * The demo date tracks the NEWEST story in the wire, shifted onto the current
- * demo window (lib/demo-clock.ts), so the recap is dated today and the "latest
- * session recap" link always resolves to the current recap rather than a frozen
- * date. It is recomputed per call so it rolls forward with the real date.
+ * Read layer for the computed recaps. In production a recap exists ONLY if the
+ * end-of-day job built it from real stored closes and persisted it (with the
+ * inputs that reproduce it) to the `recaps` table. When the day's data was too
+ * thin, nothing was written and nothing is shown. The fixture-built recaps
+ * below run only under DEMO_MODE=1.
  */
-function demoDate(): string {
-  const newest = FIXTURE_ARTICLES.reduce(
-    (max, a) => (a.publishedAt > max ? a.publishedAt : max),
-    "2000-01-01",
-  );
-  return shiftFixtureDate(newest).slice(0, 10); // YYYY-MM-DD
-}
-
 export interface NamedRecap {
   slug: string;
   kind: "session_open" | "session_close" | "weekly";
   title: string;
   output: RecapOutput;
+  /** The session date the recap describes (YYYY-MM-DD). */
+  date: string;
+  /** Source/provenance line for the numbers behind the recap. */
+  basis: string | null;
+  generatedAt: string | null;
+  demo: boolean;
 }
 
-function weakestSector(): string | undefined {
-  const withSector = UNIVERSE.filter((r) => r.sector);
-  const worst = [...withSector].sort((a, b) => a.changePct - b.changePct)[0];
-  return worst?.sector ?? undefined;
+const TITLES: Record<NamedRecap["kind"], string> = {
+  session_close: "US session close",
+  session_open: "US session open",
+  weekly: "Weekly wrap",
+};
+
+function dateFromSlug(slug: string): string {
+  return slug.match(/(\d{4}-\d{2}-\d{2})$/)?.[1] ?? "";
 }
 
-function topMover() {
-  const m = [...UNIVERSE].sort(
+interface StoredInputs {
+  coverage?: { priced: number; tracked: number };
+  sources?: string[];
+}
+
+function fromStored(r: StoredRecap): NamedRecap | null {
+  if (r.kind === "instrument") return null;
+  const inputs = (r.inputs ?? {}) as StoredInputs;
+  const basis =
+    inputs.coverage && inputs.sources
+      ? `Computed from closing prices of ${inputs.coverage.priced} of ${inputs.coverage.tracked} tracked US equities · source ${inputs.sources.join(", ")}`
+      : null;
+  return {
+    slug: r.slug,
+    kind: r.kind,
+    title: TITLES[r.kind],
+    output: {
+      bodyMd: r.bodyMd,
+      templateVersion: r.templateVersion,
+      inputs: r.inputs,
+    },
+    date: dateFromSlug(r.slug),
+    basis,
+    generatedAt: r.generatedAt,
+    demo: false,
+  };
+}
+
+// ── Demo-mode recaps (fixtures) ──────────────────────────────────────────────
+
+function demoRecaps(currency: DisplayCurrency): NamedRecap[] {
+  const articles = demo.articles();
+  const universe = demo.universe();
+  const strip = demo.indexStrip();
+  if (articles.length === 0 || universe.length === 0) return [];
+  const newest = articles.reduce(
+    (max, a) => (a.publishedAt > max ? a.publishedAt : max),
+    "2000-01-01",
+  );
+  const date = shiftFixtureDate(newest).slice(0, 10);
+  const indices = strip
+    .filter((i) => i.region !== "GCC" && i.level > 0)
+    .map((i) => ({ name: i.name, changePct: i.changePct }));
+  const top = [...universe].sort(
     (a, b) => Math.abs(b.changePct) - Math.abs(a.changePct),
   )[0];
-  return m ? { name: m.name, changePct: m.changePct } : undefined;
-}
-
-/** A tracked index has a valid close only with a finite positive level + change. */
-function indexValid(i: IndexStripItem): boolean {
-  return Number.isFinite(i.level) && i.level > 0 && Number.isFinite(i.changePct);
-}
-
-export function buildRecaps(currency: DisplayCurrency = "USD"): NamedRecap[] {
-  // Snapshot the demo date once so every recap in this call shares it.
-  const date = demoDate();
-  // Phase 1 §5: a session recap is published only when ≥80% of the tracked
-  // (non-GCC) indices have a valid close; otherwise the day's data is too
-  // incomplete to summarise honestly. GCC is excluded (EOD-only, separate rail).
-  const tracked = INDEX_STRIP.filter((i) => i.region !== "GCC");
-  const valid = tracked.filter(indexValid);
-  const enoughValid = tracked.length > 0 && valid.length / tracked.length >= 0.8;
-
-  const indices = valid.map((i) => ({ name: i.name, changePct: i.changePct }));
-  const advancers = UNIVERSE.filter((r) => r.changePct > 0).length;
-  const decliners = UNIVERSE.filter((r) => r.changePct < 0).length;
-
-  const recaps: NamedRecap[] = [];
-
-  if (enoughValid) {
-    const close = sessionRecap({
+  const worst = [...universe].sort((a, b) => a.changePct - b.changePct)[0];
+  const topMover = top ? { name: top.name, changePct: top.changePct } : undefined;
+  const base = { date, basis: "Demo data", generatedAt: null, demo: true };
+  const out: NamedRecap[] = [
+    {
+      ...base,
+      slug: `session-close-${date}`,
       kind: "session_close",
-      currency,
-      date,
-      indices,
-      breadth: { advancers, decliners },
-      topMover: topMover(),
-      weakestSector: weakestSector(),
-    });
-    const open = sessionRecap({
-      kind: "session_open",
-      currency,
-      date,
-      indices,
-      topMover: topMover(),
-    });
-    recaps.push(
-      {
-        slug: `session-close-${date}`,
+      title: TITLES.session_close,
+      output: sessionRecap({
         kind: "session_close",
-        title: "US session close",
-        output: close,
-      },
-      {
-        slug: `session-open-${date}`,
-        kind: "session_open",
-        title: "US session open",
-        output: open,
-      },
-    );
-  }
-
-  // The weekly wrap needs only its own index to be valid.
-  const spx = INDEX_STRIP.find((i) => i.symbol === "SPX");
-  if (spx && indexValid(spx)) {
-    const week = weeklyRecap({
-      currency,
-      weekEnding: date,
-      index: { name: spx.name, changePct: spx.changePct * 3 },
-      best: topMover(),
-      worst: (() => {
-        const w = [...UNIVERSE].sort((a, b) => a.changePct - b.changePct)[0];
-        return w ? { name: w.name, changePct: w.changePct } : undefined;
-      })(),
-    });
-    recaps.push({
+        currency,
+        date,
+        indices,
+        breadth: {
+          advancers: universe.filter((r) => r.changePct > 0).length,
+          decliners: universe.filter((r) => r.changePct < 0).length,
+        },
+        topMover,
+        weakestSector: worst?.sector ?? undefined,
+      }),
+    },
+    {
+      ...base,
+      slug: `session-open-${date}`,
+      kind: "session_open",
+      title: TITLES.session_open,
+      output: sessionRecap({ kind: "session_open", currency, date, indices, topMover }),
+    },
+  ];
+  const spx = strip.find((i) => i.symbol === "SPX");
+  if (spx) {
+    out.push({
+      ...base,
       slug: `weekly-${date}`,
       kind: "weekly",
-      title: "Weekly wrap",
-      output: week,
+      title: TITLES.weekly,
+      output: weeklyRecap({
+        currency,
+        weekEnding: date,
+        index: { name: spx.name, changePct: spx.changePct * 3 },
+        best: topMover,
+        worst: worst ? { name: worst.name, changePct: worst.changePct } : undefined,
+      }),
     });
   }
-
-  return recaps;
+  return out;
 }
 
-export function listRecaps(currency?: DisplayCurrency): NamedRecap[] {
-  return buildRecaps(currency);
+export async function listRecaps(
+  currency: DisplayCurrency = "USD",
+): Promise<NamedRecap[]> {
+  try {
+    const stored = (await dbRecentRecaps())
+      .map(fromStored)
+      .filter((r): r is NamedRecap => r !== null);
+    if (stored.length > 0) return stored;
+  } catch (err) {
+    console.error("[recap] stored read failed:", err);
+  }
+  return isDemoMode() ? demoRecaps(currency) : [];
 }
 
-export function readRecap(slug: string, currency?: DisplayCurrency): NamedRecap | null {
-  return buildRecaps(currency).find((r) => r.slug === slug) ?? null;
+export async function readRecap(
+  slug: string,
+  currency: DisplayCurrency = "USD",
+): Promise<NamedRecap | null> {
+  try {
+    const stored = await dbRecap(slug);
+    const named = stored ? fromStored(stored) : null;
+    if (named) return named;
+  } catch (err) {
+    console.error("[recap] stored read failed:", err);
+  }
+  return isDemoMode()
+    ? (demoRecaps(currency).find((r) => r.slug === slug) ?? null)
+    : null;
 }

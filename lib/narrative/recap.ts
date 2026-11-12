@@ -95,6 +95,12 @@ export interface SessionRecapInput {
   breadth?: { advancers: number; decliners: number };
   topMover?: { name: string; changePct: number };
   weakestSector?: string;
+  /**
+   * What the breadth counts cover, e.g. "58 tracked US large caps". When set,
+   * the breadth sentence names the universe so the recap never implies a
+   * whole-market count it does not have.
+   */
+  universeLabel?: string;
 }
 
 export function sessionRecap(input: SessionRecapInput): RecapOutput {
@@ -139,9 +145,14 @@ export function sessionRecap(input: SessionRecapInput): RecapOutput {
   // Sentence 3 — breadth.
   if (input.breadth) {
     const { advancers, decliners } = input.breadth;
-    sentences.push(
-      `Breadth favoured ${advancers >= decliners ? "advancers" : "decliners"}, ${advancers} ${plural(advancers, "gainer", "gainers")} to ${decliners} ${plural(decliners, "decliner", "decliners")}.`,
-    );
+    if (input.universeLabel) {
+      sentences.push(
+        `Among ${input.universeLabel}, ${advancers} ${plural(advancers, "name", "names")} rose and ${decliners} fell.`,
+      );
+    } else
+      sentences.push(
+        `Breadth favoured ${advancers >= decliners ? "advancers" : "decliners"}, ${advancers} ${plural(advancers, "gainer", "gainers")} to ${decliners} ${plural(decliners, "decliner", "decliners")}.`,
+      );
   }
 
   if (input.weakestSector) {

@@ -4,9 +4,10 @@ import { exchangeMeta } from "@/lib/market/gcc";
 import type { DisplayCurrency } from "@/lib/currency/peg";
 import type { Quote } from "@/lib/providers/types";
 import type { WireCluster } from "@/lib/news/read";
-import { QuoteProvenance } from "@/components/market/Provenance";
+import { ChangePill } from "@/components/market/ChangePill";
+import { PriceStamp } from "@/components/market/Provenance";
+import { priced } from "@/lib/market/service";
 import { formatMoney } from "@/lib/format/currency";
-import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 
 /**
  * GCC company page (Phase 5), rendered inside the existing /quote layout. Shows
@@ -28,9 +29,6 @@ export function GccCompanyView({
   related: WireCluster[];
 }) {
   const ex = exchangeMeta(company.exchange);
-  const dir = quote ? directionOf(quote.change) : "flat";
-  const dirClass =
-    dir === "gain" ? "dir-gain" : dir === "loss" ? "dir-loss" : "text-text-mid";
 
   return (
     <div className="pb-4">
@@ -71,17 +69,14 @@ export function GccCompanyView({
                 <div className="tnum text-ink text-[clamp(2rem,5vw,3rem)] leading-none">
                   {formatMoney(quote.priceUsd, currency)}
                 </div>
-                <div className={`tnum mt-1 text-[14px] ${dirClass}`}>
-                  <span aria-hidden>{directionGlyph(quote.change)}</span>{" "}
-                  {formatPercent(quote.changePct)}
-                </div>
+                <ChangePill pct={quote.changePct} className="mt-1 text-[14px]" />
               </div>
             ) : null}
           </div>
 
           {quote ? (
             <div className="mt-2">
-              <QuoteProvenance quote={quote} />
+              <PriceStamp stamp={priced(quote)} withYear />
             </div>
           ) : null}
         </div>
@@ -90,9 +85,9 @@ export function GccCompanyView({
       {!quote ? (
         <section className="border-hairline mt-6 rounded-[10px] border p-4">
           <p className="text-text-mid text-[13px]">
-            End-of-day pricing for {ex?.name ?? "this exchange"} is pending — we show a
-            price here only once a verified end-of-day source is connected. Company
-            reference and coverage are shown below.
+            No price is shown for {company.nameEn} yet. Mizaan does not have a licensed
+            data feed for {ex?.name ?? "this exchange"}, and will not print a price
+            without one. Company reference and coverage are below.
           </p>
         </section>
       ) : null}
@@ -157,8 +152,8 @@ export function GccCompanyView({
             </div>
             <div className="border-brand border-l-2 pl-4">
               <p className="text-text-low text-[12px] leading-relaxed">
-                {ex?.name} coverage. Index levels and prices are shown only when a
-                verified end-of-day source is connected — never illustrative values.
+                {ex?.name} coverage. Index levels and prices are shown only from a
+                licensed data feed, each with its source and time.
               </p>
             </div>
           </div>

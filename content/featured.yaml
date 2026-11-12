@@ -1,13 +1,11 @@
-# Editor's Pick (§13) — promote a REAL, already-ingested story to the homepage
-# hero, overriding the automatic signal ranking. Rules are tried in order; the
-# first that matches a story currently in the wire wins. If none match, the hero
-# falls back to the top-ranked story.
+# Editor's Pick — promote ONE real story that is already on the wire to the
+# homepage hero, overriding the automatic ranking.
 #
-# We never pin a fabricated story — a rule only promotes a story the pipeline
-# already ingested from a cited source, so the hero leads with this topic the
-# moment such a story is on the wire. Match by `title` keywords (any, case-
-# insensitive), `section`, or an exact `slug`.
-picks:
-  - label: Editor's pick
-    match:
-      title: [nvidia, "jensen huang"]
+#   picks:
+#     - label: Editor's pick
+#       slug: exact-story-slug-as-in-the-url   # /news/<slug>
+#       until: 2026-11-15T09:00:00Z            # optional hard stop
+#
+# A pick applies only while the story is younger than 72 hours, and never past
+# `until`. With no current pick the hero is the top-ranked story.
+picks: []

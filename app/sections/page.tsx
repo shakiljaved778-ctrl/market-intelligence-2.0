@@ -42,7 +42,8 @@ export default async function SectionsPage() {
               ◆ {nonFinancialPct}% non-financial
             </span>
             <span className="text-text-low">
-              {nonFinancial} of {total} live stories are outside markets &amp; economy
+              {nonFinancial} of {total} stories on the wire are outside markets &amp;
+              economy
             </span>
           </div>
         </div>

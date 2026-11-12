@@ -1,4 +1,5 @@
-import { INDEX_STRIP } from "@/fixtures/indices";
+import { readCommodityRows, readCryptoRows, readFxRows } from "@/lib/market/levels";
+import { stampText } from "@/lib/market/provenance";
 import { readWire } from "@/lib/news/read";
 import {
   NEWSLETTER_NAME,
@@ -10,9 +11,15 @@ import { SITE_URL } from "@/lib/site";
 
 /**
  * "Mizaan Morning" briefing builder (Phase 6). Deterministic — built from the
- * same validated data the site uses (index closes + the ranked wire), never
- * free-form. Used by the web archive (/briefing) and the send job. Index levels
- * are currency-neutral and never converted (§7).
+ * same stored data the site uses, never free-form.
+ *
+ * Honesty rules:
+ *  - Stories are the ranked stories PUBLISHED IN THE BRIEFING'S OWN WINDOW (the
+ *    24 hours before 07:00 Doha on its date; 7 days for the weekly wrap) — an
+ *    archive page for a past date never shows today's wire.
+ *  - Market rows are real stored values, each with its source and time, and are
+ *    included only on the day they describe. A past date carries none (no
+ *    historical snapshot is stored), and a class with nothing real is omitted.
  */
 export interface BriefingStory {
   title: string;
@@ -20,25 +27,77 @@ export interface BriefingStory {
   sourceCount: number;
 }
 
+export interface BriefingMarketRow {
+  name: string;
+  value: string;
+  changePct: number | null;
+  /** Source and time line, e.g. "ECB reference rate · 12 Nov · daily fixing". */
+  stamp: string;
+}
+
 export interface Briefing {
   date: string; // YYYY-MM-DD
   slug: string;
   title: string;
   weekly: boolean;
-  indices: { name: string; changePct: number }[];
+  markets: BriefingMarketRow[];
   topStories: BriefingStory[];
 }
 
-/** Only non-GCC indices with a valid close (GCC is EOD-only, separate rail). */
-function validIndices() {
-  return INDEX_STRIP.filter(
-    (i) =>
-      i.region !== "GCC" && Number.isFinite(i.level) && Number.isFinite(i.changePct),
-  ).map((i) => ({ name: i.name, changePct: i.changePct }));
+/** 07:00 Asia/Qatar (UTC+3, no DST) on `date`, as epoch ms. */
+export function briefingCutoffMs(date: string): number {
+  return Date.parse(`${date}T04:00:00.000Z`);
 }
 
-export async function buildBriefing(date: string, weekly = false): Promise<Briefing> {
+function num(v: number): string {
+  const dp = Math.abs(v) < 10 ? 4 : 2;
+  return v.toLocaleString("en-US", {
+    minimumFractionDigits: dp,
+    maximumFractionDigits: dp,
+  });
+}
+
+async function marketRows(): Promise<BriefingMarketRow[]> {
+  const [commodities, fx, crypto] = await Promise.all([
+    readCommodityRows(),
+    readFxRows(),
+    readCryptoRows(2),
+  ]);
+  const rows: BriefingMarketRow[] = [];
+  for (const r of [
+    ...commodities,
+    ...fx.filter((f) => f.cadence !== "pegged"),
+    ...crypto,
+  ]) {
+    if (r.demo) continue; // a briefing never carries demo values
+    const stamp = stampText({ source: r.source, asOf: r.asOf, cadence: r.cadence });
+    if (!stamp) continue;
+    rows.push({
+      name: r.name,
+      value: `${num(r.value)}${r.unit ? ` ${r.unit}` : ""}`,
+      changePct: r.changePct,
+      stamp,
+    });
+  }
+  return rows;
+}
+
+export async function buildBriefing(
+  date: string,
+  weekly = false,
+  now: number = Date.now(),
+): Promise<Briefing> {
+  const end = briefingCutoffMs(date);
+  const start = end - (weekly ? 7 : 1) * 86_400_000;
+  // Today's briefing may be opened before the 07:00 cut-off; then the window is
+  // "the last 24 hours up to now".
+  const isCurrent = now >= start && now < end + 86_400_000;
+  const upper = isCurrent ? Math.max(end, now) : end;
   const topStories = (await readWire())
+    .filter((c) => {
+      const t = Date.parse(c.eventTime);
+      return Number.isFinite(t) && t > start && t <= upper;
+    })
     .slice(0, weekly ? 8 : 5)
     .map((c) => ({ title: c.title, slug: c.slug, sourceCount: c.sourceCount }));
   return {
@@ -46,7 +105,7 @@ export async function buildBriefing(date: string, weekly = false): Promise<Brief
     slug: weekly ? `weekly-${date}` : date,
     title: `${NEWSLETTER_NAME} — ${weekly ? "Weekly wrap · " : ""}${date}`,
     weekly,
-    indices: validIndices(),
+    markets: isCurrent ? await marketRows() : [],
     topStories,
   };
 }
@@ -68,11 +127,20 @@ export function recentBriefingDates(from: Date, n = 7): string[] {
 /** Minimal branded HTML for the briefing email (inline styles; email clients
  *  ignore external CSS). Uses the brand charcoal + caramel accent. */
 export function renderBriefingHtml(b: Briefing, unsubscribeUrl: string): string {
-  const idx = b.indices
-    .map(
-      (i) =>
-        `<tr><td style="padding:4px 0;color:#eceef1">${i.name}</td><td style="padding:4px 0;text-align:right;color:${i.changePct >= 0 ? "#4ea36b" : "#d16c6c"}">${i.changePct >= 0 ? "▲" : "▼"} ${Math.abs(i.changePct).toFixed(2)}%</td></tr>`,
-    )
+  const idx = b.markets
+    .map((m) => {
+      const pct =
+        m.changePct === null
+          ? ""
+          : `${m.changePct > 0 ? "▲ +" : m.changePct < 0 ? "▼ −" : "– "}${Math.abs(m.changePct).toFixed(2)}%`;
+      const color =
+        m.changePct === null || m.changePct === 0
+          ? "#868d98"
+          : m.changePct > 0
+            ? "#4ea36b"
+            : "#d16c6c";
+      return `<tr><td style="padding:4px 0;color:#eceef1">${m.name}<br/><span style="color:#868d98;font-size:11px">${m.stamp}</span></td><td style="padding:4px 0;text-align:right;color:#eceef1;vertical-align:top">${m.value}</td><td style="padding:4px 0 4px 10px;text-align:right;color:${color};vertical-align:top;white-space:nowrap">${pct}</td></tr>`;
+    })
     .join("");
   const stories = b.topStories
     .map(
@@ -83,11 +151,15 @@ export function renderBriefingHtml(b: Briefing, unsubscribeUrl: string): string 
   return `<div style="background:#0b0a09;color:#eceef1;font-family:Georgia,serif;padding:24px;max-width:600px;margin:0 auto">
   <div style="font-weight:700;letter-spacing:2px;font-size:20px">MIZAAN <span style="color:#868d98;font-size:12px;letter-spacing:3px">INTELLIGENCE</span></div>
   <h1 style="font-size:22px;margin:16px 0 4px">${b.title}</h1>
-  <h2 style="font-size:13px;color:#868d98;text-transform:uppercase;letter-spacing:1px;margin-top:20px">Index closes</h2>
-  <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px">${idx}</table>
+  ${
+    idx
+      ? `<h2 style="font-size:13px;color:#868d98;text-transform:uppercase;letter-spacing:1px;margin-top:20px">Markets</h2>
+  <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px">${idx}</table>`
+      : ""
+  }
   <h2 style="font-size:13px;color:#868d98;text-transform:uppercase;letter-spacing:1px;margin-top:20px">Stories that mattered</h2>
   <ul style="padding-left:18px;font-family:Arial,sans-serif;font-size:14px">${stories}</ul>
-  <p style="color:#868d98;font-size:11px;margin-top:24px;font-family:Arial,sans-serif">Index levels are currency-neutral. Rankings computed; summaries AI-written from cited sources. Informational only, not investment advice.<br/><a href="${unsubscribeUrl}" style="color:#868d98">Unsubscribe</a></p>
+  <p style="color:#868d98;font-size:11px;margin-top:24px;font-family:Arial,sans-serif">Every figure states its source and time. Rankings are computed; summaries are AI-written from cited sources. Informational only, not investment advice.<br/><a href="${unsubscribeUrl}" style="color:#868d98">Unsubscribe</a></p>
 </div>`;
 }
 

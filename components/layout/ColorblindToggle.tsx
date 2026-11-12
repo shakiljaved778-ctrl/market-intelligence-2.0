@@ -4,12 +4,19 @@ import { useState } from "react";
 import { CB_COOKIE } from "@/lib/theme/theme";
 
 /**
- * Colorblind-safe mode toggle. When on, price direction switches from
+ * Colour-blind-safe mode toggle, with a visible text label (it used to read
+ * just "CB"). When on, price direction switches from
  * green/red to blue/orange (AA-tuned per theme via the [data-cb] token
  * overrides). Direction is always ALSO carried by the glyph + sign, so colour
  * is never the only cue — this just improves the colour channel.
  */
-export function ColorblindToggle({ on }: { on: boolean }) {
+export function ColorblindToggle({
+  on,
+  className = "",
+}: {
+  on: boolean;
+  className?: string;
+}) {
   const [active, setActive] = useState(on);
 
   function toggle() {
@@ -22,8 +29,8 @@ export function ColorblindToggle({ on }: { on: boolean }) {
   }
 
   const label = active
-    ? "Colorblind-safe colours on (blue / orange)"
-    : "Colorblind-safe colours off (green / red)";
+    ? "Colour-blind-safe colours are on (blue / orange). Switch to green / red."
+    : "Colour-blind-safe colours are off (green / red). Switch to blue / orange.";
 
   return (
     <button
@@ -33,16 +40,17 @@ export function ColorblindToggle({ on }: { on: boolean }) {
       aria-label={label}
       title={label}
       onClick={toggle}
-      className={`border-hairline bg-surface inline-flex h-8 items-center gap-1.5 rounded-[6px] border px-2 font-mono text-[11px] tracking-[0.06em] uppercase transition-colors ${
+      className={`border-hairline bg-surface inline-flex min-h-[44px] items-center gap-2 rounded-[6px] border px-3 text-[12px] transition-colors md:min-h-8 md:px-2 ${
         active ? "text-brand" : "text-ink-3 hover:text-ink"
-      }`}
+      } ${className}`}
     >
       <span
         aria-hidden
         className="inline-block h-2 w-2 rounded-[2px]"
         style={{ background: active ? "var(--up)" : "var(--down)" }}
       />
-      CB
+      Colour-blind safe
+      <span className="text-ink-4">{active ? "on" : "off"}</span>
     </button>
   );
 }

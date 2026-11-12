@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { readCluster, readWire } from "@/lib/news/read";
-import { readQuote } from "@/lib/market/read";
+import { getQuote, type Priced } from "@/lib/market/service";
+import { instrumentBySymbol } from "@/content/instruments";
+import { ChangePill } from "@/components/market/ChangePill";
+import { PriceStamp } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { sectionMeta } from "@/lib/curation/section";
 import { relativeTime } from "@/lib/format/relative-time";
 import { formatMoney } from "@/lib/format/currency";
-import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
@@ -15,7 +17,6 @@ import { ReadingProgress } from "@/components/news/ReadingProgress";
 import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 import { ShareButtons } from "@/components/ui/ShareButtons";
 import { SignalScore } from "@/components/ui/SignalScore";
-import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
 import {
   breadcrumbLd,
   canonical,
@@ -67,14 +68,15 @@ export default async function ClusterPage({ params }: Params) {
     getDisplayCurrency(),
     readWire({ section: cluster.section }),
   ]);
-  const instruments: { symbol: string; quote: Quote }[] = (
+  type PricedQuote = Priced<Quote> & { value: Quote };
+  const instruments: { symbol: string; priced: PricedQuote }[] = (
     await Promise.all(
       cluster.tickers.map(async (symbol) => {
-        const quote = await readQuote(symbol);
-        return quote ? { symbol, quote } : null;
+        const priced = await getQuote(symbol);
+        return priced.value ? { symbol, priced: priced as PricedQuote } : null;
       }),
     )
-  ).filter((x): x is { symbol: string; quote: Quote } => x !== null);
+  ).filter((x): x is { symbol: string; priced: PricedQuote } => x !== null);
   const more = sectionWire.filter((c) => c.slug !== cluster.slug).slice(0, 4);
 
   // NewsArticle + BreadcrumbList structured data (§6 SEO) — from our own fields.
@@ -292,50 +294,37 @@ export default async function ClusterPage({ params }: Params) {
                   Instruments in this story
                 </h2>
                 <ul className="border-hairline divide-hairline divide-y border-t border-b">
-                  {instruments.map(({ symbol, quote }) => {
-                    const dir = directionOf(quote.change);
-                    const sd = dir === "gain" ? "up" : dir === "loss" ? "down" : "flat";
-                    const dirClass =
-                      dir === "gain"
-                        ? "text-up"
-                        : dir === "loss"
-                          ? "text-down"
-                          : "text-ink-3";
-                    return (
-                      <li key={symbol} className="flex items-center gap-3 py-2.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <Link
-                              href={`/quote/${symbol}`}
-                              className="tnum text-ink hover:text-brand text-[13px] font-medium"
-                            >
-                              {symbol}
-                            </Link>
-                            <span className="tnum text-ink-2 text-[13px]">
-                              {formatMoney(quote.priceUsd, currency)}
+                  {instruments.map(({ symbol, priced }) => (
+                    <li key={symbol} className="py-2.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <Link
+                          href={`/quote/${symbol}`}
+                          className="tnum text-ink hover:text-brand text-[13px] font-medium"
+                          title={instrumentBySymbol(symbol)?.name ?? symbol}
+                        >
+                          {symbol}
+                          {instrumentBySymbol(symbol) ? (
+                            <span className="text-ink-3 ml-2 font-normal">
+                              {instrumentBySymbol(symbol)?.name}
                             </span>
-                          </div>
-                          <div className="mt-1 flex items-center justify-between gap-2">
-                            <Sparkline
-                              values={sparkSeries(symbol, quote.changePct)}
-                              dir={sd}
-                              width={72}
-                              height={18}
-                            />
-                            <span
-                              className={`tnum flex items-center gap-0.5 text-[11px] ${dirClass}`}
-                            >
-                              <span aria-hidden>{directionGlyph(quote.change)}</span>
-                              {formatPercent(quote.changePct)}
-                            </span>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
+                          ) : null}
+                        </Link>
+                        <span className="flex items-baseline gap-2">
+                          <span className="tnum text-ink-2 text-[13px]">
+                            {formatMoney(priced.value.priceUsd, currency)}
+                          </span>
+                          <ChangePill
+                            pct={priced.value.changePct}
+                            className="text-[11px]"
+                          />
+                        </span>
+                      </div>
+                      <PriceStamp stamp={priced} className="mt-1 block" />
+                    </li>
+                  ))}
                 </ul>
                 <p className="text-ink-3 mt-2 text-[11px]">
-                  Latest cached price; move vs prior close. Trend is illustrative.
+                  Latest stored price; change versus the prior close.
                 </p>
               </div>
             ) : null}

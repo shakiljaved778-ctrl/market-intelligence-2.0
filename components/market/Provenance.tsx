@@ -1,55 +1,38 @@
-import { provenanceOf } from "@/lib/market/provenance";
-import type { Quote } from "@/lib/providers/types";
+import { stampText, type StampInput } from "@/lib/market/provenance";
 
 /**
- * Honest per-price provenance (§10 trust invariant). Chrome-neutral by design
- * (§12): provenance is metadata, so it never uses the gain/loss data colours or
- * the `--iris` "ours" accent — just hairline borders and muted text. Every price
- * we surface can state its source, its timestamp and its delay; a sample is
- * always labelled as a sample and never dressed up as live.
+ * The source-and-time line printed beside a price (trust invariant). Chrome-
+ * neutral by design (§12): provenance is metadata, so it uses muted text only —
+ * never the gain/loss data colours or the accent. Renders nothing when there is
+ * no real value to stamp (the surface then shows its empty state instead).
  */
-export function QuoteProvenance({
-  quote,
+export function PriceStamp({
+  stamp,
   className = "",
+  withYear = false,
 }: {
-  quote: Quote;
+  stamp: StampInput;
   className?: string;
+  withYear?: boolean;
 }) {
-  const p = provenanceOf(quote);
-  if (!p.live) {
-    return (
-      <p className={`text-text-low text-[11px] ${className}`}>
-        <span className="border-line text-text-mid mr-1.5 rounded border px-1.5 py-0.5">
-          Sample data
-        </span>
-        Illustrative values — not live market data
-      </p>
-    );
-  }
-  return (
-    <p className={`text-text-low text-[11px] ${className}`}>
-      Source {p.source}
-      {p.asOf ? <> · as of {p.asOf}</> : null}
-      {" · "}
-      {p.delay ?? "real-time"}
-    </p>
-  );
+  const text = stampText(stamp, withYear);
+  if (!text) return null;
+  return <span className={`text-ink-3 text-[11px] ${className}`}>{text}</span>;
 }
 
-/**
- * Compact inline marker for dense rows (screener, movers). A live row shows
- * nothing extra — the table's coverage banner already states source & delay,
- * and each price cell carries a full-provenance `title`. A sample row gets a
- * small muted tag so it can never be mistaken for real market data.
- */
-export function SampleTag({ quote }: { quote: Quote }) {
-  if (quote.provider.toLowerCase() !== "fixture") return null;
+/** A short, honest empty state for a price surface with no real data stored. */
+export function NoData({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <span
-      className="border-line text-text-low ml-2 rounded border px-1 py-px align-middle text-[10px]"
-      title="Illustrative sample — not live market data"
+    <div
+      className={`border-hairline text-ink-3 rounded-[8px] border px-4 py-8 text-center text-[13px] ${className}`}
     >
-      sample
-    </span>
+      {children}
+    </div>
   );
 }

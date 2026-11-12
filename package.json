@@ -21,7 +21,9 @@
     "test:e2e": "playwright test",
     "visual:baseline": "playwright test --config playwright.visual.config.ts --update-snapshots",
     "visual:compare": "playwright test --config playwright.visual.config.ts",
-    "check:colors": "node scripts/check-colors.mjs"
+    "check:colors": "node scripts/check-colors.mjs",
+    "check:fixtures": "node scripts/check-fixture-imports.mjs",
+    "dev:demo": "DEMO_MODE=1 next dev"
   },
   "dependencies": {
     "@xenova/transformers": "2.17.2",

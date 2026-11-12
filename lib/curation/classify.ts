@@ -18,6 +18,34 @@ export function mentions(haystack: string, needle: string): boolean {
   return new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`, "i").test(haystack);
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Case-SENSITIVE whole-token match — for proper nouns (company names) and
+ * explicit upper-case aliases ("IBM", "BTC"). "Apple" matches; "apple" in
+ * "apple harvest" does not.
+ */
+export function mentionsExact(haystack: string, needle: string): boolean {
+  return new RegExp(`(^|[^A-Za-z0-9])${escapeRegex(needle)}([^A-Za-z0-9]|$)`).test(
+    haystack,
+  );
+}
+
+/**
+ * A bare ticker SYMBOL counts only in market context: "$NOW", "(NOW)" or
+ * "(NYSE: NOW)". Plain words never do — the old case-insensitive symbol match
+ * turned "now", "low", "Dec" and "de" in ordinary headlines into the tickers
+ * NOW, LOW, DEC and DE, which then mis-filed those stories under Markets.
+ */
+export function mentionsTicker(haystack: string, symbol: string): boolean {
+  const s = escapeRegex(symbol);
+  const cashtag = new RegExp(`\\$${s}(?![A-Za-z0-9])`);
+  const bracketed = new RegExp(`\\((?:[A-Z]{2,10}:\\s*)?${s}\\)`);
+  return cashtag.test(haystack) || bracketed.test(haystack);
+}
+
 let cache: {
   tickers: [string, string[]][];
   entities: { name: string; aliases: string[] }[];
@@ -47,7 +75,9 @@ export function classify(headline: string, dek: string | null): Classification {
 
   const foundTickers = new Set<string>();
   for (const [symbol, aliases] of tickers) {
-    if ([symbol, ...aliases].some((a) => mentions(text, a))) foundTickers.add(symbol);
+    if (mentionsTicker(text, symbol) || aliases.some((a) => mentionsExact(text, a))) {
+      foundTickers.add(symbol);
+    }
   }
 
   const foundEntities = new Set<string>();

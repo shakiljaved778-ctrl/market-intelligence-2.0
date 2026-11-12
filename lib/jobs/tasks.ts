@@ -1,12 +1,19 @@
+import { INSTRUMENTS } from "@/content/instruments";
 import { fredSeries } from "@/lib/providers/fred";
+import { referenceRates } from "@/lib/providers/frankfurter";
+import { worldBankSeries } from "@/lib/providers/worldbank";
 import { getRegistry } from "@/lib/providers";
 import { cachePut } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
-import { persistQuote } from "@/lib/db/queries/quotes";
+import { dbLatestQuotes, persistQuote } from "@/lib/db/queries/quotes";
 import { persistFundamentals } from "@/lib/db/queries/fundamentals";
+import { persistFxRates, persistRecap, persistSeries } from "@/lib/db/queries/market";
 import { pruneRetention } from "@/lib/db/queries/retention";
+import { SERIES } from "@/lib/economy/series";
 import { refreshCandles } from "@/lib/market/candles";
-import { BACKFILL_SYMBOLS, TRACKED_MACRO_SERIES, TRACKED_SYMBOLS } from "./tracked";
+import { FX_QUOTE_CURRENCIES } from "@/lib/market/levels";
+import { buildSessionClose, nyDate, type SessionRow } from "@/lib/narrative/session";
+import { BACKFILL_SYMBOLS, TRACKED_SYMBOLS } from "./tracked";
 import type { JobSummary } from "./job-runs";
 
 /**
@@ -24,9 +31,12 @@ export async function quotesTask(): Promise<JobSummary> {
   let out = 0;
   for (const symbol of TRACKED_SYMBOLS) {
     const quote = await registry.quote(symbol);
-    if (quote) {
-      // Prime the read cache that pages consume, and persist to Postgres.
-      await cachePut(`market:quote:${quote.symbol}`, TTL.quoteLive, quote);
+    // Only a REAL provider answer is stored. (The fixture provider is absent in
+    // production; the guard keeps demo runs from writing to a real database.)
+    if (quote && quote.provider !== "fixture") {
+      // Last-known-good: a long-lived cache entry plus a Postgres row, each
+      // carrying the quote's own source, time and delay.
+      await cachePut(`market:quote:${quote.symbol}`, TTL.quoteLastKnown, quote);
       await persistQuote(quote);
       out += 1;
     }
@@ -34,16 +44,81 @@ export async function quotesTask(): Promise<JobSummary> {
   return { itemsIn: TRACKED_SYMBOLS.length, itemsOut: out };
 }
 
+/**
+ * Macro job: FRED + World Bank series (macro tiles, yield curve, energy
+ * benchmarks) and ECB reference FX rates. Everything fetched is PERSISTED so the
+ * pages read stored, source-stamped observations — never a fixture.
+ */
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
-  for (const series of TRACKED_MACRO_SERIES) {
-    const obs = await fredSeries(series);
-    if (obs.length > 0) out += 1;
+  for (const cfg of SERIES) {
+    const obs =
+      cfg.provider === "fred"
+        ? await fredSeries(cfg.code, cfg.historyDays)
+        : await worldBankSeries(cfg.country ?? "", cfg.code);
+    if (obs.length === 0) continue;
+    await persistSeries(
+      {
+        id: cfg.id,
+        name: cfg.name,
+        unit: cfg.unit,
+        frequency: cfg.frequency,
+        source: cfg.source,
+        region: cfg.region,
+      },
+      // World Bank dates are years ("2024"); store them as a year-end date.
+      obs.map((o) => ({
+        date: /^\d{4}$/.test(o.date) ? `${o.date}-12-31` : o.date,
+        value: o.value,
+      })),
+    );
+    out += 1;
   }
-  return { itemsIn: TRACKED_MACRO_SERIES.length, itemsOut: out };
+
+  const fx = await referenceRates("USD", FX_QUOTE_CURRENCIES, 14);
+  const fxStored = await persistFxRates(fx.map((r) => ({ ...r, source: "ecb" })));
+
+  return {
+    itemsIn: SERIES.length + FX_QUOTE_CURRENCIES.length,
+    itemsOut: out + (fxStored > 0 ? FX_QUOTE_CURRENCIES.length : 0),
+  };
+}
+
+/**
+ * Build and persist the US session-close recap from the quotes just stored.
+ * Returns false (and writes nothing) when coverage is below the gate.
+ */
+async function sessionRecapTask(): Promise<boolean> {
+  const stored = await dbLatestQuotes(36);
+  const rows: SessionRow[] = [];
+  for (const inst of INSTRUMENTS) {
+    const quote = stored.get(inst.symbol);
+    if (quote) rows.push({ instrument: inst, quote });
+  }
+  const result = buildSessionClose(rows, nyDate(new Date().toISOString()));
+  if (!result) {
+    console.log("[eod] session recap not published: closing-price coverage below gate");
+    return false;
+  }
+  await persistRecap({
+    slug: result.slug,
+    kind: "session_close",
+    bodyMd: result.output.bodyMd,
+    templateVersion: result.output.templateVersion,
+    inputs: {
+      recap: result.output.inputs,
+      coverage: result.coverage,
+      sources: result.sources,
+    },
+  });
+  return true;
 }
 
 export async function eodTask(): Promise<JobSummary> {
+  // Refresh quotes first: at 22:00 UTC the US cash session has closed, so the
+  // provider returns closing prices — the inputs the recap is built from.
+  const quotes = await quotesTask();
+
   // EOD candle backfill for the core symbols across the daily ranges (§13).
   // Scoped to BACKFILL_SYMBOLS, not the full live-quote list, to stay within the
   // tight free candle budgets (Polygon ~5/min, EODHD ~100/day).
@@ -68,11 +143,20 @@ export async function eodTask(): Promise<JobSummary> {
     }
   }
 
+  let recapWritten = false;
+  try {
+    recapWritten = await sessionRecapTask();
+  } catch (err) {
+    console.error("[eod] session recap failed:", err);
+  }
+
   const pruned = await pruneRetention();
   return {
     itemsOut:
+      (quotes.itemsOut ?? 0) +
       backfilled +
       fundamentalsOut +
+      (recapWritten ? 1 : 0) +
       pruned.articlesDeleted +
       pruned.intradayCandlesDeleted,
     outcome: pruned.skipped ? "partial" : "ok",

@@ -2,19 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
-import { QuoteProvenance } from "@/components/market/Provenance";
+import { ChangePill } from "@/components/market/ChangePill";
+import { NoData, PriceStamp } from "@/components/market/Provenance";
 import { FundamentalsPanel } from "@/components/market/Fundamentals";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import { readCandles, readFundamentals, readQuote } from "@/lib/market/read";
+import { readCandles, readFundamentals } from "@/lib/market/read";
+import { getQuote } from "@/lib/market/service";
+import { instrumentBySymbol } from "@/content/instruments";
 import { readWire } from "@/lib/news/read";
 import { sectionMeta } from "@/lib/curation/section";
 import { deriveInstrumentRecap } from "@/lib/narrative/derive";
 import { instrumentRecap } from "@/lib/narrative/recap";
 import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
-import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
 import { relativeTime } from "@/lib/format/relative-time";
 import { sessionFor } from "@/lib/format/session";
-import { universeBySymbol } from "@/fixtures/universe";
 import { breadcrumbLd, canonical, corporationLd, graph, ogImage } from "@/lib/seo";
 import { exchangeMeta, gccCompany, gccSectorPeers } from "@/lib/market/gcc";
 import { GccCompanyView } from "@/components/market/GccCompanyView";
@@ -38,25 +39,24 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const gcc = gccCompany(sym);
   if (gcc) {
     const ex = exchangeMeta(gcc.exchange);
-    const raw = await readQuote(sym);
-    // Only a REAL quote counts (never the illustrative fixture a GCC symbol may
-    // carry in the universe) — GCC is real-or-hidden, like the GCC spotlight (§1).
-    const quote = raw && raw.provider.toLowerCase() !== "fixture" ? raw : null;
+    // Only a REAL quote counts — a GCC page is indexable only with a real price.
+    const p = await getQuote(sym);
+    const quote = p.value && !p.demo ? p.value : null;
     const related = await readWire({ ticker: sym });
     const indexable = Boolean(quote) && (Boolean(gcc.profile) || related.length > 0);
     const title = `${gcc.nameEn} (${sym}) Share Price Today | ${ex?.shortName ?? "GCC"}`;
     return {
       title,
-      description: `${gcc.nameEn} (${sym}) on the ${ex?.name ?? "GCC exchange"} — share price, company profile and the latest Mizaan coverage. ${quote ? "Delayed, source-stamped." : "End-of-day pricing pending."}`,
+      description: `${gcc.nameEn} (${sym}) on the ${ex?.name ?? "GCC exchange"} — share price, company profile and the latest Mizaan coverage. ${quote ? "Price shown with its source and time." : "No licensed price feed yet."}`,
       alternates: { canonical: canonical(`/quote/${sym}`) },
       robots: indexable ? undefined : { index: false, follow: true },
     };
   }
 
-  const meta = universeBySymbol(sym);
+  const meta = instrumentBySymbol(sym);
   const name = meta?.name ?? sym;
-  const title = `${name} (${sym}) Share Price Today, News & Chart`;
-  const description = `Live ${name} (${sym}) price, chart and the latest Mizaan news coverage across global and GCC markets. Delayed data, source-stamped.`;
+  const title = `${name} (${sym}) Share Price, News & Chart`;
+  const description = `${name} (${sym}): latest stored price with its source and time, price chart and Mizaan news coverage.`;
   const url = canonical(`/quote/${sym}`);
   const image = ogImage(`${name} (${sym})`, "quote");
   return {
@@ -77,16 +77,19 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function QuotePage({ params }: Params) {
   const { symbol } = await params;
   const sym = symbol.toUpperCase();
-  const [quote, currency] = await Promise.all([readQuote(sym), getDisplayCurrency()]);
+  const [pricedQuote, currency] = await Promise.all([
+    getQuote(sym),
+    getDisplayCurrency(),
+  ]);
+  const quote = pricedQuote.value;
 
   // GCC company pages (Phase 5): a dedicated profile/peers/coverage view in the
   // same layout. Price block shows only when a real quote exists. Non-GCC symbols
   // fall through to the unchanged universe path below.
   const gcc = gccCompany(sym);
   if (gcc) {
-    // GCC is real-or-hidden: ignore any illustrative fixture price in the universe.
-    const realQuote =
-      quote && quote.provider.toLowerCase() !== "fixture" ? quote : null;
+    // GCC is real-or-hidden: a demo value never stands in for a GCC price.
+    const realQuote = quote && !pricedQuote.demo ? quote : null;
     const [related, peers] = [
       (await readWire({ ticker: sym })).slice(0, 6),
       gccSectorPeers(gcc, 5),
@@ -118,25 +121,70 @@ export default async function QuotePage({ params }: Params) {
     );
   }
 
-  if (!quote) notFound();
+  const meta = instrumentBySymbol(sym);
+  // Unknown symbol → 404. A KNOWN instrument with no stored price keeps its
+  // page (name, chart area, coverage) and says plainly that no price is held.
+  if (!quote && !meta) notFound();
+  if (!quote) {
+    const coverage = (await readWire({ ticker: sym })).slice(0, 6);
+    return (
+      <div className="pb-4">
+        <div className="header-band bleed">
+          <div className="mx-auto max-w-[1280px] px-4 py-8">
+            <div className="text-ink-2 flex items-center gap-2 text-[13px]">
+              <h1 className="t-h3 font-editorial text-ink">{meta?.name ?? sym}</h1>
+              <span className="tnum text-ink-3">{sym}</span>
+              {meta ? <span className="text-ink-4">· {meta.exchange}</span> : null}
+            </div>
+          </div>
+        </div>
+        <div className="mt-6">
+          <NoData>
+            No price is available for {meta?.name ?? sym} right now. Mizaan shows a
+            price only when its data feed has delivered one, with its source and time.
+          </NoData>
+        </div>
+        {coverage.length > 0 ? (
+          <>
+            <h2 className="text-text-mid mt-8 mb-2.5 text-[13px] font-medium">
+              Related coverage
+            </h2>
+            <ul className="list-card divide-line divide-y">
+              {coverage.map((c) => (
+                <li key={c.slug} className="p-3.5">
+                  <Link
+                    href={`/news/${c.slug}`}
+                    className="font-editorial text-text-hi hover:text-iris text-[14px] leading-snug"
+                  >
+                    {c.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </div>
+    );
+  }
 
-  const meta = universeBySymbol(sym);
   const session = sessionFor(meta?.exchange ?? null);
 
-  // Fundamentals (equities only; null for crypto/unknown) — cache/db/fixture.
+  // Fundamentals (equities only) — stored values, or nothing.
   const fundamentals = await readFundamentals(sym);
 
   // News clusters bound to this instrument, newest-ranked first.
   const coverage = (await readWire({ ticker: sym })).slice(0, 6);
 
-  // Computed "how it moved" recap — deterministic, from our own candles (§9).
+  // Computed "how it moved" recap — deterministic, from STORED daily closes
+  // (§9). With fewer than five stored closes there is nothing to derive, so the
+  // block is omitted rather than written from a generated series.
   const candles = await readCandles(sym, "6M");
-  const recap = instrumentRecap(
-    deriveInstrumentRecap(meta?.name ?? sym, currency, quote, candles),
-  );
-  const dir = directionOf(quote.change);
-  const dirClass =
-    dir === "gain" ? "dir-gain" : dir === "loss" ? "dir-loss" : "text-text-mid";
+  const recap =
+    candles.length >= 5
+      ? instrumentRecap(
+          deriveInstrumentRecap(meta?.name ?? sym, currency, quote, candles),
+        )
+      : null;
 
   const stats: { label: string; value: string }[] = [
     {
@@ -196,14 +244,7 @@ export default async function QuotePage({ params }: Params) {
                 <span className="tnum text-ink text-[clamp(2.5rem,6vw,4rem)] leading-none font-medium">
                   {formatMoney(quote.priceUsd, currency)}
                 </span>
-                <span
-                  className={`tnum flex items-center gap-1.5 text-[18px] ${dirClass}`}
-                >
-                  <span aria-hidden>{directionGlyph(quote.change)}</span>
-                  {formatMoney(Math.abs(quote.change), currency)}
-                  <span className="text-ink-4">·</span>
-                  {formatPercent(quote.changePct)}
-                </span>
+                <ChangePill pct={quote.changePct} className="text-[18px]" />
               </div>
             </div>
             <div className="text-right">
@@ -219,7 +260,7 @@ export default async function QuotePage({ params }: Params) {
                 ) : null}
                 {session.label}
               </span>
-              <QuoteProvenance quote={quote} className="mt-1.5" />
+              <PriceStamp stamp={pricedQuote} withYear className="mt-1.5 block" />
             </div>
           </div>
         </div>
@@ -257,23 +298,27 @@ export default async function QuotePage({ params }: Params) {
           style={{ "--d": "160ms" } as React.CSSProperties}
         >
           {/* Computed "how it moved" block — deterministic prose from our candles (§9). */}
-          <div className="card overflow-hidden p-5">
-            <div className="ours border-iris/25 bg-iris/10 relative inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px]">
-              <span aria-hidden>◆</span>
-              <span>How it moved · computed</span>
+          {recap ? (
+            <div className="card overflow-hidden p-5">
+              <div className="ours border-iris/25 bg-iris/10 relative inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px]">
+                <span aria-hidden>◆</span>
+                <span>How it moved · computed</span>
+              </div>
+              <p className="font-editorial text-text-hi relative mt-3 text-[15px] leading-[1.6]">
+                {recap.bodyMd}
+              </p>
+              <p className="text-text-low relative mt-3 text-[11px]">
+                Computed from stored daily closes ·{" "}
+                <a href="/methodology" className="ours">
+                  methodology
+                </a>
+              </p>
             </div>
-            <p className="font-editorial text-text-hi relative mt-3 text-[15px] leading-[1.6]">
-              {recap.bodyMd}
-            </p>
-            <p className="text-text-low relative mt-3 text-[11px]">
-              Generated from our own price data ·{" "}
-              <a href="/methodology" className="ours">
-                methodology
-              </a>
-            </p>
-          </div>
+          ) : null}
 
-          <h2 className="text-text-mid mt-8 mb-2.5 text-[13px] font-medium">
+          <h2
+            className={`text-text-mid mb-2.5 text-[13px] font-medium ${recap ? "mt-8" : ""}`}
+          >
             Related coverage
           </h2>
           {coverage.length > 0 ? (

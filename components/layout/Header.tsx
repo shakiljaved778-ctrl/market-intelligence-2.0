@@ -55,7 +55,9 @@ export function Header({
           <MarketStatus />
           <CommandPalette />
           <CurrencyToggle current={currency} />
-          <ColorblindToggle on={colorblind} />
+          {/* Wide screens only; on smaller screens the same control sits in the
+              footer's "Display" row, so the phone header stays uncluttered. */}
+          <ColorblindToggle on={colorblind} className="hidden xl:inline-flex" />
           <ThemeToggle pref={themePref} />
         </div>
       </div>

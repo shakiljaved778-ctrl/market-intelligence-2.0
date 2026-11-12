@@ -12,9 +12,10 @@ interface CandlePoint {
 }
 
 /**
- * Price chart (§13) using TradingView Lightweight Charts. Fetches candles from
- * the cache-backed API (never a vendor), switches ranges, and colours the area
- * by overall direction. Respects prefers-reduced-motion implicitly (no entrance
+ * Price chart (§13) using TradingView Lightweight Charts. Fetches the STORED
+ * series from our API (never a vendor, never a generated line), prints the
+ * series' source beneath the chart, switches ranges, and colours the area by
+ * overall direction. A range with nothing stored shows an empty state. Respects prefers-reduced-motion implicitly (no entrance
  * animation is used).
  */
 export function PriceChart({ symbol }: { symbol: string }) {
@@ -22,6 +23,7 @@ export function PriceChart({ symbol }: { symbol: string }) {
   const [range, setRange] = useState<Range>("1M");
   const [loading, setLoading] = useState(true);
   const [empty, setEmpty] = useState(false);
+  const [stamp, setStamp] = useState<string | null>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -30,6 +32,7 @@ export function PriceChart({ symbol }: { symbol: string }) {
     async function draw() {
       setLoading(true);
       setEmpty(false);
+      setStamp(null);
       const [{ createChart, ColorType }, res] = await Promise.all([
         import("lightweight-charts"),
         fetch(
@@ -38,7 +41,10 @@ export function PriceChart({ symbol }: { symbol: string }) {
       ]);
       if (disposed || !containerRef.current) return;
 
-      const data = (await res.json()) as { candles: CandlePoint[] };
+      const data = (await res.json()) as {
+        candles: CandlePoint[];
+        stamp?: string | null;
+      };
       const points = data.candles.map((c) => ({
         time: Math.floor(new Date(c.t).getTime() / 1000) as never,
         value: c.c,
@@ -85,6 +91,7 @@ export function PriceChart({ symbol }: { symbol: string }) {
         priceLineVisible: false,
       });
       series.setData(points);
+      setStamp(data.stamp ?? null);
       setLoading(false);
     }
 
@@ -120,11 +127,12 @@ export function PriceChart({ symbol }: { symbol: string }) {
           <p className="text-text-low absolute top-2 left-0 text-[12px]">Loading…</p>
         ) : null}
         {empty ? (
-          <p className="text-text-mid absolute inset-0 flex items-center justify-center text-[13px]">
-            No price history for this range.
+          <p className="text-text-mid absolute inset-0 flex items-center justify-center px-6 text-center text-[13px]">
+            No price history is stored for this range.
           </p>
         ) : null}
       </div>
+      {stamp ? <p className="text-text-low mt-2 text-[11px]">{stamp}</p> : null}
     </div>
   );
 }

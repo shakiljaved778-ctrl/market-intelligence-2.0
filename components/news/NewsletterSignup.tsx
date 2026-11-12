@@ -4,11 +4,14 @@ import { NEWSLETTER_NAME } from "@/lib/newsletter";
 /**
  * Newsletter signup (Phase 6). Reuses existing tokens/components — no new styles.
  * Allowed placements only: the end of an article ("article") and one footer row
- * ("footer"). No pop-ups, no modals, no sticky bars. Email + one consent box +
- * a honeypot; posts to the subscribeAction server action (double opt-in).
+ * ("footer"). No pop-ups, no modals, no sticky bars. ONE visible email field and
+ * one button (plus a hidden honeypot); posts to the subscribeAction server
+ * action, which sends the double-opt-in confirmation email.
  */
+// `bg-bg` (the page canvas) + a strong border keep the field visible on the
+// footer's `bg-surface` — it used to blend into its own background.
 const inputClass =
-  "border-hairline bg-surface text-ink focus:border-line-strong rounded-[8px] border px-3 py-2 text-[14px] outline-none";
+  "border-line-strong bg-bg text-ink placeholder:text-ink-3 focus:border-brand min-h-[44px] rounded-[8px] border px-3 py-2 text-[14px] outline-none";
 
 export function NewsletterSignup({
   source,
@@ -38,7 +41,7 @@ export function NewsletterSignup({
         className="flex flex-col gap-2 sm:flex-row sm:items-center"
       >
         <label htmlFor="nl-footer-email" className="text-ink-2 text-[13px] sm:mr-1">
-          {NEWSLETTER_NAME} — the daily GCC &amp; global briefing:
+          {NEWSLETTER_NAME} — the morning briefing, by email:
         </label>
         <div className="flex gap-2">
           <input
@@ -46,22 +49,22 @@ export function NewsletterSignup({
             name="email"
             type="email"
             required
+            autoComplete="email"
             placeholder="you@email.com"
             className={`${inputClass} w-full sm:w-[220px]`}
           />
-          <button type="submit" className="btn btn-primary shrink-0 text-[13px]">
+          <button
+            type="submit"
+            className="btn btn-primary min-h-[44px] shrink-0 text-[13px]"
+          >
             Subscribe
           </button>
         </div>
-        <label className="text-ink-4 flex items-center gap-1.5 text-[11px]">
-          <input
-            type="checkbox"
-            name="consent"
-            required
-            className="accent-[var(--brand)]"
-          />
-          Send me the daily briefing
-        </label>
+        {/* Consent is given by submitting and then confirming by email (double
+            opt-in), so the form is one field and one button. */}
+        <p className="text-ink-3 text-[11px]">
+          We&rsquo;ll email a confirmation link. Unsubscribe anytime.
+        </p>
         {Hidden}
       </form>
     );
@@ -76,30 +79,27 @@ export function NewsletterSignup({
         Start your day with {NEWSLETTER_NAME}
       </h3>
       <p className="text-ink-2 mt-1 text-[14px]">
-        GCC closes, overnight global moves and the five stories that matter — one email,
-        before the open.
+        The five ranked stories that matter and source-stamped market figures — one
+        email each trading morning.
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
         <input
           name="email"
           type="email"
           required
+          autoComplete="email"
+          aria-label="Email address"
           placeholder="you@email.com"
           className={`${inputClass} w-full`}
         />
-        <button type="submit" className="btn btn-primary shrink-0">
+        <button type="submit" className="btn btn-primary min-h-[44px] shrink-0">
           Subscribe
         </button>
       </div>
-      <label className="text-ink-3 mt-3 flex items-center gap-2 text-[12px]">
-        <input
-          type="checkbox"
-          name="consent"
-          required
-          className="accent-[var(--brand)]"
-        />
-        Send me the daily {NEWSLETTER_NAME} briefing. Unsubscribe anytime.
-      </label>
+      <p className="text-ink-3 mt-3 text-[12px]">
+        We&rsquo;ll email a confirmation link before sending anything. Unsubscribe
+        anytime.
+      </p>
       {Hidden}
     </form>
   );

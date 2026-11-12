@@ -1,12 +1,12 @@
-import { formatAsOf } from "@/lib/market/provenance";
+import { formatAsOf, sourceLabel } from "@/lib/market/provenance";
 import type { Fundamentals } from "@/lib/providers/types";
 
 /**
  * Key fundamentals for a quote page (§6 depth). Valuation multiples and ratios
  * are dimensionless and currency-neutral (§7). Chrome stays monochrome (§12):
  * these are facts, not price direction, so no gain/loss colour and no `--iris`
- * accent — just labels and figures. Provenance is stated honestly; a fixture is
- * labelled as a sample and never dressed up as live.
+ * accent — just labels and figures. Provenance is stated beside the heading;
+ * the panel is not rendered at all when no real fundamentals are stored.
  */
 
 /** A multiple like 24.3× (ratios). Null/negative-earnings cases show "—". */
@@ -65,19 +65,16 @@ export function FundamentalsPanel({ data }: { data: Fundamentals }) {
     <section>
       <div className="mt-8 mb-2.5 flex items-baseline justify-between">
         <h2 className="text-text-mid text-[13px] font-medium">Financials · TTM</h2>
-        {live ? (
-          <span className="text-text-low text-[11px]">
-            Source {data.provider === "fmp" ? "FMP" : data.provider}
-            {asOf ? <> · as of {asOf}</> : null}
-          </span>
-        ) : (
-          <span className="text-text-low text-[11px]">
-            <span className="border-line text-text-mid mr-1.5 rounded border px-1.5 py-0.5">
-              Sample data
-            </span>
-            Illustrative — not live fundamentals
-          </span>
-        )}
+        <span className="text-text-low text-[11px]">
+          {live ? (
+            <>
+              Source {sourceLabel(data.provider)}
+              {asOf ? <> · as of {asOf}</> : null}
+            </>
+          ) : (
+            "Demo data — not market data"
+          )}
+        </span>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {groups.map((g) => (

@@ -36,6 +36,13 @@
       "when": 1789737600821,
       "tag": "0004_add_fundamentals",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794497029753,
+      "tag": "0005_price_provenance",
+      "breakpoints": true
     }
   ]
 }

@@ -46,3 +46,54 @@ export async function usdPerUnit(native: string): Promise<number | null> {
     return null;
   }
 }
+
+const SeriesResponse = z.object({
+  base: z.string(),
+  rates: z.record(z.string(), z.record(z.string(), z.number())),
+});
+
+export interface ReferenceRate {
+  base: string;
+  quote: string;
+  date: string; // YYYY-MM-DD (the ECB publication date)
+  rate: number; // units of `quote` per 1 `base`
+}
+
+/**
+ * Daily ECB reference rates for `base` against `symbols`, for the last `days`
+ * calendar days. These are once-a-day reference fixings (published around
+ * 16:00 CET on TARGET business days) — NOT a live FX feed — and are labelled as
+ * such wherever they are shown. Returns [] if unavailable.
+ */
+export async function referenceRates(
+  base: string,
+  symbols: string[],
+  days = 14,
+): Promise<ReferenceRate[]> {
+  const b = base.toUpperCase();
+  const syms = symbols.map((s) => s.toUpperCase()).filter((s) => s !== b);
+  if (syms.length === 0) return [];
+  const start = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const key = `fx:ref:${b}:${syms.join(",")}:${days}`;
+  try {
+    const { value } = await swr(key, TTL.fxReference, async () => {
+      const res = await fetch(
+        `${BASE_URL}/${start}..?base=${b}&symbols=${syms.join(",")}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
+      const parsed = SeriesResponse.parse(await res.json());
+      const out: ReferenceRate[] = [];
+      for (const [date, rates] of Object.entries(parsed.rates)) {
+        for (const [quote, rate] of Object.entries(rates)) {
+          if (Number.isFinite(rate) && rate > 0)
+            out.push({ base: b, quote, date, rate });
+        }
+      }
+      return out;
+    });
+    return value;
+  } catch {
+    return [];
+  }
+}
