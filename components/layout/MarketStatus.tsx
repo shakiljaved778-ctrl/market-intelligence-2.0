@@ -50,6 +50,7 @@ export function MarketStatus() {
     <div
       className="border-hairline bg-surface hidden items-center gap-3 rounded-[6px] border px-2.5 py-1.5 lg:flex"
       aria-label="Market status"
+      data-volatile
     >
       {markets.map((m, i) => {
         const e = eta(m.etaMin);

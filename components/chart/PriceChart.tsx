@@ -78,6 +78,10 @@ export function PriceChart({ symbol }: { symbol: string }) {
           borderColor: lineColor,
           timeVisible: range === "1D" || range === "5D",
         },
+        // A fixed, valid locale for axis labels: the library otherwise reads the
+        // browser's language tag, which some environments report in a form that
+        // Intl rejects.
+        localization: { locale: "en-GB" },
         height: 320,
         autoSize: true,
         handleScroll: false,

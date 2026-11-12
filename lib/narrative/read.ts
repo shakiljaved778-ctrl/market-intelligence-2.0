@@ -2,6 +2,7 @@ import type { DisplayCurrency } from "@/lib/currency/peg";
 import { dbRecap, dbRecentRecaps, type StoredRecap } from "@/lib/db/queries/market";
 import { demo } from "@/lib/demo/fixtures";
 import { isDemoMode } from "@/lib/demo/mode";
+import { sourceLabel } from "@/lib/market/provenance";
 import { shiftFixtureDate } from "@/lib/demo/clock";
 import { sessionRecap, weeklyRecap, type RecapOutput } from "./recap";
 
@@ -45,7 +46,7 @@ function fromStored(r: StoredRecap): NamedRecap | null {
   const inputs = (r.inputs ?? {}) as StoredInputs;
   const basis =
     inputs.coverage && inputs.sources
-      ? `Computed from closing prices of ${inputs.coverage.priced} of ${inputs.coverage.tracked} tracked US equities · source ${inputs.sources.join(", ")}`
+      ? `Computed from closing prices of ${inputs.coverage.priced} of ${inputs.coverage.tracked} tracked US equities · source ${inputs.sources.map(sourceLabel).join(", ")}`
       : null;
   return {
     slug: r.slug,

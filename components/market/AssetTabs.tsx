@@ -15,12 +15,11 @@ function fmt(p: number): string {
 }
 
 function Row({ r }: { r: LevelRow }) {
-  const stamp = stampText({
-    source: r.source,
-    asOf: r.asOf,
-    cadence: r.cadence,
-    demo: r.demo,
-  });
+  const stamp = stampText(
+    { source: r.source, asOf: r.asOf, cadence: r.cadence, demo: r.demo },
+    // A peg is reviewed rarely — show the year so "1 Jan" is not ambiguous.
+    r.cadence === "pegged",
+  );
   const name = (
     <span className="min-w-0">
       <span className="flex flex-wrap items-baseline gap-x-2">

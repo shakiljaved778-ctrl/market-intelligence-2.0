@@ -35,10 +35,10 @@ export default function MethodologyPage() {
         providers, fetched on a schedule and stored — a page never calls a provider
         directly. Each figure is shown with the provider&rsquo;s name and the time it
         refers to. When we hold no real value for something, the page says so; we do not
-        fill the gap with a sample or an estimate. News is aggregated from official RSS
-        and API feeds listed in our source registry, weighted heavily toward regulators,
-        central banks, exchanges and statistics authorities. Every source carries an
-        explicit licence note, and we store{" "}
+        fill the gap with a placeholder or an estimate. News is aggregated from official
+        RSS and API feeds listed in our source registry, weighted heavily toward
+        regulators, central banks, exchanges and statistics authorities. Every source
+        carries an explicit licence note, and we store{" "}
         <strong>headlines, short deks (≤ 40 words), timestamps and links only</strong> —
         never the body of a third-party article.
       </p>

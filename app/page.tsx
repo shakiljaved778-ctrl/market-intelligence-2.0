@@ -59,12 +59,12 @@ function LatestRow({ c }: { c: WireCluster }) {
 
 function GccCard({ item }: { item: IndexLevel }) {
   return (
-    <div className="border-hairline bg-surface rounded-[8px] border p-4">
-      <div className="flex items-baseline justify-between">
-        <span className="text-ink text-[14px] font-medium">{item.name}</span>
+    <div className="border-hairline bg-surface min-w-0 rounded-[8px] border p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-ink truncate text-[14px] font-medium">{item.name}</span>
         <span className="tnum text-ink-4 text-[10px]">{item.symbol}</span>
       </div>
-      <div className="mt-2 flex items-end justify-between gap-2">
+      <div className="mt-2 flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
         <span className="tnum text-ink text-[20px] leading-none">
           {item.level.toLocaleString("en-US", {
             minimumFractionDigits: 2,
@@ -173,7 +173,7 @@ export default async function BoardPage() {
         <div className="mb-5 flex items-baseline justify-between">
           <p className="t-micro text-ink-3 inline-flex items-center gap-2">
             <span className="live-dot inline-block align-middle" aria-hidden />
-            Today on Mizaan · {dohaToday(now)}
+            Today on Mizaan · <span data-volatile>{dohaToday(now)}</span>
           </p>
           <Link href="/news" className="text-brand text-[12px]">
             The wire <span aria-hidden>→</span>

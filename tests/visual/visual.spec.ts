@@ -2,9 +2,10 @@ import { test, expect, type Page } from "@playwright/test";
 
 /**
  * Visual baseline (Prompt Pack Phase 0). One full-page screenshot per route per
- * theme; the project (mobile/desktop) sets the viewport. The live ticker strip
- * and every tabular figure are masked so real/fixture number changes never
- * trip the diff — this guards LAYOUT, COLOUR and TYPOGRAPHY, not live data.
+ * theme; the project (mobile/desktop) sets the viewport. Runs in DEMO MODE (see
+ * playwright.visual.config.ts) so every surface is populated. The ticker strip,
+ * every tabular figure and time-of-day content are masked so number or clock
+ * changes never trip the diff — this guards LAYOUT, COLOUR and TYPOGRAPHY.
  *
  * Run `pnpm visual:baseline` once to record, then `pnpm visual:compare` in later
  * phases to prove the design is untouched (fails above 0.5% pixel diff).
@@ -15,6 +16,7 @@ import { test, expect, type Page } from "@playwright/test";
 const ROUTES: { name: string; path: string }[] = [
   { name: "home", path: "/" },
   { name: "markets", path: "/markets" },
+  { name: "screener", path: "/markets/screener" },
   { name: "news", path: "/news" },
   { name: "sections", path: "/sections" },
   { name: "economy", path: "/economy" },
@@ -27,7 +29,13 @@ const THEMES = ["light", "dark"] as const;
 
 /** Elements whose content is live/volatile and must be masked out of the diff. */
 function masks(page: Page) {
-  return [page.locator(".ticker-tape"), page.locator(".tnum")];
+  return [
+    page.locator(".ticker-tape"),
+    page.locator(".tnum"),
+    // Time-of-day content: exchange session states, the header status pill and
+    // today's date.
+    page.locator("[data-volatile]"),
+  ];
 }
 
 async function setTheme(page: Page, theme: string) {

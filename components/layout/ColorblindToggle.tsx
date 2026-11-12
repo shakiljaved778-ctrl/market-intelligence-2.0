@@ -12,9 +12,10 @@ import { CB_COOKIE } from "@/lib/theme/theme";
  */
 export function ColorblindToggle({
   on,
-  className = "",
+  className = "inline-flex",
 }: {
   on: boolean;
+  /** Display classes — the caller decides where the control is visible. */
   className?: string;
 }) {
   const [active, setActive] = useState(on);
@@ -40,7 +41,7 @@ export function ColorblindToggle({
       aria-label={label}
       title={label}
       onClick={toggle}
-      className={`border-hairline bg-surface inline-flex min-h-[44px] items-center gap-2 rounded-[6px] border px-3 text-[12px] transition-colors md:min-h-8 md:px-2 ${
+      className={`border-hairline bg-surface min-h-[44px] items-center gap-2 rounded-[6px] border px-3 text-[12px] transition-colors md:min-h-8 md:px-2 ${
         active ? "text-brand" : "text-ink-3 hover:text-ink"
       } ${className}`}
     >
@@ -49,7 +50,7 @@ export function ColorblindToggle({
         className="inline-block h-2 w-2 rounded-[2px]"
         style={{ background: active ? "var(--up)" : "var(--down)" }}
       />
-      Colour-blind safe
+      <span className="whitespace-nowrap">Colour-blind-safe colours</span>
       <span className="text-ink-4">{active ? "on" : "off"}</span>
     </button>
   );

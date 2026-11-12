@@ -38,7 +38,13 @@ export function SessionClocks({ nowIso }: { nowIso: string }) {
 
   useEffect(() => {
     setNow(new Date());
-    setLocalZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    try {
+      // An explicit locale: some environments report a default locale tag that
+      // Intl rejects, and the zone does not depend on the locale anyway.
+      setLocalZone(new Intl.DateTimeFormat("en-GB").resolvedOptions().timeZone);
+    } catch {
+      setLocalZone(null);
+    }
     const id = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(id);
   }, []);
@@ -46,14 +52,14 @@ export function SessionClocks({ nowIso }: { nowIso: string }) {
   const showLocal = localZone !== null && localZone !== "Asia/Qatar";
 
   return (
-    <div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div data-volatile>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {VENUES.map((v) => {
           const s = sessionFor(v.code, now);
           const t = sessionTimes(v.code, now);
           const open = s.state === "open";
           return (
-            <div key={v.code} className="card p-3.5">
+            <div key={v.code} className="card min-w-0 p-3.5">
               <div className="flex items-center justify-between">
                 <div className="text-text-mid text-[12px]">{v.label}</div>
                 {open ? <span className="live-dot" aria-hidden /> : null}

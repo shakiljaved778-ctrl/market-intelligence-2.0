@@ -99,7 +99,7 @@ export default async function RootLayout({
             data.
           </p>
         ) : null}
-        <Header currency={currency} themePref={themePref} colorblind={colorblind} />
+        <Header currency={currency} themePref={themePref} />
         <TickerTape />
         <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
           {children}
