@@ -166,17 +166,18 @@ describe("section classifier — 20 labelled cases (Phase 2 §5)", () => {
   }
 });
 
-describe("editorial mix (§13 product rule)", () => {
+describe("editorial mix (owner rule, 2026-11-12)", () => {
   beforeEach(() => __resetSectionCache());
 
-  it("keeps at least ~30% of the live wire non-financial", async () => {
+  // The old rule required at least 30% of the wire to be non-financial, which
+  // pushed the wrong way. Markets and economy now lead; non-finance sections are
+  // capped on the homepage (lib/news/homepage.ts, tested there).
+  it("reports the financial / non-financial split of the wire", async () => {
     const { nonFinancialPct, total, nonFinancial } = await readSectionSummaries();
     expect(total).toBeGreaterThan(0);
-    expect(nonFinancial).toBeGreaterThan(0);
-    // Markets-first, but a deliberate non-financial share for engagement.
-    expect(nonFinancialPct).toBeGreaterThanOrEqual(30);
-    // ...and still markets-first: non-financial is a minority of the wire.
-    expect(nonFinancialPct).toBeLessThan(50);
+    expect(nonFinancial).toBeLessThanOrEqual(total);
+    expect(nonFinancialPct).toBeGreaterThanOrEqual(0);
+    expect(nonFinancialPct).toBeLessThanOrEqual(100);
   });
 });
 
