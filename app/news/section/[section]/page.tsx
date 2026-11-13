@@ -11,6 +11,7 @@ import { canonical } from "@/lib/seo";
  */
 interface Params {
   params: Promise<{ section: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -27,8 +28,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-export default async function SectionWirePage({ params }: Params) {
+export default async function SectionWirePage({ params, searchParams }: Params) {
   const { section } = await params;
   if (!allSections().some((s) => s.id === section)) notFound();
-  return NewsPage({ searchParams: Promise.resolve({ section }) });
+  const sp = (await searchParams) ?? {};
+  return NewsPage({ searchParams: Promise.resolve({ section, page: sp.page }) });
 }
