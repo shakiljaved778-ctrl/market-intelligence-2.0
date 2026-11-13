@@ -17,6 +17,7 @@ import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedup
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import { computeImportance, type RankContext } from "@/lib/curation/rank";
 import { loadSources } from "@/lib/curation/config";
+import { classifyRegion, type Region } from "@/lib/curation/region";
 import { getQuotes } from "@/lib/market/service";
 import {
   classifySection,
@@ -35,6 +36,8 @@ import {
 /** A ranked cluster enriched with its editorial section + cover image. */
 export interface WireCluster extends SluggedCluster {
   section: string;
+  /** GCC country, "GCC", or "GLOBAL" (lib/curation/region.ts). */
+  region: Region;
   dek: string | null;
   imageUrl: string | null;
   imageCredit: { credit: string; creditUrl: string } | null;
@@ -100,6 +103,11 @@ function fixtureLoaded(
   const wire: WireCluster = {
     ...cluster,
     section,
+    region: classifyRegion({
+      title: cluster.title,
+      dek: primary?.dek ?? null,
+      sourceRegion: sourceRegion(primary?.sourceId),
+    }),
     dek: primary?.dek ?? null,
     imageUrl: cover?.url ?? primary?.imageUrl ?? null,
     imageCredit: cover ? { credit: cover.credit, creditUrl: cover.creditUrl } : null,
@@ -119,6 +127,17 @@ function fixtureLoaded(
     // bodies exist only under DEMO_MODE.
     body: eurekaBody(cluster.primaryId) ?? demo.articleBody(cluster.primaryId),
   };
+}
+
+let sourceRegions: Map<string, string> | null = null;
+/** The registered region of a source (content/sources.yaml), if any. */
+function sourceRegion(sourceId: string | null | undefined): string | null {
+  if (!sourceId) return null;
+  if (!sourceRegions) {
+    sourceRegions = new Map();
+    for (const s of loadSources()) if (s.region) sourceRegions.set(s.id, s.region);
+  }
+  return sourceRegions.get(sourceId) ?? null;
 }
 
 /** Build a cluster from a persisted (live) row. Live articles carry no stored
@@ -148,6 +167,11 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
       topics: row.topics,
       tickers,
       sourceId: row.primarySourceId,
+    }),
+    region: classifyRegion({
+      title: row.title,
+      dek: row.primaryDek,
+      sourceRegion: sourceRegion(row.primarySourceId),
     }),
     dek: row.primaryDek,
     imageUrl: row.imageUrl,

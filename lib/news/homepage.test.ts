@@ -22,6 +22,7 @@ function story(section: string, ageH: number, score: number): WireCluster {
     articleIds: [n],
     primaryId: n,
     section,
+    region: "GLOBAL",
     dek: "A real one-sentence description of the story.",
     imageUrl: null,
     imageCredit: null,
@@ -125,6 +126,14 @@ describe("buildHomepage", () => {
     });
     expect(l2.lead?.slug).not.toBe(stale.slug);
     expect(l2.leadLabel).toBeNull();
+  });
+
+  it("puts a fresh GCC financial story ahead of a stronger global one", () => {
+    const gcc = { ...story("markets", 6, 30), region: "QA" as const };
+    const global = story("markets", 2, 80);
+    const l = buildHomepage([global, gcc], { now: NOW });
+    expect(l.lead?.slug).toBe(gcc.slug);
+    expect(l.heroSide[0]?.slug).toBe(global.slug);
   });
 
   it("has no lead when nothing is fresh", () => {

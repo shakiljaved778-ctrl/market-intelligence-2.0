@@ -4,6 +4,7 @@ import {
   visibleSections,
   type SectionConfig,
 } from "@/lib/curation/section";
+import { isGccRegion } from "@/lib/curation/region";
 import type { WireCluster } from "@/lib/news/read";
 
 /**
@@ -13,9 +14,9 @@ import type { WireCluster } from "@/lib/news/read";
  *  1. Every story appears ONCE on the homepage.
  *  2. Nothing older than TOP_SLOT_MAX_AGE_H holds a top slot (lead, hero rail,
  *     three-up row). An editor's pick obeys the same limit.
- *  3. Markets and economy LEAD: the lead and the hero rail are filled from the
- *     financial sections first, falling back to other sections only when there
- *     are not enough fresh financial stories.
+ *  3. Markets and economy LEAD, GCC first: the lead and the hero rail are
+ *     filled from GCC financial stories, then other financial stories, falling
+ *     back to other sections only when there are not enough fresh ones.
  *  4. Section blocks only show stories inside that section's freshness window
  *     (lib/curation/freshness.ts; Eureka is evergreen). Financial sections show
  *     up to FINANCIAL_BLOCK_SIZE stories; every other section ONE row of at most
@@ -72,9 +73,15 @@ export function buildHomepage(
   const topPool = shown.filter(
     (c) => c.section !== "eureka" && ageHours(c, now) <= TOP_SLOT_MAX_AGE_H,
   );
+  // GCC financial stories first, then other financial, then the rest — each
+  // group keeps its importance order.
+  const fin = topPool.filter((c) => isFinancialSection(c.section));
+  const nonFin = topPool.filter((c) => !isFinancialSection(c.section));
   const financialFirst = [
-    ...topPool.filter((c) => isFinancialSection(c.section)),
-    ...topPool.filter((c) => !isFinancialSection(c.section)),
+    ...fin.filter((c) => isGccRegion(c.region)),
+    ...fin.filter((c) => !isGccRegion(c.region)),
+    ...nonFin.filter((c) => isGccRegion(c.region)),
+    ...nonFin.filter((c) => !isGccRegion(c.region)),
   ];
 
   // Lead: a current editor's pick, else the strongest fresh financial story.

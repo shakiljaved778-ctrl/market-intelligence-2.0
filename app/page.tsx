@@ -44,7 +44,7 @@ function LatestRow({ c }: { c: WireCluster }) {
     >
       <div className="flex items-center gap-2 text-[11px]">
         <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
-        <SectionTag section={c.section} />
+        <SectionTag section={c.section} region={c.region} />
       </div>
       <h3 className="font-editorial text-ink mt-1 text-[15px] leading-snug underline-offset-2 group-hover:underline">
         {c.title}
@@ -176,7 +176,7 @@ export default async function BoardPage() {
                         <span aria-hidden>◆</span> {leadLabel}
                       </span>
                     ) : null}
-                    <SectionTag section={lead.section} />
+                    <SectionTag section={lead.section} region={lead.region} />
                     <SignalScore score={lead.importanceScore} />
                     <span className="text-signal-strong tnum">
                       {lead.sourceCount} {lead.sourceCount === 1 ? "source" : "sources"}
