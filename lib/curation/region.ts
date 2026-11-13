@@ -2,13 +2,15 @@
  * Region tagging (Phase 2): which GCC country a story concerns, or "GCC" when it
  * concerns the Gulf as a whole, or "GLOBAL". Deterministic, like sections:
  *
- *  1. A source registered with a GCC region (content/sources.yaml `region: QA`)
- *     tags its stories with that country.
- *  2. Otherwise the headline and description are matched against the country
+ *  1. The headline and description are matched against the country
  *     dictionaries below. Names match case-sensitively as whole tokens, so
  *     "gulf" in "Gulf of Mexico" does not make a story Gulf news unless the
  *     phrase itself names the region (see GCC_TERMS).
- *  3. Mentions of two or more GCC countries, or of the GCC itself, give "GCC".
+ *  2. Mentions of two or more GCC countries, or of the GCC itself, give "GCC".
+ *  3. When the text names no Gulf country, a source registered with a GCC
+ *     region (content/sources.yaml `region: QA`) tags the story with that
+ *     country. The text comes first because a Qatari agency also reports on
+ *     Oman or Saudi Arabia, and those stories must not be tagged Qatar.
  */
 export type GccCountry = "QA" | "SA" | "AE" | "KW" | "BH" | "OM";
 export type Region = GccCountry | "GCC" | "GLOBAL";
@@ -107,14 +109,15 @@ export interface RegionInput {
 }
 
 export function classifyRegion(input: RegionInput): Region {
-  if (isGccCountry(input.sourceRegion)) return input.sourceRegion;
-  if (input.sourceRegion === "GCC") return "GCC";
   const text = `${input.title} ${input.dek ?? ""}`;
   const countries = GCC_COUNTRIES.filter((c) =>
     COUNTRY_TERMS[c].some((t) => has(text, t)),
   );
   if (countries.length >= 2 || GCC_TERMS.some((t) => has(text, t))) return "GCC";
-  return countries[0] ?? "GLOBAL";
+  if (countries[0]) return countries[0];
+  if (isGccCountry(input.sourceRegion)) return input.sourceRegion;
+  if (input.sourceRegion === "GCC") return "GCC";
+  return "GLOBAL";
 }
 
 export function isGccRegion(region: Region | string | null | undefined): boolean {

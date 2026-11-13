@@ -23,6 +23,22 @@ describe("classifyRegion", () => {
     ).toBe("QA");
   });
 
+  it("lets the text override the source when a Gulf agency reports on a neighbour", () => {
+    expect(
+      classifyRegion({
+        title: "Oman Crude Oil Price Rises to $92.04 a Barrel",
+        dek: "Muscat, November 13 (QNA) - Oman's official crude oil price rose.",
+        sourceRegion: "QA",
+      }),
+    ).toBe("OM");
+    expect(
+      classifyRegion({
+        title: "Government tenders reach six billion in the third quarter",
+        sourceRegion: "QA",
+      }),
+    ).toBe("QA");
+  });
+
   it("does not read ordinary words as Gulf news", () => {
     expect(
       classifyRegion({ title: "Hurricane season ends in the Gulf of Mexico" }),
