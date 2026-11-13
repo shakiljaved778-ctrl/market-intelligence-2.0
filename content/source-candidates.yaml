@@ -5,6 +5,21 @@
 # `scripts/probe-sources.ts` (run by .github/workflows/probe-sources.yml on
 # GitHub, where these sites are reachable) checks robots.txt, fetches each URL,
 # parses it if it is a feed, and lists any feed links if it is a web page.
+#
+# Probe results, 2026-11-13 (GitHub Actions runs 43439141971 and 43439826314):
+#   qna-economy-local / -international  ADDED to sources.yaml — robots allow, HTTP
+#                                       200, RSS 2.0 with fresh items.
+#   wam-home, spa-home, cma-sa-news     robots allow, page loads, no feed found.
+#   qcb-news, sama-news                 site unreachable from the runner.
+#   qfma-news                           news URL returns 404.
+#   sca-news                            redirects to a "page not found" page.
+#   cbuae-news, adx-home,               HTTP 403 to automated requests — skipped;
+#   saudi-exchange-news                 we do not work around a block.
+#   qse-home                            robots.txt unreachable, no feed found.
+#   dfm-home                            only a YouTube feed — not news text.
+# None of the skipped sources is scraped: without a feed or a published API, a
+# source needs either a licence or a terms-of-use check for HTML collection,
+# which is the owner's decision.
 candidates:
   # --- Official news agencies ---
   - id: qna-rss-hub

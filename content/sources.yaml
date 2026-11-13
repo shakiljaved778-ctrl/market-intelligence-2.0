@@ -98,6 +98,41 @@ sources:
     default_section: markets
     allowed_sections: [markets]
 
+  # Qatar News Agency — the state news agency, which publishes these RSS feeds for
+  # reuse (index: https://www.qna.org.qa/en/RSS-Feeds). Probed 2026-11-13 from
+  # GitHub Actions (scripts/probe-sources.ts): robots.txt allows the paths, HTTP
+  # 200, RSS 2.0 with fresh items (the root omits version="2.0"; the fetcher
+  # normalises that). Headline + dek (≤ 40 words) + link only, attributed and
+  # linked; no body stored (§10).
+  - id: qna-economy-local
+    name: Qatar News Agency — Economy
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Economy-Local
+    kind: rss
+    region: QA
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 20
+    default_section: economy
+    allowed_sections: [economy, markets, realestate]
+
+  # The international feed covers world markets, so it carries no region: each
+  # story is tagged from its own text (a Nikkei story is not tagged Qatar).
+  - id: qna-economy-international
+    name: Qatar News Agency — World economy
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Economy-International
+    kind: rss
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 15
+    default_section: markets
+    allowed_sections: [economy, markets]
+
   # The Conversation — expert-authored news & analysis across markets, world,
   # tech, science, health. CC-BY-ND explicitly permits commercial republication
   # with attribution; we take headline + dek + link + link-out only (no body
