@@ -1,4 +1,4 @@
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { candlesDaily, instruments, quotes } from "@/lib/db/schema";
 import { rangeToWindow, ymd } from "@/lib/providers/range";
@@ -7,7 +7,7 @@ import type { Candle, Quote, Range } from "@/lib/providers/types";
 /**
  * Read-only DB accessors for page rendering (§6 budget discipline): pages read
  * what the scheduled jobs persisted — they never call a vendor. Every function
- * returns null/[] when there is no database so callers fall back to fixtures.
+ * returns null/[] when there is no database.
  */
 
 export async function dbLatestQuote(symbol: string): Promise<Quote | null> {
@@ -41,14 +41,22 @@ export async function dbLatestQuote(symbol: string): Promise<Quote | null> {
     volume: row.volume,
     marketCapUsd: row.marketCapUsd,
     provider: row.provider,
-    dataDelayMinutes: inst?.dataDelayMinutes ?? 0,
+    // The delay recorded WITH the quote wins; older rows fall back to the
+    // instrument's declared delay.
+    dataDelayMinutes: row.delayMinutes ?? inst?.dataDelayMinutes ?? 0,
     asOf: row.ts.toISOString(),
   };
 }
 
-export async function dbCandles(symbol: string, range: Range): Promise<Candle[]> {
+export interface StoredSeries {
+  candles: Candle[];
+  /** Provider that supplied the bars, when recorded. */
+  provider: string | null;
+}
+
+export async function dbCandles(symbol: string, range: Range): Promise<StoredSeries> {
   const db = getDb();
-  if (!db) return [];
+  if (!db) return { candles: [], provider: null };
   const w = rangeToWindow(range);
   const rows = await db
     .select()
@@ -60,14 +68,44 @@ export async function dbCandles(symbol: string, range: Range): Promise<Candle[]>
       ),
     )
     .orderBy(candlesDaily.date);
-  return rows.map(
-    (r): Candle => ({
-      t: new Date(`${r.date}T00:00:00.000Z`).toISOString(),
-      o: r.o,
-      h: r.h,
-      l: r.l,
-      c: r.c,
-      v: r.v,
-    }),
-  );
+  const provider = rows.at(-1)?.provider ?? null;
+  return {
+    provider,
+    candles: rows.map(
+      (r): Candle => ({
+        t: new Date(`${r.date}T00:00:00.000Z`).toISOString(),
+        o: r.o,
+        h: r.h,
+        l: r.l,
+        c: r.c,
+        v: r.v,
+      }),
+    ),
+  };
+}
+
+/** Recent daily closes for many symbols in ONE query (screener trend column). */
+export async function dbRecentCloses(
+  symbols: string[],
+  days = 45,
+): Promise<Map<string, number[]>> {
+  const out = new Map<string, number[]>();
+  const db = getDb();
+  if (!db || symbols.length === 0) return out;
+  const since = ymd(new Date(Date.now() - days * 86_400_000));
+  const rows = await db
+    .select({ symbol: candlesDaily.symbol, date: candlesDaily.date, c: candlesDaily.c })
+    .from(candlesDaily)
+    .where(
+      and(
+        inArray(
+          candlesDaily.symbol,
+          symbols.map((s) => s.toUpperCase()),
+        ),
+        gte(candlesDaily.date, since),
+      ),
+    )
+    .orderBy(candlesDaily.symbol, candlesDaily.date);
+  for (const r of rows) out.set(r.symbol, [...(out.get(r.symbol) ?? []), r.c]);
+  return out;
 }

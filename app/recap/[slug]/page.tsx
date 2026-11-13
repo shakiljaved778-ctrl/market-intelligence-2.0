@@ -10,16 +10,16 @@ interface Params {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const r = readRecap(slug);
+  const r = await readRecap(slug);
   return { title: r ? `${r.title} — recap` : "Recap" };
 }
 
 export default async function RecapPage({ params }: Params) {
   const { slug } = await params;
   const currency = await getDisplayCurrency();
-  const recap = readRecap(slug, currency);
+  const recap = await readRecap(slug, currency);
   if (!recap) notFound();
-  const others = listRecaps(currency).filter((r) => r.slug !== slug);
+  const others = (await listRecaps(currency)).filter((r) => r.slug !== slug);
 
   return (
     <div className="py-8">
@@ -28,11 +28,17 @@ export default async function RecapPage({ params }: Params) {
           <span aria-hidden>◆</span>
           <span>Computed from market data · not AI-written</span>
         </div>
-        <h1 className="font-editorial text-text-hi mt-2 text-[27px]">{recap.title}</h1>
+        <h1 className="font-editorial text-text-hi mt-2 text-[27px]">
+          {recap.title}
+          {recap.date ? <span className="text-text-mid"> · {recap.date}</span> : null}
+        </h1>
         <p className="font-editorial text-text-hi mt-4 max-w-[68ch] text-[19px] leading-[1.6]">
           {recap.output.bodyMd}
         </p>
-        <p className="text-text-low mt-3 text-[11px]">
+        {recap.basis ? (
+          <p className="text-text-low mt-3 text-[11px]">{recap.basis}</p>
+        ) : null}
+        <p className="text-text-low mt-1 text-[11px]">
           Template {recap.output.templateVersion} · reproducible from stored inputs ·{" "}
           <Link href="/methodology" className="ours">
             methodology
@@ -40,15 +46,21 @@ export default async function RecapPage({ params }: Params) {
         </p>
       </div>
 
-      <h2 className="text-text-mid mt-10 mb-2 text-[13px] font-medium">More recaps</h2>
-      <ul className="border-line border-t">
+      {others.length > 0 ? (
+        <h2 className="text-text-mid mt-10 mb-2 text-[13px] font-medium">
+          More recaps
+        </h2>
+      ) : null}
+      <ul className={others.length > 0 ? "border-line border-t" : ""}>
         {others.map((r) => (
           <li key={r.slug} className="border-line border-b">
             <Link
               href={`/recap/${r.slug}`}
               className="hover:bg-surface flex items-center justify-between px-1 py-3 transition-colors"
             >
-              <span className="font-editorial text-text-hi text-[15px]">{r.title}</span>
+              <span className="font-editorial text-text-hi text-[15px]">
+                {r.title} · {r.date}
+              </span>
               <span className="eyebrow">{r.kind.replace(/_/g, " ")}</span>
             </Link>
           </li>

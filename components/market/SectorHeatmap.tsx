@@ -1,139 +1,89 @@
-"use client";
+import Link from "next/link";
+import { NoData } from "@/components/market/Provenance";
+import { summaryStamp } from "@/lib/market/provenance";
+import type { MarketRow } from "@/lib/market/read";
 
-import { Treemap, ResponsiveContainer } from "recharts";
-
-export type HeatTile = { name: string; size: number; changePct: number };
-export type HeatGroup = { name: string; children: HeatTile[] };
-
-/** Diverging fill: up (green) for gains, down (red) for losses, intensity by
- *  magnitude, over a neutral surface. Paired with a ▲/▼ glyph + sign in the
- *  tile text so colour is never the only cue (§12). */
+/**
+ * Sector heatmap — server-rendered (no client chart library, so the tiles are
+ * in the HTML and need no JavaScript). Built ONLY from instruments with a real
+ * stored price. Tiles are grouped by sector and coloured by the session change;
+ * every tile also prints its glyph, sign and figure, so colour is never the
+ * only cue (§12). Tiles are equal-sized: we do not have a sourced market cap
+ * for every name, so we do not pretend to size by one.
+ */
 function fillFor(pct: number): string {
-  const pos = pct >= 0;
-  const inten = Math.min(62, Math.abs(pct) * 16);
-  return `color-mix(in srgb, var(--${pos ? "up" : "down"}) ${inten}%, var(--surface-2))`;
+  const rounded = Number(pct.toFixed(2));
+  if (rounded === 0) return "var(--surface-2)";
+  const inten = Math.min(46, 10 + Math.abs(rounded) * 12);
+  return `color-mix(in srgb, var(--${rounded > 0 ? "up" : "down"}) ${inten}%, var(--surface-2))`;
 }
 
-type CellProps = {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  depth?: number;
-  name?: string;
-  changePct?: number;
-};
+function label(pct: number): string {
+  const rounded = Number(pct.toFixed(2));
+  const glyph = rounded > 0 ? "▲" : rounded < 0 ? "▼" : "–";
+  const sign = rounded > 0 ? "+" : rounded < 0 ? "−" : "";
+  return `${glyph} ${sign}${Math.abs(rounded).toFixed(2)}%`;
+}
 
-function Cell(props: CellProps) {
-  const {
-    x = 0,
-    y = 0,
-    width = 0,
-    height = 0,
-    depth = 0,
-    name = "",
-    changePct,
-  } = props;
-
-  if (depth === 1) {
-    // Sector container — hairline border + label.
+export function SectorHeatmap({ rows }: { rows: MarketRow[] }) {
+  const equities = rows.filter((r) => r.assetClass === "equity" && r.sector);
+  if (equities.length === 0) {
     return (
-      <g>
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          fill="transparent"
-          stroke="var(--hairline)"
-          strokeWidth={1}
-        />
-        {width > 60 && height > 16 ? (
-          <text
-            x={x + 6}
-            y={y + 13}
-            fontSize={10}
-            fill="var(--ink-3)"
-            style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}
-          >
-            {name}
-          </text>
-        ) : null}
-      </g>
+      <NoData>
+        No equity prices are available right now, so there is nothing to map. The
+        heatmap fills in as soon as the market feed delivers prices.
+      </NoData>
     );
   }
+  const bySector = new Map<string, MarketRow[]>();
+  for (const r of equities) {
+    const key = r.sector as string;
+    bySector.set(key, [...(bySector.get(key) ?? []), r]);
+  }
+  const groups = [...bySector.entries()]
+    .map(([sector, members]) => ({
+      sector,
+      members: members.sort((a, b) => b.changePct - a.changePct),
+      avg: members.reduce((n, m) => n + m.changePct, 0) / members.length,
+    }))
+    .sort((a, b) => b.members.length - a.members.length);
 
-  const pct = typeof changePct === "number" ? changePct : 0;
-  const pos = pct >= 0;
-  return (
-    <g>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={fillFor(pct)}
-        stroke="var(--bg)"
-        strokeWidth={1}
-      />
-      {width > 46 && height > 30 ? (
-        <>
-          <text
-            x={x + 5}
-            y={y + 17}
-            fontSize={11}
-            fontFamily="var(--font-mono)"
-            fill="var(--ink)"
-          >
-            {name}
-          </text>
-          <text
-            x={x + 5}
-            y={y + 31}
-            fontSize={10}
-            fontFamily="var(--font-mono)"
-            fill={pos ? "var(--up)" : "var(--down)"}
-          >
-            {pos ? "▲" : "▼"}
-            {Math.abs(pct).toFixed(2)}%
-          </text>
-        </>
-      ) : null}
-    </g>
-  );
-}
+  const stamp = summaryStamp(equities.map((r) => r.priced));
 
-export function SectorHeatmap({ data }: { data: HeatGroup[] }) {
   return (
     <div>
-      <div className="border-hairline bg-surface h-[340px] w-full overflow-hidden rounded-[8px] border p-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <Treemap
-            data={data}
-            dataKey="size"
-            stroke="var(--bg)"
-            isAnimationActive={false}
-            content={<Cell />}
-          />
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {groups.map((g) => (
+          <section
+            key={g.sector}
+            aria-label={`${g.sector} sector`}
+            className="border-hairline bg-surface rounded-[8px] border p-2"
+          >
+            <div className="flex items-baseline justify-between px-1 pb-2">
+              <h3 className="t-micro text-ink-2">{g.sector}</h3>
+              <span className="tnum text-ink-3 text-[11px]">avg {label(g.avg)}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {g.members.map((m) => (
+                <Link
+                  key={m.symbol}
+                  href={`/quote/${m.symbol}`}
+                  title={`${m.name} — ${label(m.changePct)}`}
+                  className="text-ink flex min-h-[44px] flex-col justify-center rounded-[4px] px-2 py-1.5"
+                  style={{ background: fillFor(m.changePct) }}
+                >
+                  <span className="tnum text-[12px] font-medium">{m.symbol}</span>
+                  <span className="tnum text-[11px]">{label(m.changePct)}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
-      <div className="text-ink-3 mt-2 flex items-center gap-3 text-[11px]">
-        <span>Sized by market cap · coloured by session change</span>
-        <span className="ml-auto flex items-center gap-1">
-          <span
-            aria-hidden
-            className="inline-block h-2.5 w-4 rounded-[2px]"
-            style={{ background: fillFor(-3) }}
-          />
-          ▼ loss
-          <span
-            aria-hidden
-            className="ml-2 inline-block h-2.5 w-4 rounded-[2px]"
-            style={{ background: fillFor(3) }}
-          />
-          ▲ gain
-        </span>
-      </div>
+      <p className="text-ink-3 mt-2 text-[11px]">
+        Grouped by sector, coloured by change versus the prior close. Equal-sized tiles.
+        {stamp ? ` ${stamp}.` : ""}
+      </p>
     </div>
   );
 }

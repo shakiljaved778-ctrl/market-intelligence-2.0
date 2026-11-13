@@ -55,6 +55,8 @@ export default defineConfig({
   ],
   webServer: {
     command: `pnpm start -p ${PORT}`,
+    // Smoke and visual tests run against the committed sample data.
+    env: { DEMO_MODE: "1" },
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

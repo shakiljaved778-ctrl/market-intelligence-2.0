@@ -2,55 +2,53 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
-import type { MarketQuoteRow } from "@/fixtures/markets-extra";
+import { ChangePill } from "@/components/market/ChangePill";
+import { stampText } from "@/lib/market/provenance";
+import type { LevelRow } from "@/lib/market/levels";
 
 function fmt(p: number): string {
-  const d = Math.abs(p) < 5 ? 4 : 2;
+  const d = Math.abs(p) < 10 ? 4 : 2;
   return p.toLocaleString("en-US", {
     minimumFractionDigits: d,
     maximumFractionDigits: d,
   });
 }
 
-function Row({ r, link }: { r: MarketQuoteRow; link?: boolean }) {
-  const sd = r.changePct > 0 ? "up" : r.changePct < 0 ? "down" : "flat";
-  const color = sd === "up" ? "text-up" : sd === "down" ? "text-down" : "text-ink-3";
-  const glyph = sd === "up" ? "▲" : sd === "down" ? "▼" : "–";
-  const sign = r.changePct > 0 ? "+" : r.changePct < 0 ? "−" : "";
-
+function Row({ r }: { r: LevelRow }) {
+  const stamp = stampText(
+    { source: r.source, asOf: r.asOf, cadence: r.cadence, demo: r.demo },
+    // A peg is reviewed rarely — show the year so "1 Jan" is not ambiguous.
+    r.cadence === "pegged",
+  );
   const name = (
     <span className="min-w-0">
-      <span className="tnum text-ink text-[13px] font-medium">{r.symbol}</span>
-      <span className="text-ink-3 ml-2 text-[12px]">{r.name}</span>
-      {r.note ? <span className="t-micro text-ink-4 ml-2">{r.note}</span> : null}
+      <span className="flex flex-wrap items-baseline gap-x-2">
+        <span className="tnum text-ink text-[13px] font-medium">{r.symbol}</span>
+        <span className="text-ink-3 text-[12px]">{r.name}</span>
+        {r.note ? <span className="t-micro text-ink-4">{r.note}</span> : null}
+      </span>
+      {stamp ? (
+        <span className="text-ink-3 mt-0.5 block text-[11px]">{stamp}</span>
+      ) : null}
     </span>
   );
-
   return (
     <li className="border-hairline flex items-center justify-between gap-3 border-b py-2.5 last:border-0">
-      {link ? (
-        <Link href={`/quote/${r.symbol}`} className="hover:text-brand min-w-0">
+      {r.href ? (
+        <Link href={r.href} className="hover:text-brand min-w-0">
           {name}
         </Link>
       ) : (
         name
       )}
-      <span className="flex items-center gap-3">
-        <Sparkline
-          values={sparkSeries(r.symbol, r.changePct)}
-          dir={sd}
-          width={48}
-          height={16}
-        />
-        <span className="tnum text-ink text-[13px]">
-          {fmt(r.price)}
-          {r.unit ? <span className="text-ink-4">{r.unit}</span> : null}
+      <span className="flex shrink-0 items-center gap-3">
+        <span className="tnum text-ink text-right text-[13px]">
+          {fmt(r.value)}
+          {r.unit ? (
+            <span className="text-ink-4 ml-1 text-[11px]">{r.unit}</span>
+          ) : null}
         </span>
-        <span className={`tnum w-[68px] text-right text-[12px] ${color}`}>
-          <span aria-hidden>{glyph}</span> {sign}
-          {Math.abs(r.changePct).toFixed(2)}%
-        </span>
+        <ChangePill pct={r.changePct} className="w-[68px] justify-end text-[12px]" />
       </span>
     </li>
   );
@@ -58,27 +56,36 @@ function Row({ r, link }: { r: MarketQuoteRow; link?: boolean }) {
 
 type TabId = "fx" | "commodities" | "crypto";
 
+const EMPTY: Record<TabId, string> = {
+  fx: "No FX reference rates are available right now.",
+  commodities:
+    "No commodity prices are available right now. Energy benchmarks appear here once the daily data feed delivers them.",
+  crypto: "No crypto prices are available right now.",
+};
+
+/**
+ * FX · Commodities · Crypto. All three panels are rendered in the HTML (the
+ * inactive ones are `hidden`), so the content exists without JavaScript and for
+ * crawlers; the buttons only switch which panel is visible. Each row prints its
+ * source and time. A class with no real data shows a plain empty state.
+ */
 export function AssetTabs({
   fx,
   commodities,
   crypto,
 }: {
-  fx: MarketQuoteRow[];
-  commodities: MarketQuoteRow[];
-  crypto: MarketQuoteRow[];
+  fx: LevelRow[];
+  commodities: LevelRow[];
+  crypto: LevelRow[];
 }) {
-  const tabs = [
-    { id: "fx" as const, label: "FX", rows: fx, link: false },
-    {
-      id: "commodities" as const,
-      label: "Commodities",
-      rows: commodities,
-      link: false,
-    },
-    { id: "crypto" as const, label: "Crypto", rows: crypto, link: true },
+  const tabs: { id: TabId; label: string; rows: LevelRow[] }[] = [
+    { id: "fx", label: "FX", rows: fx },
+    { id: "commodities", label: "Commodities", rows: commodities },
+    { id: "crypto", label: "Crypto", rows: crypto },
   ];
-  const [active, setActive] = useState<TabId>("fx");
-  const cur = tabs.find((t) => t.id === active)!;
+  // Open on the first tab that has data, so the block is never blank on arrival.
+  const first = tabs.find((t) => t.rows.length > 0)?.id ?? "fx";
+  const [active, setActive] = useState<TabId>(first);
 
   return (
     <div className="border-hairline bg-surface rounded-[8px] border">
@@ -92,9 +99,11 @@ export function AssetTabs({
             key={t.id}
             type="button"
             role="tab"
+            id={`asset-tab-${t.id}`}
             aria-selected={active === t.id}
+            aria-controls={`asset-panel-${t.id}`}
             onClick={() => setActive(t.id)}
-            className={`rounded-[5px] px-3 py-1.5 text-[13px] transition-colors ${
+            className={`min-h-[44px] rounded-[5px] px-3 py-1.5 text-[13px] transition-colors ${
               active === t.id ? "bg-brand-soft text-brand" : "text-ink-3 hover:text-ink"
             }`}
           >
@@ -102,14 +111,27 @@ export function AssetTabs({
           </button>
         ))}
       </div>
-      <ul className="px-4">
-        {cur.rows.map((r) => (
-          <Row key={r.symbol} r={r} link={cur.link} />
-        ))}
-      </ul>
-      <p className="text-ink-3 t-micro border-hairline border-t px-4 py-2">
-        Illustrative sample · trends indicative · no live feed configured
-      </p>
+      {tabs.map((t) => (
+        <div
+          key={t.id}
+          role="tabpanel"
+          id={`asset-panel-${t.id}`}
+          aria-labelledby={`asset-tab-${t.id}`}
+          hidden={active !== t.id}
+        >
+          {t.rows.length > 0 ? (
+            <ul className="px-4">
+              {t.rows.map((r) => (
+                <Row key={r.symbol} r={r} />
+              ))}
+            </ul>
+          ) : (
+            <p className="text-ink-3 px-4 py-8 text-center text-[13px]">
+              {EMPTY[t.id]}
+            </p>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

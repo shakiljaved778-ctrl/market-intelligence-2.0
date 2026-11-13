@@ -7,8 +7,11 @@ configure.** Level 2 (optional, later) turns on live data. Do them in order.
 
 ## Level 1 — See it live (no keys, no database)
 
-The whole site works in "fixture mode" — real pages, sample data. Perfect for a
-first deploy and for sharing a link.
+With nothing configured the site deploys and every page renders, but it shows **no
+market figures** — each data surface says plainly that no data is available. It
+never shows sample numbers in production. (To see the site populated with sample
+data on your own machine, run `pnpm dev:demo`; that sets `DEMO_MODE=1`, which must
+never be set on the live site.)
 
 1. Go to **vercel.com** → sign in with GitHub.
 2. Click **Add New… → Project**, pick the **`market-intelligence-2.0`** repo,
@@ -26,8 +29,22 @@ renders. Nothing to pay for.
 
 ## Level 2 — Turn on live data (optional, do it later)
 
-Only when you want real prices/news instead of the sample data. Add things **one at
-a time** — anything you skip just keeps using fixtures, nothing breaks.
+This is what puts real prices and news on the site. Add things **one at a time** —
+anything you skip simply shows an empty state for that surface; nothing breaks.
+
+What each key lights up:
+
+| Key | Surfaces |
+| --- | --- |
+| `POSTGRES_URL` | Required for everything stored: news, prices, FX, economy, recaps. |
+| `FINNHUB_API_KEY` | US equity prices → ticker, movers, heatmap, screener, stock pages, session recap. |
+| (none — CoinGecko is keyless) | Crypto prices. |
+| (none — ECB rates via Frankfurter are keyless) | FX reference rates. |
+| `FRED_API_KEY` | Economy tiles, yield curve and the energy benchmarks (Brent, WTI, Henry Hub). |
+| (none — World Bank is keyless) | Gulf GDP tiles. |
+
+Database migrations are applied automatically when they reach `main`
+(`.github/workflows/migrate.yml`, using the `POSTGRES_URL` GitHub secret).
 
 ### 2a. A database (for saved news + history)
 

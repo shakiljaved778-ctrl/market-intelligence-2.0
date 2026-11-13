@@ -9,7 +9,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  *     be empty) — but un-shifted, so they age against the real clock and fall to
  *     their natural low rank instead of masquerading as today's news.
  *   - The authored DEMO stories (non-Eureka fixtures) are dropped in live mode.
- * With no DB the full, date-shifted fixture wire renders on its own (§2).
+ *   - Stored tickers are re-derived at read time with the current matcher.
+ * Without a database the wire is the authored Eureka content only — invented
+ * demo news appears ONLY under DEMO_MODE=1.
  */
 describe("wire read — live mode: real news leads, demo fixtures dropped, Eureka kept", () => {
   afterEach(() => {
@@ -76,5 +78,86 @@ describe("wire read — live mode: real news leads, demo fixtures dropped, Eurek
     // The only markets-section story is the live one (demo markets fixtures gone).
     const markets = await readWire({ section: "markets" });
     expect(markets.some((c) => c.slug === "live-markets-story")).toBe(true);
+  });
+});
+
+describe("wire read — production with no stored news", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("never falls back to invented demo news", async () => {
+    vi.stubEnv("DEMO_MODE", "");
+    vi.resetModules();
+    const { readWire } = await import("./read");
+    const all = await readWire();
+    // Only Mizaan's own authored, cited Eureka explainers remain.
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.every((c) => c.section === "eureka")).toBe(true);
+    expect(all.some((c) => /opec|federal reserve|fomc/i.test(c.title))).toBe(false);
+  });
+
+  it("serves the full sample wire only in demo mode", async () => {
+    vi.stubEnv("DEMO_MODE", "1");
+    vi.resetModules();
+    const { readWire } = await import("./read");
+    const all = await readWire();
+    expect(all.some((c) => c.section !== "eureka")).toBe(true);
+  });
+});
+
+describe("wire read — stored tickers are re-derived", () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.doUnmock("@/lib/db/client");
+    vi.doUnmock("@/lib/db/queries/wire");
+  });
+
+  it("drops false tickers written by the old matcher", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/db/client", () => ({
+      isDbConfigured: () => true,
+      getDb: () => null,
+    }));
+    vi.doMock("@/lib/db/queries/wire", () => ({
+      dbReadWire: async () => [
+        {
+          slug: "nasa-escapade",
+          title: "NASA's ESCAPADE Completes Powered Earth Flybys, Now En Route to Mars",
+          // What the old case-insensitive symbol match stored.
+          tickers: ["NOW", "DEC"],
+          topics: [],
+          entities: [],
+          sourceIds: ["nasa-news"],
+          sourceCount: 1,
+          eventTime: new Date().toISOString(),
+          importanceScore: 40,
+          articleIds: [1],
+          primaryId: 1,
+          primaryDek:
+            "NASA's two ESCAPADE spacecraft have each completed a powered Earth flyby and are now on their way to Mars.",
+          brief: null,
+          imageUrl: null,
+          imageCredit: null,
+          members: [
+            {
+              headline:
+                "NASA's ESCAPADE Completes Powered Earth Flybys, Now En Route to Mars",
+              sourceName: "NASA",
+              url: "https://www.nasa.gov/example",
+              publishedAt: new Date().toISOString(),
+              dek: "NASA's two ESCAPADE spacecraft have each completed a powered Earth flyby and are now on their way to Mars.",
+            },
+          ],
+        },
+      ],
+    }));
+    const { readWire } = await import("./read");
+    const story = (await readWire()).find((c) => c.slug === "nasa-escapade");
+    expect(story).toBeDefined();
+    expect(story?.tickers).toEqual([]);
+    // With no false ticker forcing it into Markets, it files under Science.
+    expect(story?.section).toBe("science");
   });
 });

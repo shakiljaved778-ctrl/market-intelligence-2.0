@@ -124,6 +124,28 @@ export class ProviderRegistry {
     );
   }
 
+  /**
+   * Candles plus the id of the provider that answered, so a stored series can
+   * always state its source. Null when no provider has the series.
+   */
+  async candlesWithSource(
+    symbol: string,
+    range: Range,
+  ): Promise<{ candles: Candle[]; provider: string } | null> {
+    for (const provider of this.candidates("candles")) {
+      try {
+        const candles = await provider.candles(symbol, range);
+        this.recordSuccess(provider.id);
+        if (Array.isArray(candles) && candles.length > 0) {
+          return { candles, provider: provider.id };
+        }
+      } catch {
+        this.recordFailure(provider.id);
+      }
+    }
+    return null;
+  }
+
   async candles(symbol: string, range: Range): Promise<Candle[]> {
     const result = await this.resolve<Candle[]>(
       "candles",

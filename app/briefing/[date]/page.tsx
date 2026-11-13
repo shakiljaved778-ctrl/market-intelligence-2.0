@@ -5,7 +5,7 @@ import { Prose } from "@/components/layout/Prose";
 import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 import { buildBriefing } from "@/lib/briefing";
 import { canonical, graph, newsArticleLd } from "@/lib/seo";
-import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
+import { ChangePill } from "@/components/market/ChangePill";
 import { formatAstDate } from "@/lib/format/datetime";
 
 interface Params {
@@ -20,8 +20,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const b = await buildBriefing(date);
   return {
     title: b.title,
-    description: `Mizaan Morning for ${date}: index closes and the ${b.topStories.length} stories that mattered.`,
+    description: `Mizaan Morning for ${date}: the ${b.topStories.length} stories that mattered.`,
     alternates: { canonical: canonical(`/briefing/${date}`) },
+    // A date with no stories in its window has no briefing to index.
+    robots: b.topStories.length === 0 ? { index: false, follow: true } : undefined,
   };
 }
 
@@ -33,7 +35,7 @@ export default async function BriefingPage({ params }: Params) {
   const jsonLd = graph(
     newsArticleLd({
       headline: b.title,
-      description: `Index closes and the ${b.topStories.length} stories that mattered.`,
+      description: `The ${b.topStories.length} stories that mattered.`,
       slug: `briefing/${date}`, // used only for the article URL in the LD
       datePublished: iso,
       section: "Markets",
@@ -47,42 +49,42 @@ export default async function BriefingPage({ params }: Params) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <h2>Index closes</h2>
-      {b.indices.length === 0 ? (
-        <p className="text-text-low">No validated index closes for this session.</p>
-      ) : (
-        <ul>
-          {b.indices.map((i) => {
-            const dir = directionOf(i.changePct);
-            return (
-              <li key={i.name}>
-                {i.name}{" "}
-                <span
-                  className={`tnum ${dir === "gain" ? "dir-gain" : dir === "loss" ? "dir-loss" : ""}`}
-                >
-                  <span aria-hidden>{directionGlyph(i.changePct)}</span>{" "}
-                  {formatPercent(i.changePct)}
-                </span>
+      {b.markets.length > 0 ? (
+        <>
+          <h2>Markets</h2>
+          <ul>
+            {b.markets.map((m) => (
+              <li key={m.name}>
+                {m.name} <span className="tnum">{m.value}</span>{" "}
+                <ChangePill pct={m.changePct} />
+                <br />
+                <span className="text-text-low text-[12px]">{m.stamp}</span>
               </li>
-            );
-          })}
-        </ul>
-      )}
-
+            ))}
+          </ul>
+        </>
+      ) : null}
       <h2>Stories that mattered</h2>
-      <ol>
-        {b.topStories.map((s) => (
-          <li key={s.slug}>
-            <Link href={`/news/${s.slug}`}>{s.title}</Link>{" "}
-            <span className="text-text-low">· {s.sourceCount} sources</span>
-          </li>
-        ))}
-      </ol>
-
+      {b.topStories.length === 0 ? (
+        <p className="text-text-low">
+          No briefing was published for this date: no ranked stories fall in its window.
+        </p>
+      ) : (
+        <ol>
+          {b.topStories.map((s) => (
+            <li key={s.slug}>
+              <Link href={`/news/${s.slug}`}>{s.title}</Link>{" "}
+              <span className="text-text-low">
+                · {s.sourceCount} {s.sourceCount === 1 ? "source" : "sources"}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
       <p className="text-text-low text-[12px]">
-        Index levels are currency-neutral and never converted. Rankings computed;
-        summaries AI-written from cited sources. Informational only, not investment
-        advice.
+        Stories are those published in the 24 hours before 07:00 Doha time on this date,
+        in ranked order. Rankings are computed; summaries are AI-written from cited
+        sources. Informational only, not investment advice.
       </p>
 
       <div className="not-prose mt-6 max-w-[46ch]">

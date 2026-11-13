@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE as SITE_CONFIG } from "@/content/site.config";
 import { SITE_URL } from "./site";
 import { EDITOR, authorSameAs, authorUrl, type Author } from "./author";
 
@@ -8,13 +9,14 @@ import { EDITOR, authorSameAs, authorUrl, type Author } from "./author";
  * consistent, valid structured data. Pure functions — unit-tested in seo.test.ts.
  */
 
-/** Social profiles for Organization.sameAs. Fill with the real URLs when live. */
+/** Social profiles for Organization.sameAs — from content/site.config.ts. */
 export const SOCIAL_LINKS: string[] = [
-  // "https://www.linkedin.com/company/mizaan-intelligence",
-  // "https://x.com/mizaan",
-];
+  SITE_CONFIG.social.linkedin,
+  SITE_CONFIG.social.x,
+  SITE_CONFIG.social.whatsappChannel,
+].filter((u): u is string => Boolean(u));
 
-const ORG_NAME = "Mizaan Intelligence";
+const ORG_NAME = SITE_CONFIG.name;
 
 /** Absolute canonical URL for a path: single host, no trailing slash, no query. */
 export function canonical(path: string): string {
@@ -47,8 +49,7 @@ export function organizationLd(): Record<string, unknown> {
     name: ORG_NAME,
     url: SITE_URL,
     logo: { "@type": "ImageObject", url: `${SITE_URL}/icon.svg` },
-    description:
-      "Signal-ranked market intelligence across global and GCC markets — computed rankings and cited, AI-written summaries.",
+    description: SITE_CONFIG.socialDescription,
     email: EDITOR.email,
     publishingPrinciples: `${SITE_URL}/editorial-policy`,
     correctionsPolicy: `${SITE_URL}/corrections`,

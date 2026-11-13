@@ -9,6 +9,8 @@ import { getDisplayCurrency } from "@/lib/currency/server";
 import { getThemePref, getColorblind } from "@/lib/theme/server";
 import { SITE_URL } from "@/lib/site";
 import { siteLd } from "@/lib/seo";
+import { SITE } from "@/content/site.config";
+import { isDemoMode } from "@/lib/demo/mode";
 
 const siteUrl = SITE_URL;
 
@@ -24,25 +26,24 @@ function safeUrl(value: string): URL | undefined {
 export const metadata: Metadata = {
   metadataBase: safeUrl(siteUrl),
   title: {
-    default: "Mizaan Intelligence — GCC & Global Market News, Live Data and Analysis",
-    template: "%s | Mizaan",
+    default: SITE.title,
+    template: `%s | ${SITE.shortName}`,
   },
-  // Rankings/clustering are computed deterministically; story summaries are
-  // AI-written from cited sources.
-  description:
-    "Mizaan — a trusted source for market news and live data. Signal-ranked intelligence: cross-source clustering, news-to-price attribution and live quotes across global and GCC markets, with AI-written story summaries from cited sources.",
-  applicationName: "Mizaan Intelligence",
+  // Copy lives in content/site.config.ts and must only claim what the site
+  // delivers: ranked news from cited sources, and source-stamped market data.
+  description: SITE.description,
+  applicationName: SITE.name,
   openGraph: {
     type: "website",
-    siteName: "Mizaan Intelligence",
-    title: "Mizaan Intelligence",
-    description:
-      "Signal-ranked market intelligence across global and GCC markets. Computed rankings, AI-written summaries.",
+    siteName: SITE.name,
+    title: SITE.name,
+    description: SITE.socialDescription,
     images: [{ url: "/api/og", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mizaan Intelligence",
+    title: SITE.name,
+    description: SITE.socialDescription,
     images: ["/api/og"],
   },
   alternates: { types: { "application/rss+xml": `${siteUrl}/feed.xml` } },
@@ -89,12 +90,21 @@ export default async function RootLayout({
         >
           Skip to content
         </a>
-        <Header currency={currency} themePref={themePref} colorblind={colorblind} />
+        {isDemoMode() ? (
+          <p
+            role="note"
+            className="bg-surface-2 text-ink-2 border-hairline border-b px-4 py-1.5 text-center text-[12px]"
+          >
+            Demo mode — figures and stories on this page are sample data, not market
+            data.
+          </p>
+        ) : null}
+        <Header currency={currency} themePref={themePref} />
         <TickerTape />
         <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
           {children}
         </main>
-        <Footer />
+        <Footer colorblind={colorblind} />
         <MobileTabBar />
       </body>
     </html>

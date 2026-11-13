@@ -154,17 +154,9 @@ function Motif({ glyph, hue, n }: { glyph: string; hue: string; n: number }) {
 }
 
 /**
- * A keyless, deterministic real photo for a story that has no resolved image.
- * Browser-loaded from a CDN (a static asset, not a data API), so it needs no key
- * and never calls a vendor on the server (§17). Topical Pexels photos, when the
- * backfill script has run, take precedence via `imageUrl`. If this ever fails to
- * load, the generative art layer beneath shows through — nothing renders empty.
+ * The on-brand generative art — the cover itself when a story has no image, and
+ * the base layer under a photo when it has one.
  */
-function fallbackPhoto(seed: string): string {
-  return `https://picsum.photos/seed/mizan-${encodeURIComponent(seed)}/960/600`;
-}
-
-/** The on-brand generative art — used as the base layer under every photo. */
 function GenerativeArt({
   meta,
   n,
@@ -256,7 +248,10 @@ export function CoverArt({
   const meta = sectionMeta(section);
   const n = seedNum(seed);
   const uid = `${section}-${n}`;
-  const photo = imageUrl ?? fallbackPhoto(seed);
+  // A photo is shown only when the story has a resolved, credited image. With
+  // none, the generated section cover IS the cover — no random stock photo, and
+  // no third-party request from the reader's browser.
+  const photo = imageUrl ?? null;
 
   return (
     <div className={`relative overflow-hidden ${className ?? ""}`}>
@@ -268,13 +263,15 @@ export function CoverArt({
         className="absolute inset-0 h-full w-full"
       />
       {/* Real photo on top; object-cover fills the frame. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={photo}
-        alt=""
-        loading="lazy"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
       {/* Legibility scrim + a subtle top vignette to seat text. */}
       <div
         className="pointer-events-none absolute inset-0"

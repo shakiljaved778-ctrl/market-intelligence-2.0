@@ -5,7 +5,7 @@ import { marketCountdown, type SessionState } from "@/lib/format/session";
 
 function dotColor(state: SessionState): string {
   if (state === "open") return "var(--up)";
-  if (state === "pre" || state === "post" || state === "eod") return "var(--signal)";
+  if (state === "pre" || state === "post") return "var(--signal)";
   return "var(--ink-4)";
 }
 
@@ -23,8 +23,8 @@ function verb(state: SessionState): string {
 }
 
 /**
- * Market-status pill — live Open/Closed/Pre-market for the US (NASDAQ) and the
- * QSE, with a countdown to the next boundary. Recomputes each minute client-side
+ * Market-status pill — Open/Closed for the US (NASDAQ) and the QSE from their
+ * regular hours, with a countdown to the next boundary. Recomputes each minute client-side
  * (the server can't know "now" without risking a hydration mismatch).
  */
 export function MarketStatus() {
@@ -50,6 +50,7 @@ export function MarketStatus() {
     <div
       className="border-hairline bg-surface hidden items-center gap-3 rounded-[6px] border px-2.5 py-1.5 lg:flex"
       aria-label="Market status"
+      data-volatile
     >
       {markets.map((m, i) => {
         const e = eta(m.etaMin);
@@ -72,11 +73,9 @@ export function MarketStatus() {
                 ? "Open"
                 : m.state === "pre"
                   ? "Pre"
-                  : m.state === "eod"
-                    ? "EOD"
-                    : m.state === "post"
-                      ? "After"
-                      : "Closed"}
+                  : m.state === "post"
+                    ? "Closed"
+                    : "Closed"}
               {e && v ? (
                 <span className="tnum">
                   {" "}

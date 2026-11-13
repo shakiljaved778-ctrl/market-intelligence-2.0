@@ -33,8 +33,11 @@ the AI content, and never imply the *rankings* are AI-written.
 
 ## Hard constraints (non-negotiable — §2)
 
-- **No paid APIs, no paid SaaS, no metered AI in V1.** Free tiers only. Signup keys
-  (Finnhub, FRED, Twelve Data) are fine; anything that can generate a bill is not.
+- **Paid services need the owner's named approval** (owner decision, 2026-11-12 —
+  this replaced "no paid APIs, no paid SaaS"). A paid data feed, scheduler, host or
+  payment gateway may be used only when the owner has approved that specific
+  service with its monthly cost stated first. Never sign up, upgrade or add a
+  billable key on your own. Free signup keys (Finnhub, FRED) are fine.
 - **LLM use is limited to AI summaries via Groq** (owner-approved, free tier), and
   only in scheduled jobs / the backfill script — never on page render, always
   cached (§2), and always original content (never source text, §10). No other
@@ -46,8 +49,21 @@ the AI content, and never imply the *rankings* are AI-written.
 - **Every external call is cached in KV with an explicit TTL.** An uncached call to a
   rate-limited vendor is a bug. Pages never trigger vendor calls — quotes are fetched
   in scheduled batches, written to KV/Postgres, served from cache.
-- The site renders useful content with **zero keys configured** (fixture mode).
-  Missing keys degrade gracefully.
+- **Never display a fabricated number** (owner decision, 2026-11-12 — this replaced
+  "the site renders useful content with zero keys / fixture mode"). In production a
+  missing value renders an honest empty state. `fixtures/` is sample data for
+  `DEMO_MODE=1` only (local dev, unit tests, visual tests); it is reachable solely
+  through `lib/demo/` (plus `lib/content/authored.ts` for the authored Eureka
+  explainers), and `pnpm check:fixtures` fails CI on any other import. Never set
+  `DEMO_MODE` in production.
+- **Every price carries its source and its time** (and its delay, if any). Read
+  prices through `lib/market/service.ts` (`getQuote` / `getSeries`), which returns
+  `{ status, value, source, asOf, delayMinutes }`; render the stamp with
+  `PriceStamp`. Draw a percentage move with `ChangePill` so glyph, sign and colour
+  come from one number.
+- Business details (operator, location, contact, editor) live in
+  `content/site.config.ts`. A `null` field is hidden, never shown as a placeholder.
+  Ask the owner for values; do not invent them.
 - Lighthouse: Performance ≥ 90 mobile, Accessibility ≥ 95, CLS < 0.05, LCP < 2.0s.
 - 90-day retention on `articles` and intraday candles from Phase 1, in the EOD job.
 
@@ -106,6 +122,8 @@ cookie so Server Components render the right figures without a client flash.
 
 ## What not to do (§17)
 
+- Never show a sample, illustrative or generated figure in production — an empty
+  state is the only acceptable substitute for missing data.
 - No hosted-model key other than Groq for summaries; keep ranking/clustering model-free.
 - Never imply the rankings/recaps are AI-written; always label the AI summaries and
   carry the not-advice + verify-against-sources disclaimer.
@@ -168,9 +186,11 @@ Every cluster gets a **section** — the top-level editorial vertical — assign
   Everything else — **technology** (Tech & AI), **health**, **sports**,
   **entertainment** (Culture), **science**, **world** (geopolitics) and **eureka**
   (Nobel ideas) — is non-financial.
-- **Product rule:** Mizan is markets-first, but at least **~30%** of the live wire
-  is deliberately non-financial to keep a broad audience engaged. Guarded by
-  `lib/curation/section.test.ts` (currently 33%). Non-financial stays a minority.
+- **Product rule (owner decision, 2026-11-12):** markets and economy LEAD, with
+  GCC first. Non-finance sections keep their own pages but are capped to one row
+  each on the homepage. This replaces the old "at least ~30% non-financial" rule;
+  the old guard in `lib/curation/section.test.ts` is replaced in Phase 2 of
+  `docs/IMPLEMENTATION_PLAN.md`.
 - Non-financial feeds live in `content/sources.yaml` under the same rules: primary
   gov/agency feeds (NASA, WHO, CDC, BLS, World Bank) are public-domain/open;
   commercial outlets are added headline+dek+link only and left `active: false`
@@ -188,14 +208,27 @@ never touches chrome or data, so §12 holds.
 Work **phase by phase**. At each gate: stop, report what was built, show acceptance
 evidence, **wait for approval**. Conventional commits, one feature branch per phase.
 
-## Non-negotiable rules for every task
+## Rules for every task
 
-- Do not change the visual design: no changes to colours, colour tokens, CSS variables, theme files, fonts, font sizes, spacing, layout, grid, component styling, animations, icons or the light/dark/system theme behaviour.
-- Do not change navigation structure, page order, section order or the homepage layout.
-- Do not remove or rename any existing section (Markets, Wire, Sections, Economy, Crypto, Real Estate, World, Eureka, Tech & AI, Health, Science, Methodology).
-- Brand positioning stays: "GCC and global market intelligence". Do not rewrite brand copy, taglines or the logo.
-- If a task needs a new visible element, reuse existing components, class names and design tokens only. Never introduce a new colour, font or spacing value.
+Updated 2026-11-12 with the owner's approval (see `docs/IMPLEMENTATION_PLAN.md` §8).
+The earlier blanket bans on visual, navigation and copy changes are replaced by the
+scoped rules below.
+
+- **Visual design.** Until the owner picks a palette direction in Phase 3, build new
+  states and components from the EXISTING tokens, class names and components only —
+  no new colour, font or spacing value. Phase 3 (and only Phase 3) may change the
+  design system, after the owner approves a direction from screenshots.
+- **Navigation and layout.** Keep every existing URL working (add a redirect if a
+  route must move). The homepage layout and section order may change as the plan
+  requires. Do not remove or rename a section without the owner's say-so.
+- **Brand.** Positioning stays "GCC and global market intelligence". Copy must only
+  claim what the site delivers today; a claim that is not true must be rewritten,
+  and the rewrite shown to the owner in the phase report. Do not change the logo.
 - Prefer server-side, data-layer, metadata and config changes over UI changes.
-- Before editing, show a plan listing every file you will touch. After editing, list what changed and why.
-- Never expose API keys to the client. Never commit secrets.
-- Run lint, type-check and a production build before declaring a task done.
+- Before editing, show a plan listing the files you will touch. After editing, list
+  what changed and why.
+- Never expose API keys to the client. Never commit secrets. List every new
+  environment variable in `.env.example` with a comment.
+- Informational only: no personalised buy, sell or hold language anywhere.
+- Run lint, type-check, tests, `pnpm check:fixtures` and a production build before
+  declaring a task done. Stop at the end of each phase and wait for the owner.

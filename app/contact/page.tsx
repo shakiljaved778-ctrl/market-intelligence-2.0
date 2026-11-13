@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Prose } from "@/components/layout/Prose";
 import { pageMeta } from "@/lib/seo";
 import { EDITOR } from "@/lib/author";
+import { OperatorDetails } from "@/components/layout/OperatorDetails";
 import { sendContactEmail } from "@/lib/contact";
 
 export const metadata = pageMeta(
@@ -40,6 +41,7 @@ export default async function ContactPage({ searchParams }: SearchParams) {
         For corrections, questions, partnerships or press, email{" "}
         <a href={`mailto:${EDITOR.email}`}>{EDITOR.email}</a> or use the form below.
       </p>
+      <OperatorDetails />
 
       {sent ? (
         <p className="text-signal-strong">

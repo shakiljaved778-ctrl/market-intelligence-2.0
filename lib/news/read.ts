@@ -1,13 +1,18 @@
 import { cache } from "react";
-import { FIXTURE_ARTICLES, type RawArticle } from "@/fixtures/articles";
-import { EDITORIAL_ARTICLES } from "@/fixtures/editorial";
-import { ARTICLE_BODIES, type ArticleBody } from "@/fixtures/articles-body";
-import { COVER_IMAGES } from "@/fixtures/cover-images";
-import { UNIVERSE } from "@/fixtures/universe";
+import { EDITORIAL_ARTICLES, isEditorialCurrent } from "@/content/editorial";
+import {
+  eurekaArticles,
+  eurekaBody,
+  type ArticleBody,
+  type RawArticle,
+} from "@/lib/content/authored";
+import { demo } from "@/lib/demo/fixtures";
+import { isDemoMode } from "@/lib/demo/mode";
 import { isDbConfigured } from "@/lib/db/client";
 import { dbReadWire, type DbWireRow } from "@/lib/db/queries/wire";
+import { classify } from "@/lib/curation/classify";
 import { HashEmbedder } from "@/lib/curation/embed";
-import { demoNow, shiftFixtureDate } from "@/lib/demo-clock";
+import { demoNow, shiftFixtureDate } from "@/lib/demo/clock";
 import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedupe";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import type { RankContext } from "@/lib/curation/rank";
@@ -20,14 +25,10 @@ import {
 
 /**
  * Read layer for the wire (§13). In production the cluster job persists ranked
- * clusters to Postgres and this reads them back (`dbReadWire`). With zero keys
- * (§2) — or if the DB is empty or unreachable — it falls back to computing the
- * ranked clusters deterministically from the fixture wire, so /news always
- * renders. The shape is identical either way, so the UI is unchanged.
- *
- * The fixture path uses the deterministic HashEmbedder and a fixed clock so the
- * demo is stable. Each cluster is tagged with a section (deterministic,
- * keyword-driven) and an optional image reference.
+ * clusters to Postgres and this reads them back (`dbReadWire`), merged with
+ * Mizaan's own authored Eureka explainers. Invented demo news is reachable only
+ * under DEMO_MODE=1 (see `loadAll`). Each cluster is tagged with a section
+ * (deterministic, keyword-driven) and an optional image reference.
  */
 /** A ranked cluster enriched with its editorial section + cover image. */
 export interface WireCluster extends SluggedCluster {
@@ -54,11 +55,15 @@ interface LoadedCluster {
   body: ArticleBody | null;
 }
 
-function context(clock: Date): RankContext {
+function context(clock: Date, articles: RawArticle[]): RankContext {
   const tiers: Record<string, string> = {};
-  for (const a of FIXTURE_ARTICLES) tiers[a.sourceId] = a.tier;
+  for (const a of articles) tiers[a.sourceId] = a.tier;
+  // Demo price moves feed the demo ranking only; in production this is empty
+  // (authored explainers are not ranked on invented market moves).
   const tickerMovePct: Record<string, number> = {};
-  for (const row of UNIVERSE) tickerMovePct[row.symbol] = Math.abs(row.changePct);
+  for (const row of demo.universe()) {
+    tickerMovePct[row.symbol] = Math.abs(row.changePct);
+  }
   return { tiers, tickerMovePct, now: clock };
 }
 
@@ -86,9 +91,9 @@ function fixtureLoaded(
     topics: cluster.topics,
     tickers: cluster.tickers,
   });
-  // Prefer a resolved Pexels cover (committed offline); fall back to any image
-  // reference on the article, else null → the UI draws the SVG cover.
-  const cover = COVER_IMAGES[cluster.primaryId];
+  // Prefer a resolved cover (demo only); fall back to any image reference on
+  // the article, else null → the UI draws the generated section cover.
+  const cover = demo.cover(cluster.primaryId);
   const wire: WireCluster = {
     ...cluster,
     section,
@@ -107,17 +112,25 @@ function fixtureLoaded(
     cluster: wire,
     members,
     primaryId: cluster.primaryId,
-    body: ARTICLE_BODIES[cluster.primaryId] ?? null,
+    // Eureka explainers carry their authored body in every mode; demo news
+    // bodies exist only under DEMO_MODE.
+    body: eurekaBody(cluster.primaryId) ?? demo.articleBody(cluster.primaryId),
   };
 }
 
 /** Build a cluster from a persisted (live) row. Live articles carry no stored
  * image, so the UI draws the deterministic SVG cover. */
 function dbLoaded(row: DbWireRow): LoadedCluster {
+  // Tickers are RE-DERIVED at read time from the member headlines and deks with
+  // the current matcher, rather than trusted from storage: rows written before
+  // the matcher was tightened carry false tickers ("now" → NOW, "low" → LOW).
+  const tickers = [
+    ...new Set(row.members.flatMap((m) => classify(m.headline, m.dek).tickers)),
+  ];
   const cluster: WireCluster = {
     slug: row.slug,
     title: row.title,
-    tickers: row.tickers,
+    tickers,
     topics: row.topics,
     entities: row.entities,
     sourceIds: row.sourceIds,
@@ -130,7 +143,7 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
       title: row.title,
       dek: row.primaryDek,
       topics: row.topics,
-      tickers: row.tickers,
+      tickers,
     }),
     dek: row.primaryDek,
     imageUrl: row.imageUrl,
@@ -163,28 +176,12 @@ function collapseNearDuplicates(list: LoadedCluster[]): LoadedCluster[] {
   return kept;
 }
 
-/**
- * Compute the ranked wire deterministically from the fixture articles.
- *
- * `shift` controls the clock:
- * - `true` (zero-key mode): shift every fixture date forward onto the current
- *   demo window (lib/demo-clock.ts) and rank against that clock, so the keyless
- *   demo always looks current. The shift is uniform, so ranking order and
- *   cluster slugs are unchanged — only the timestamps move.
- * - `false` (live-merge mode): keep the fixtures' authored dates and rank
- *   against the REAL clock, so freshly ingested news out-ranks them and the
- *   evergreen explainers never masquerade as today's news.
- */
-async function computeFixtureClusters(shift = true): Promise<LoadedCluster[]> {
-  // Snapshot "now" once so the whole wire shares one clock/offset.
-  const now = Date.now();
-  const clock = shift ? demoNow(now) : new Date(now);
-  const articles = shift
-    ? FIXTURE_ARTICLES.map((a) => ({
-        ...a,
-        publishedAt: shiftFixtureDate(a.publishedAt, now),
-      }))
-    : FIXTURE_ARTICLES.map((a) => ({ ...a }));
+/** Rank a set of authored/demo articles into loaded clusters. */
+async function rankAuthored(
+  articles: RawArticle[],
+  clock: Date,
+): Promise<LoadedCluster[]> {
+  if (articles.length === 0) return [];
   const byId = new Map<number, RawArticle>(articles.map((a) => [a.id, a]));
   const ranked = await runPipeline(
     articles.map((a) => ({
@@ -195,10 +192,36 @@ async function computeFixtureClusters(shift = true): Promise<LoadedCluster[]> {
       dek: a.dek,
       publishedAt: a.publishedAt,
     })),
-    context(clock),
+    context(clock, articles),
     new HashEmbedder(),
   );
   return ranked.map((c) => fixtureLoaded(c, byId));
+}
+
+/**
+ * DEMO MODE ONLY: the full fixture wire, with every date shifted forward onto
+ * the current demo window (lib/demo/clock.ts) and ranked against that clock, so
+ * the demo always looks current. Returns [] outside demo mode.
+ */
+async function computeDemoWire(): Promise<LoadedCluster[]> {
+  const fixtures = demo.articles();
+  if (fixtures.length === 0) return [];
+  const now = Date.now();
+  return rankAuthored(
+    fixtures.map((a) => ({ ...a, publishedAt: shiftFixtureDate(a.publishedAt, now) })),
+    demoNow(now),
+  );
+}
+
+/**
+ * The evergreen Eureka explainers — authored, cited content served in every
+ * mode. Ranked against the REAL clock with their authored dates, so they never
+ * out-rank or masquerade as today's news.
+ */
+async function computeEurekaClusters(): Promise<LoadedCluster[]> {
+  return (await rankAuthored(eurekaArticles(), new Date())).filter(
+    (l) => l.cluster.section === "eureka",
+  );
 }
 
 /**
@@ -219,77 +242,60 @@ function isSubstantive(l: LoadedCluster): boolean {
 }
 
 /**
- * Owner-curated editorial stories (fixtures/editorial.ts): real, cited items an
- * editor promotes into the LIVE wire. Ranked against the real clock like live
- * news (never date-shifted) and kept in live mode (unlike the demo fixtures), so
- * an Editor's Pick rule can lead the hero with a hand-picked real story.
+ * Owner-curated editorial stories (content/editorial.ts): real, cited items an
+ * editor promotes into the wire. Ranked against the real clock like live news,
+ * and dropped automatically once they pass their expiry (72 hours by default),
+ * so a hand-picked story can never sit at the top for days.
  */
 async function computeEditorialClusters(): Promise<LoadedCluster[]> {
-  if (EDITORIAL_ARTICLES.length === 0) return [];
-  const byId = new Map<number, RawArticle>(EDITORIAL_ARTICLES.map((a) => [a.id, a]));
-  const ranked = await runPipeline(
-    EDITORIAL_ARTICLES.map((a) => ({
-      id: a.id,
-      sourceId: a.sourceId,
-      trustScore: a.trustScore,
-      headline: a.headline,
-      dek: a.dek,
-      publishedAt: a.publishedAt,
-    })),
-    context(new Date()),
-    new HashEmbedder(),
-  );
-  return ranked.map((c) => fixtureLoaded(c, byId));
+  const current = EDITORIAL_ARTICLES.filter((a) => isEditorialCurrent(a));
+  return rankAuthored(current, new Date());
 }
 
 /**
  * Load the whole ranked wire once per request (React `cache` dedupes the calls
  * from readWire / readCluster / readSectionSummaries in a single render).
  *
- * In LIVE mode (the ingest/cluster jobs persist ranked clusters to Postgres),
- * real news leads: we rank the live clusters by importance and merge in ONLY
- * the evergreen Eureka explainers from our fixtures — un-shifted, so they age
- * against the real clock and never out-rank or masquerade as today's news, but
- * the Eureka section (which is never ingested) still has content. The authored
- * demo market stories are dropped so freshly ingested articles are never buried.
- * With no DB (§2) the full fixture wire renders on its own, date-shifted so the
- * keyless demo looks current.
+ * PRODUCTION: the wire is the ranked clusters the ingest/cluster jobs persisted
+ * to Postgres, plus the authored Eureka explainers and any current editorial
+ * pick. If the database is empty or unreachable the wire is just the authored
+ * content — it NEVER falls back to invented demo news.
+ *
+ * DEMO MODE (DEMO_MODE=1, no database rows): the committed fixture wire,
+ * date-shifted so the demo looks current.
  */
 const loadAll = cache(async (): Promise<LoadedCluster[]> => {
+  const byImportance = (a: LoadedCluster, b: LoadedCluster) =>
+    b.cluster.importanceScore - a.cluster.importanceScore;
+
+  let live: LoadedCluster[] = [];
   if (isDbConfigured()) {
     try {
-      const rows = await dbReadWire();
-      if (rows.length > 0) {
-        // Phase 2 §2: collapse near-duplicate live clusters (same section, title
-        // Jaccard ≥ threshold) so a paraphrase never shows twice.
-        const live = collapseNearDuplicates(rows.map(dbLoaded));
-        const liveSlugs = new Set(live.map((l) => l.cluster.slug));
-        // Keep ONLY the evergreen Eureka explainers from our authored fixtures,
-        // un-shifted (computeFixtureClusters(false) ranks them against the real
-        // clock, so they stay old and never lead). The demo market stories are
-        // dropped so real ingested news is never buried beneath them.
-        const eureka = (await computeFixtureClusters(false)).filter(
-          (l) => l.cluster.section === "eureka" && !liveSlugs.has(l.cluster.slug),
-        );
-        // Owner-curated editorial stories (real, cited) — kept in live mode so an
-        // Editor's Pick rule can lead the hero with a hand-picked real story.
-        const editorial = (await computeEditorialClusters()).filter(
-          (l) => !liveSlugs.has(l.cluster.slug),
-        );
-        const byImportance = (a: LoadedCluster, b: LoadedCluster) =>
-          b.cluster.importanceScore - a.cluster.importanceScore;
-        // Real news leads; the evergreen explainers + curated editorial fall to
-        // their natural rank by importance. Stub stories (no brief, no real dek)
-        // are hidden so readers never get a two-line "article" (§13 quality).
-        return [...live, ...editorial, ...eureka]
-          .filter(isSubstantive)
-          .sort(byImportance);
-      }
+      // Collapse near-duplicate live clusters (same section, title Jaccard ≥
+      // threshold) so a paraphrase never shows twice.
+      live = collapseNearDuplicates((await dbReadWire()).map(dbLoaded));
     } catch (err) {
-      console.error("[wire] DB read failed, falling back to fixtures:", err);
+      console.error("[wire] DB read failed:", err);
     }
   }
-  return computeFixtureClusters();
+
+  if (live.length === 0 && isDemoMode()) return computeDemoWire();
+
+  const liveSlugs = new Set(live.map((l) => l.cluster.slug));
+  const [eureka, editorial] = await Promise.all([
+    computeEurekaClusters(),
+    computeEditorialClusters(),
+  ]);
+  // Real news leads; the evergreen explainers + curated editorial fall to their
+  // natural rank by importance. Stub stories (no brief, no real dek) are hidden
+  // so readers never get a two-line "article".
+  return [
+    ...live,
+    ...editorial.filter((l) => !liveSlugs.has(l.cluster.slug)),
+    ...eureka.filter((l) => !liveSlugs.has(l.cluster.slug)),
+  ]
+    .filter(isSubstantive)
+    .sort(byImportance);
 });
 
 async function allClusters(): Promise<WireCluster[]> {

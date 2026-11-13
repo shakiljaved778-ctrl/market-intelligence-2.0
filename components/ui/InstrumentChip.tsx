@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { instrumentBySymbol } from "@/content/instruments";
 
 /**
  * Instrument chip — a bound ticker with its live change inline ("NVDA ▲1.2%"),
@@ -43,14 +44,27 @@ export function InstrumentChip({
     </>
   );
 
+  // The chip explains itself: the company name is the tooltip and the
+  // accessible name, so a bare symbol is never an unexplained tag.
+  const name = instrumentBySymbol(symbol)?.name;
+  const title = name
+    ? `${name} (${symbol}) — related instrument`
+    : `${symbol} — related instrument`;
+
   const base = `border-hairline text-ink-2 inline-flex items-center gap-1.5 rounded-[4px] border px-1.5 py-0.5 text-[11px] ${className ?? ""}`;
 
   if (!asLink) {
-    return <span className={base}>{inner}</span>;
+    return (
+      <span className={base} title={title}>
+        {inner}
+      </span>
+    );
   }
   return (
     <Link
       href={`/quote/${symbol}`}
+      title={title}
+      aria-label={title}
       className={`${base} hover:border-hairline-strong hover:text-ink transition-colors`}
     >
       {inner}

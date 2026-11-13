@@ -3,7 +3,6 @@ import type { DisplayCurrency } from "@/lib/currency/peg";
 import type { ThemePref } from "@/lib/theme/theme";
 import { CurrencyToggle } from "./CurrencyToggle";
 import { ThemeToggle } from "./ThemeToggle";
-import { ColorblindToggle } from "./ColorblindToggle";
 import { CommandPalette } from "./CommandPalette";
 import { MarketStatus } from "./MarketStatus";
 import { HeaderShrink } from "./HeaderShrink";
@@ -17,14 +16,18 @@ const NAV = [
   { href: "/methodology", label: "Methodology" },
 ];
 
+/**
+ * Site header. The colour-blind-safe control used to sit here as an unlabelled
+ * "CB" button; it now lives, with a full text label, in the footer's "Display"
+ * row on every screen size, which also keeps the phone header inside the
+ * viewport.
+ */
 export function Header({
   currency,
   themePref,
-  colorblind,
 }: {
   currency: DisplayCurrency;
   themePref: ThemePref;
-  colorblind: boolean;
 }) {
   return (
     <header className="border-hairline bg-bg/85 sticky top-0 z-40 border-b backdrop-blur">
@@ -55,7 +58,6 @@ export function Header({
           <MarketStatus />
           <CommandPalette />
           <CurrencyToggle current={currency} />
-          <ColorblindToggle on={colorblind} />
           <ThemeToggle pref={themePref} />
         </div>
       </div>

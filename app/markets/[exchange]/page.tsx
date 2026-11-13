@@ -44,7 +44,7 @@ export default async function ExchangeHubPage({ params }: Params) {
           <PageHeader
             kicker={`${ex.country} · ${ex.shortName}`}
             title={ex.name}
-            subtitle={`Listed companies on the ${ex.name}. Share prices appear once a verified end-of-day source is connected — never illustrative values.`}
+            subtitle={`Listed companies on the ${ex.name}. Share prices are shown only from a licensed data feed, each with its source and time.`}
             action={
               <Link href="/markets" className="btn btn-ghost text-[13px]">
                 All markets <span aria-hidden>→</span>

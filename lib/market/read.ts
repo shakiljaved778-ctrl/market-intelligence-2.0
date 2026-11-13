@@ -1,140 +1,114 @@
-import { getKvStore } from "@/lib/cache/store";
-import { sanitizeQuote } from "@/lib/market/sanity";
-import { dbCandles, dbLatestQuote } from "@/lib/db/queries/read";
+import { INSTRUMENTS, type Instrument } from "@/content/instruments";
+import { cacheGet } from "@/lib/cache/swr";
 import { dbLatestFundamentals } from "@/lib/db/queries/fundamentals";
-import { fixtureCandles } from "@/fixtures/candles";
-import { fixtureFundamentals } from "@/fixtures/fundamentals";
-import { UNIVERSE, universeBySymbol, type UniverseRow } from "@/fixtures/universe";
+import { dbRecentCloses } from "@/lib/db/queries/read";
+import { isDemoMode } from "@/lib/demo/mode";
+import { demo } from "@/lib/demo/fixtures";
+import { getQuote, getQuotes, getSeries, type Priced } from "@/lib/market/service";
 import type { Candle, Fundamentals, Quote, Range } from "@/lib/providers/types";
 
 /**
- * Read-only market layer for page rendering. Order: KV cache → Postgres →
- * fixtures. It NEVER calls a provider/vendor (§6, §17) — the scheduled jobs are
- * the only writers. This is what proves "no vendor call fires on page render".
+ * Read-only market layer for page rendering, built on the quote service
+ * (lib/market/service.ts). It NEVER calls a provider (§6, §17) — the scheduled
+ * jobs are the only writers — and it never substitutes an invented number: an
+ * instrument without a real stored quote is simply absent from the result.
  */
 
-async function kvGet<T>(key: string): Promise<T | null> {
-  try {
-    const raw = await getKvStore().get(key);
-    if (!raw) return null;
-    const env = JSON.parse(raw) as { v: T };
-    return env.v ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function universeToQuote(row: UniverseRow): Quote {
-  return {
-    symbol: row.symbol,
-    priceUsd: row.priceUsd,
-    nativePrice: null,
-    nativeCurrency: row.nativeCurrency,
-    fxRateUsed: 1,
-    change: row.change,
-    changePct: row.changePct,
-    open: null,
-    high: null,
-    low: null,
-    prevClose: row.priceUsd - row.change,
-    volume: row.volume,
-    marketCapUsd: row.marketCapUsd,
-    provider: "fixture",
-    dataDelayMinutes: row.dataDelayMinutes,
-    asOf: "2026-09-16T20:00:00.000Z",
-  };
-}
-
-/**
- * Best *live* quote for a symbol — KV cache, then Postgres — or null when the
- * scheduled jobs haven't populated one. Deliberately does NOT fall back to
- * fixtures: callers decide whether to substitute a clearly-labelled sample, so
- * fixture values never masquerade as live market data.
- */
-async function liveQuote(symbol: string): Promise<Quote | null> {
-  const sym = symbol.toUpperCase();
-  const cached = await kvGet<Quote>(`market:quote:${sym}`);
-  const raw = cached ?? (await dbLatestQuote(sym));
-  // Every widget's live quote passes through the sanity layer (Phase 1 data
-  // integrity): a null/zero/negative or stale value is dropped so the caller
-  // falls back to a clearly-labelled sample rather than showing a bad number.
-  // (Outlier second-source confirmation happens in the ingest job, which has a
-  // second provider and the prior value to compare against.)
-  return sanitizeQuote(raw);
-}
-
+/** The real quote for a symbol, or null. See `getQuote` for provenance. */
 export async function readQuote(symbol: string): Promise<Quote | null> {
-  const sym = symbol.toUpperCase();
-  const live = await liveQuote(sym);
-  if (live) return live;
-  const row = universeBySymbol(sym);
-  return row ? universeToQuote(row) : null;
+  return (await getQuote(symbol)).value;
 }
 
+/** A stored price series, or [] — never a generated one. */
 export async function readCandles(symbol: string, range: Range): Promise<Candle[]> {
-  const sym = symbol.toUpperCase();
-  const cached = await kvGet<Candle[]>(`market:candles:${sym}:${range}`);
-  if (cached && cached.length > 0) return cached;
-  const fromDb = await dbCandles(sym, range);
-  if (fromDb.length > 0) return fromDb;
-  return fixtureCandles(sym, range);
+  return (await getSeries(symbol, range)).value ?? [];
 }
 
 /**
- * Latest fundamentals for a symbol: KV cache → Postgres → illustrative fixture.
- * Reads only — the scheduled job is the sole writer, so no vendor call fires on
- * render (§2/§6). `provider === "fixture"` marks illustrative sample values.
+ * Latest stored fundamentals for a symbol: cache → Postgres. Null when the
+ * daily job has not stored any (demo mode substitutes a labelled fixture).
  */
 export async function readFundamentals(symbol: string): Promise<Fundamentals | null> {
   const sym = symbol.toUpperCase();
-  const cached = await kvGet<Fundamentals>(`market:fundamentals:${sym}`);
-  if (cached) return cached;
-  const fromDb = await dbLatestFundamentals(sym);
-  if (fromDb) return fromDb;
-  return fixtureFundamentals(sym);
+  const cached = await cacheGet<Fundamentals>(`market:fundamentals:${sym}`);
+  if (cached && cached.provider !== "fixture") return cached;
+  try {
+    const fromDb = await dbLatestFundamentals(sym);
+    if (fromDb && fromDb.provider !== "fixture") return fromDb;
+  } catch (err) {
+    console.error("[market] fundamentals read failed:", err);
+  }
+  return demo.fundamentals(sym);
 }
 
-export interface MarketRow extends UniverseRow {
+/** An instrument together with its real, provenance-carrying quote. */
+export interface MarketRow extends Instrument {
+  priceUsd: number;
+  change: number;
+  changePct: number;
+  marketCapUsd: number | null;
+  volume: number | null;
   quote: Quote;
+  priced: Priced<Quote>;
 }
 
 /**
- * Instruments + latest quote for movers and the screener. Live cached/DB quotes
- * are overlaid onto the fixture universe: for any symbol the scheduled quotes
- * job has populated, the row's numbers come from the *live* quote (and its
- * `quote.provider` names the real source); symbols without a live quote keep
- * their illustrative fixture values, clearly marked as a sample in the UI via
- * `quote.provider === "fixture"`. Reads cache/DB only — no vendor call on render.
+ * Every instrument that has a real stored quote, with the numbers taken from
+ * that quote only. Instruments no feed covers are omitted (see `coverageOf`).
+ * One batched read — no per-symbol round-trips, no vendor call on render.
  */
 export async function readUniverse(): Promise<MarketRow[]> {
-  return Promise.all(
-    UNIVERSE.map(async (row) => {
-      const live = await liveQuote(row.symbol);
-      if (!live) return { ...row, quote: universeToQuote(row) };
-      // Reflect the live figures in the fields the tables read, so the screener
-      // and movers show real prices — not just the quote page.
-      return {
-        ...row,
-        priceUsd: live.priceUsd,
-        change: live.change,
-        changePct: live.changePct,
-        volume: live.volume ?? row.volume,
-        marketCapUsd: live.marketCapUsd ?? row.marketCapUsd,
-        quote: live,
-      };
-    }),
-  );
+  const quotes = await getQuotes(INSTRUMENTS.map((i) => i.symbol));
+  const rows: MarketRow[] = [];
+  for (const inst of INSTRUMENTS) {
+    const p = quotes.get(inst.symbol);
+    if (!p || !p.value) continue;
+    const q = p.value;
+    rows.push({
+      ...inst,
+      priceUsd: q.priceUsd,
+      change: q.change,
+      changePct: q.changePct,
+      marketCapUsd: q.marketCapUsd,
+      volume: q.volume,
+      quote: q,
+      priced: p,
+    });
+  }
+  return rows;
 }
 
 export async function readMovers(limit = 6): Promise<MarketRow[]> {
   const rows = await readUniverse();
   return [...rows]
+    .filter((r) => Number.isFinite(r.changePct))
     .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
     .slice(0, limit);
 }
 
-/** Coverage summary for honest provenance banners: how many rows are live. */
-export function coverageOf(rows: MarketRow[]): { live: number; total: number } {
-  const live = rows.filter((r) => r.quote.provider.toLowerCase() !== "fixture").length;
-  return { live, total: rows.length };
+/** How many instruments in the reference list currently carry a real price. */
+export function coverageOf(rows: MarketRow[]): { priced: number; total: number } {
+  return { priced: rows.length, total: INSTRUMENTS.length };
+}
+
+/**
+ * Recent daily closes per symbol for the trend column — one stored read. A
+ * symbol with no stored series is absent (the cell shows a dash, never a
+ * generated line).
+ */
+export async function readTrends(symbols: string[]): Promise<Record<string, number[]>> {
+  const out: Record<string, number[]> = {};
+  try {
+    for (const [sym, closes] of await dbRecentCloses(symbols)) {
+      if (closes.length > 1) out[sym] = closes.slice(-30);
+    }
+  } catch (err) {
+    console.error("[market] trend read failed:", err);
+  }
+  if (isDemoMode()) {
+    for (const sym of symbols) {
+      if (!out[sym]) out[sym] = demo.candles(sym, "1M").map((c) => c.c);
+    }
+  }
+  return out;
 }

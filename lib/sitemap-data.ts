@@ -1,8 +1,8 @@
-import { UNIVERSE } from "@/fixtures/universe";
-import { MACRO_SERIES } from "@/fixtures/macro";
+import { INSTRUMENTS } from "@/content/instruments";
+import { SERIES } from "@/lib/economy/series";
 import { allSections, readWire } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
-import { readQuote } from "@/lib/market/read";
+import { getQuotes } from "@/lib/market/service";
 import { GCC_EXCHANGES } from "@/content/gcc-companies";
 import { SITE_URL as SITE } from "@/lib/site";
 
@@ -48,7 +48,7 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
       "/terms",
       "/privacy",
     ].map((p) => ({ loc: `${SITE}${p}`, lastmod: now }));
-    const series = MACRO_SERIES.map((s) => ({
+    const series = SERIES.filter((s) => s.groups.includes("macro")).map((s) => ({
       loc: `${SITE}/economy/indicator/${encodeURIComponent(s.id)}`,
       lastmod: now,
     }));
@@ -71,17 +71,16 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
   }
 
   if (name === "quotes") {
-    const rows = await Promise.all(
-      UNIVERSE.map(async (r) => ({ r, quote: await readQuote(r.symbol) })),
-    );
-    // Only quote pages with a resolvable quote (real data only, in live mode).
-    return rows
-      .filter((x) => x.quote !== null)
-      .map((x) => ({ loc: `${SITE}/quote/${x.r.symbol}`, lastmod: now }));
+    // Only quote pages that currently carry a real stored price.
+    const priced = await getQuotes(INSTRUMENTS.map((i) => i.symbol));
+    return INSTRUMENTS.filter((i) => priced.has(i.symbol)).map((i) => ({
+      loc: `${SITE}/quote/${i.symbol}`,
+      lastmod: now,
+    }));
   }
 
   if (name === "recaps") {
-    return listRecaps().map((rec) => ({
+    return (await listRecaps()).map((rec) => ({
       loc: `${SITE}/recap/${rec.slug}`,
       lastmod: now,
     }));

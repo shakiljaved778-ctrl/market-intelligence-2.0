@@ -1,64 +1,106 @@
 import { describe, expect, it } from "vitest";
-import { delayLabel, provenanceOf, provenanceTitle } from "@/lib/market/provenance";
-import type { Quote } from "@/lib/providers/types";
-
-function quote(overrides: Partial<Quote>): Quote {
-  return {
-    symbol: "AAPL",
-    priceUsd: 100,
-    nativePrice: null,
-    nativeCurrency: "USD",
-    fxRateUsed: 1,
-    change: 1,
-    changePct: 1,
-    open: null,
-    high: null,
-    low: null,
-    prevClose: 99,
-    volume: null,
-    marketCapUsd: null,
-    provider: "fixture",
-    dataDelayMinutes: 0,
-    asOf: "2026-09-18T14:32:00.000Z",
-    ...overrides,
-  };
-}
+import {
+  delayLabel,
+  formatAsOf,
+  sourceLabel,
+  stampText,
+  summaryStamp,
+} from "@/lib/market/provenance";
 
 describe("delayLabel", () => {
-  it("labels real-time, delayed and end-of-day honestly", () => {
+  it("labels no delay, delayed and end-of-day honestly", () => {
     expect(delayLabel(0)).toBeNull();
-    expect(delayLabel(15)).toBe("delayed 15 min");
-    expect(delayLabel(120)).toBe("delayed 2h");
-    expect(delayLabel(1440)).toBe("end-of-day");
+    expect(delayLabel(15)).toBe("15 min delayed");
+    expect(delayLabel(120)).toBe("2h delayed");
+    expect(delayLabel(1440)).toBe("end of day");
   });
 });
 
-describe("provenanceOf", () => {
-  it("marks a fixture as a sample, never as live", () => {
-    const p = provenanceOf(quote({ provider: "fixture" }));
-    expect(p.live).toBe(false);
-    expect(p.source).toBe("Sample data");
+describe("formatAsOf", () => {
+  it("prints a timestamp in Doha time", () => {
+    // 14:45 UTC is 17:45 in Doha (UTC+3, no DST).
+    expect(formatAsOf("2026-11-12T14:45:00.000Z")).toBe("12 Nov, 17:45 AST");
   });
-
-  it("marks a vendor quote as live with a human source label", () => {
-    const p = provenanceOf(quote({ provider: "finnhub", dataDelayMinutes: 15 }));
-    expect(p.live).toBe(true);
-    expect(p.source).toBe("Finnhub");
-    expect(p.delay).toBe("delayed 15 min");
-    expect(p.asOf).toContain("UTC");
+  it("prints a date-only observation without a clock time", () => {
+    expect(formatAsOf("2026-11-12")).toBe("12 Nov");
+    expect(formatAsOf("2026-11-12", true)).toBe("12 Nov 2026");
+  });
+  it("returns null for an unparseable value", () => {
+    expect(formatAsOf("not a date")).toBeNull();
   });
 });
 
-describe("provenanceTitle", () => {
-  it("never presents a fixture as real market data", () => {
-    expect(provenanceTitle(quote({ provider: "fixture" }))).toContain(
-      "not live market data",
+describe("stampText", () => {
+  it("states source and time for a real quote", () => {
+    expect(
+      stampText({
+        source: "finnhub",
+        asOf: "2026-11-12T14:45:00.000Z",
+        delayMinutes: 0,
+        status: "ok",
+      }),
+    ).toBe("Finnhub · 12 Nov, 17:45 AST");
+  });
+  it("states the delay when the feed is delayed", () => {
+    expect(
+      stampText({
+        source: "fmp",
+        asOf: "2026-11-12T14:30:00.000Z",
+        delayMinutes: 15,
+        status: "ok",
+      }),
+    ).toBe("FMP · 12 Nov, 17:30 AST · 15 min delayed");
+  });
+  it("labels a last close and an end-of-day feed", () => {
+    expect(
+      stampText({
+        source: "finnhub",
+        asOf: "2026-11-11T21:00:00.000Z",
+        delayMinutes: 0,
+        status: "eod",
+      }),
+    ).toBe("Finnhub · 12 Nov, 00:00 AST · close");
+    expect(stampText({ source: "eodhd", asOf: "2026-11-11", delayMinutes: 1440 })).toBe(
+      "EODHD · 11 Nov · end of day",
     );
   });
+  it("uses the cadence qualifier for reference rates", () => {
+    expect(
+      stampText({ source: "ecb", asOf: "2026-11-12", cadence: "daily fixing" }),
+    ).toBe("ECB reference rate · 12 Nov · daily fixing");
+  });
+  it("never dresses demo data up as market data", () => {
+    expect(
+      stampText({ source: "demo", asOf: "2026-11-12T14:45:00.000Z", demo: true }),
+    ).toBe("Demo data — not market data");
+  });
+  it("returns null when there is nothing real to stamp", () => {
+    expect(stampText({ source: null, asOf: null })).toBeNull();
+  });
+});
 
-  it("states source and timing for a live quote", () => {
-    const title = provenanceTitle(quote({ provider: "finnhub", dataDelayMinutes: 15 }));
-    expect(title).toContain("Finnhub");
-    expect(title).toContain("delayed 15 min");
+describe("sourceLabel", () => {
+  it("maps provider ids and keeps human labels as recorded", () => {
+    expect(sourceLabel("coingecko")).toBe("CoinGecko");
+    expect(sourceLabel("FRED (EIA)")).toBe("FRED (EIA)");
+  });
+});
+
+describe("summaryStamp", () => {
+  it("lists distinct sources and the time span covered", () => {
+    expect(
+      summaryStamp([
+        { source: "finnhub", asOf: "2026-11-11T21:00:00.000Z", delayMinutes: 0 },
+        { source: "coingecko", asOf: "2026-11-12T14:45:00.000Z", delayMinutes: 0 },
+      ]),
+    ).toBe(
+      "Source Finnhub, CoinGecko · prices as of 12 Nov, 00:00 AST to 12 Nov, 17:45 AST",
+    );
+  });
+  it("is null with no real rows, and says so for demo rows", () => {
+    expect(summaryStamp([])).toBeNull();
+    expect(summaryStamp([{ source: "demo", asOf: "2026-11-12", demo: true }])).toBe(
+      "Demo data — not market data",
+    );
   });
 });

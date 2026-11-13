@@ -6,7 +6,7 @@ import { NEWSLETTER_NAME } from "@/lib/newsletter";
 export const metadata = pageMeta(
   "/newsletter",
   `${NEWSLETTER_NAME} — daily market briefing`,
-  `Subscribe to ${NEWSLETTER_NAME}: GCC closes, overnight global moves and the five stories that matter, in one email before the open.`,
+  `Subscribe to ${NEWSLETTER_NAME}: the ranked stories that matter and source-stamped market figures, in one email each trading morning.`,
 );
 
 interface SearchParams {
@@ -52,9 +52,10 @@ export default async function NewsletterPage({ searchParams }: SearchParams) {
   return (
     <Prose eyebrow="before the open" title={NEWSLETTER_NAME}>
       <p>
-        One email each trading morning: GCC closes, overnight moves in the US, Europe,
-        Asia, oil, gold and bitcoin, the five stories that matter and today&rsquo;s
-        calendar. Rankings computed; summaries cited.
+        One email each trading morning, Sunday to Thursday: the five ranked stories that
+        matter, with FX reference rates, energy benchmarks and crypto prices — each
+        figure with its source and time. Rankings are computed; summaries are AI-written
+        from cited sources.
       </p>
       {msg ? (
         <p className={msg.tone === "ok" ? "text-signal-strong" : "text-text-mid"}>

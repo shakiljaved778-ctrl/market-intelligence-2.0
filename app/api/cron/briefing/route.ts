@@ -11,6 +11,11 @@ export function GET(request: Request): Promise<Response> {
   return handleCronRoute(request, "briefing", async () => {
     const date = new Date().toISOString().slice(0, 10);
     const briefing = await buildBriefing(date, weekly);
+    // Send only when there is something fresh to send: a briefing with no
+    // stories in its window is not sent at all.
+    if (briefing.topStories.length === 0) {
+      return { itemsOut: 0, outcome: "partial" };
+    }
     const result = await sendBriefing(briefing);
     return {
       itemsOut: result.sent ? 1 : 0,

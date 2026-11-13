@@ -7,7 +7,8 @@ import { Movers } from "@/components/market/Movers";
 import { SignalScore } from "@/components/ui/SignalScore";
 import { InstrumentChip } from "@/components/ui/InstrumentChip";
 import { CountUp } from "@/components/ui/CountUp";
-import { Sparkline, sparkSeries } from "@/components/ui/Sparkline";
+import { ChangePill } from "@/components/market/ChangePill";
+import { PriceStamp } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import {
   allSections,
@@ -18,9 +19,7 @@ import {
 import { pickFeatured } from "@/lib/news/featured";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
-import type { IndexStripItem } from "@/fixtures/indices";
-import { readGccIndices } from "@/lib/market/indices";
-import { directionGlyph, directionOf, formatPercent } from "@/lib/format/percent";
+import { readGccIndices, type IndexLevel } from "@/lib/market/indices";
 
 function StatTile({
   value,
@@ -58,40 +57,52 @@ function LatestRow({ c }: { c: WireCluster }) {
   );
 }
 
-function GccCard({ item }: { item: IndexStripItem }) {
-  const dir = directionOf(item.change);
-  const sd = dir === "gain" ? "up" : dir === "loss" ? "down" : "flat";
-  const color = sd === "up" ? "text-up" : sd === "down" ? "text-down" : "text-ink-3";
+function GccCard({ item }: { item: IndexLevel }) {
   return (
-    <div className="border-hairline bg-surface rounded-[8px] border p-4">
-      <div className="flex items-baseline justify-between">
-        <span className="text-ink text-[14px] font-medium">{item.name}</span>
+    <div className="border-hairline bg-surface min-w-0 rounded-[8px] border p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-ink truncate text-[14px] font-medium">{item.name}</span>
         <span className="tnum text-ink-4 text-[10px]">{item.symbol}</span>
       </div>
-      <div className="mt-2 flex items-end justify-between gap-2">
+      <div className="mt-2 flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
         <span className="tnum text-ink text-[20px] leading-none">
           {item.level.toLocaleString("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
         </span>
-        <Sparkline
-          values={sparkSeries(item.symbol, item.changePct)}
-          dir={sd}
-          width={56}
-          height={20}
-        />
+        <ChangePill pct={item.changePct} className="text-[12px]" />
       </div>
-      <div className="mt-2 flex items-center justify-between">
-        <span className={`tnum inline-flex items-center gap-0.5 text-[12px] ${color}`}>
-          <span aria-hidden>{directionGlyph(item.change)}</span>
-          {formatPercent(item.changePct)}
-        </span>
-        <span className="t-micro text-ink-4">{item.delayLabel}</span>
-      </div>
+      <PriceStamp stamp={item.stamp} className="mt-2 block" />
     </div>
   );
 }
+
+/** Today's date in Doha — the house timezone — e.g. "Thursday 12 November 2026". */
+function dohaToday(now: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Qatar",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+    .format(now)
+    .replace(",", "");
+}
+
+/** e.g. "11 Nov" for a YYYY-MM-DD session date. */
+function shortDay(ymd: string): string {
+  const d = new Date(`${ymd}T00:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return ymd;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+  }).format(d);
+}
+
+const DAY_MS = 86_400_000;
 
 export const metadata = { alternates: { canonical: canonical("/") } };
 
@@ -101,8 +112,13 @@ export default async function BoardPage() {
     readWire(),
     readSectionSummaries(),
   ]);
-  const totalSources = clusters.reduce((n, c) => n + c.sourceCount, 0);
-  const sectionsCount = allSections().length;
+  // Homepage counters — each is a plain count of what is on the wire now.
+  const now = new Date();
+  const ageMs = (c: WireCluster) => now.getTime() - new Date(c.eventTime).getTime();
+  const last24h = clusters.filter((c) => ageMs(c) <= DAY_MS).length;
+  const last7d = clusters.filter((c) => ageMs(c) <= 7 * DAY_MS).length;
+  const distinctSources = new Set(clusters.flatMap((c) => c.sourceIds)).size;
+  const sectionsWithStories = summary.sections.filter((s) => s.count > 0).length;
 
   // Editor's Pick (§13): if a configured rule matches a real story in the wire,
   // it leads the hero (labelled), overriding the automatic ranking; otherwise
@@ -116,9 +132,19 @@ export default async function BoardPage() {
   const latest = [...clusters]
     .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime())
     .slice(0, 8);
-  const sessionRecap = listRecaps().find((r) => r.kind === "session_close");
-  // Real GCC index levels only — hides the spotlight when no provider returns
-  // them, rather than showing illustrative values (Phase 1 §3).
+  // The latest session recap — shown only while it is recent (a week-old recap
+  // is not "the session recap"). Built from real stored closes, or absent.
+  const latestRecap = (await listRecaps(currency)).find(
+    (r) => r.kind === "session_close",
+  );
+  const sessionRecap =
+    latestRecap &&
+    (latestRecap.demo ||
+      now.getTime() - new Date(`${latestRecap.date}T00:00:00Z`).getTime() <= 4 * DAY_MS)
+      ? latestRecap
+      : null;
+  // Real GCC index levels only — the block does not render until a licensed
+  // feed supplies them.
   const gcc = await readGccIndices();
 
   const bySection = new Map<string, WireCluster[]>();
@@ -147,8 +173,7 @@ export default async function BoardPage() {
         <div className="mb-5 flex items-baseline justify-between">
           <p className="t-micro text-ink-3 inline-flex items-center gap-2">
             <span className="live-dot inline-block align-middle" aria-hidden />
-            Today on Mizaan ·{" "}
-            {new Date((latest[0] ?? lead).eventTime).toUTCString().slice(5, 16)}
+            Today on Mizaan · <span data-volatile>{dohaToday(now)}</span>
           </p>
           <Link href="/news" className="text-brand text-[12px]">
             The wire <span aria-hidden>→</span>
@@ -203,14 +228,10 @@ export default async function BoardPage() {
           {/* Right rail: computed counters + secondary stories. */}
           <div className="lg:col-span-4">
             <div className="grid grid-cols-2 gap-3">
-              <StatTile value={summary.total} label="stories ranked today" />
-              <StatTile value={totalSources} label="source reports across the wire" />
-              <StatTile value={sectionsCount} label="sections covered" />
-              <StatTile
-                value={summary.nonFinancialPct}
-                suffix="%"
-                label="beyond markets & economy"
-              />
+              <StatTile value={last24h} label="stories in the last 24 hours" />
+              <StatTile value={last7d} label="stories in the last 7 days" />
+              <StatTile value={distinctSources} label="sources cited on the wire" />
+              <StatTile value={sectionsWithStories} label="sections with coverage" />
             </div>
             <div className="border-hairline divide-hairline mt-5 divide-y border-t">
               {heroSide.map((c) => (
@@ -245,7 +266,9 @@ export default async function BoardPage() {
           <div className="lg:col-span-5">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="t-h3 font-editorial text-ink">Session recap</h2>
-              <span className="t-micro text-ink-3">computed</span>
+              <span className="t-micro text-ink-3">
+                US close · {shortDay(sessionRecap.date)} · computed
+              </span>
             </div>
             <Link
               href={`/recap/${sessionRecap.slug}`}
@@ -253,11 +276,14 @@ export default async function BoardPage() {
             >
               <div className="text-signal-strong flex items-center gap-2 text-[12px]">
                 <span aria-hidden>◆</span>
-                <span>From today&rsquo;s market data</span>
+                <span>Computed from stored closing prices</span>
               </div>
               <p className="font-editorial text-ink mt-3 text-[17px] leading-[1.6]">
                 {sessionRecap.output.bodyMd}
               </p>
+              {sessionRecap.basis ? (
+                <p className="text-ink-3 mt-2 text-[11px]">{sessionRecap.basis}</p>
+              ) : null}
               <span className="text-brand mt-3 inline-flex items-center gap-1 text-[13px]">
                 Read the full recap <span aria-hidden>→</span>
               </span>
@@ -340,7 +366,7 @@ export default async function BoardPage() {
             ))}
           </div>
           <p className="text-ink-4 t-micro mt-3">
-            GCC indices · end-of-day (prior close), per exchange
+            GCC indices · end of day, per exchange
           </p>
         </section>
       ) : null}
