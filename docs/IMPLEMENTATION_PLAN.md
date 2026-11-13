@@ -402,3 +402,35 @@ policy blocks them), so the FRED, Frankfurter and World Bank fetches are covered
 mocked tests only. The first macro and quotes job runs after deployment are the real
 test; check the job output and the Markets and Economy pages after they run.
 
+
+## 13. Phase 2 status (GCC content engine) — built, awaiting sign-off
+
+Built on `claude/wonderful-davinci-3fxwpg`, on top of the merged Phase 1.
+
+| Plan item | What was built | Where |
+| --- | --- | --- |
+| 1. Source adapters | Sources stay config-driven (`content/sources.yaml`) through the one RSS ingester, which checks robots.txt inside the fetcher. Each source can now declare `default_section`, `allowed_sections` and `max_items_per_run`. A read-only probe (`scripts/probe-sources.ts`, run on GitHub by `probe-sources.yml`) checks a candidate's robots.txt and looks for a feed. No per-source adapter file was needed: the only sources that qualified are RSS feeds. | `lib/curation/{config,ingest}.ts`, `content/source-candidates.yaml` |
+| 2. Gulf sources | **Added:** Qatar News Agency economy feeds, local and international (robots allow, HTTP 200, fresh RSS 2.0). Headline, dek and link only. **Skipped**, with the reason recorded: WAM, SPA and the Saudi CMA (no feed); QCB and SAMA (unreachable); QFMA (404); SCA (page not found); CBUAE, ADX and Saudi Exchange (HTTP 403 to automated requests, which we do not work around); QSE (robots.txt unreachable, no feed); DFM (only a YouTube feed). | `content/sources.yaml` |
+| 3. Region and section | Every story carries a section and a region (a GCC country, GCC or GLOBAL). The region is computed when the wire is read: the story's own text first, then its source's region. It is not stored, so the rules can change without a migration. Section tags show the country ("Markets · Qatar"). | `lib/curation/region.ts`, `components/news/SectionTag.tsx` |
+| 4. Classifier rewrite | Score-based instead of first match. Headline outweighs description. Capitalised keywords match case-sensitively, so WHO is not "who". Sources limit the sections they can publish into. Unplaceable stories go to a hidden General bucket instead of Markets. Covered by the 20 labelled cases and 7 misfiled NASA headlines. | `lib/curation/section.ts`, `content/sections.yaml` |
+| 5. Ranking | Importance is recomputed at read time against the current clock and current price moves. The wire is chosen by event time within 14 days. Top slots only take stories under 72 hours old. | `lib/news/read.ts`, `lib/db/queries/wire.ts` |
+| 6. Homepage | One pure selection function: each story used once; GCC finance first, then other finance, then the rest; one row per non-finance section; stubs hidden. | `lib/news/homepage.ts` |
+| 7. Shariah screen | A rule-based engine: business-activity screen plus financial ratios. It returns compliant, non-compliant or insufficient data, with a per-ratio breakdown and the date and source of the data. It never estimates a missing figure. The draft standard (AAOIFI SS21 ratios) is `published: false`, so nothing is shown. When it is switched on, the Methodology page renders the standard, its ratios and "not a fatwa" from the same config. | `lib/shariah/screen.ts`, `content/shariah-standard.ts`, `app/methodology/page.tsx` |
+| 8. Stock pages | Price with source, key statistics and related coverage already exist. The Shariah block and disclosures wait on data (below). | `app/quote/[symbol]/page.tsx` |
+
+Also in this phase:
+
+- The wire is paged, 30 stories a page. The 14-day window would otherwise have made `/news` several megabytes.
+- The ingester accepts RSS 2.0 feeds whose root element omits its version. QNA serves feeds this way.
+
+**Not done, and why:**
+
+- **Instrument master for QSE, Tadawul, ADX and DFM.** It needs a verified company list and fundamentals, which means a data provider (Q6). The exchanges' own sites refused automated requests or have no feed.
+- **Shariah status on stock pages.** It needs the standard confirmed (Q5) and fundamentals with debt and interest-income figures (Q6).
+- **Exchange disclosures.** No reachable feed; this needs a provider or an agreement with the exchanges.
+
+**Acceptance targets:** "at least 15 GCC stories on a trading day" and "top five homepage stories under 24 hours old" can only be measured on the live wire. Check both on the first trading day after merge. The classifier tests pass.
+
+No new environment variables. No schema migrations.
+
+Verification carried out: 250 unit tests, 9 smoke tests, lint, type-check, the fixture-import check and a production build. The probe ran twice on GitHub Actions. The QNA feed shape is covered by a test built from the live document.
