@@ -31,7 +31,7 @@ async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
   });
   if (!res.ok) throw new Error(`${source.id}: HTTP ${res.status}`);
   const xml = await res.text();
-  const feed = await parser.parseString(xml);
+  const feed = await parser.parseString(normalizeFeedXml(xml));
 
   const articles = feed.items
     // An item with no publication date is skipped: we never stamp a story with
@@ -59,6 +59,16 @@ async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
 }
 
 /** Keep only the `max` newest items of a feed (no cap when `max` is unset). */
+/**
+ * Some publishers (the Qatar News Agency among them) emit a valid RSS 2.0
+ * document whose root `<rss>` element has no `version` attribute, which
+ * rss-parser rejects. Treat a versionless `<rss>` root as 2.0. Nothing else in
+ * the document is changed.
+ */
+export function normalizeFeedXml(xml: string): string {
+  return xml.replace(/<rss(?![^>]*\bversion\s*=)(?=[\s>])/, '<rss version="2.0"');
+}
+
 export function capNewest(
   articles: NormalizedArticle[],
   max: number | undefined,

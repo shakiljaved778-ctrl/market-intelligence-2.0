@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import Parser from "rss-parser";
 import { parse } from "yaml";
+import { normalizeFeedXml } from "@/lib/curation/ingest";
 import { parseRobots, pathAllowed } from "@/lib/curation/robots";
 
 interface Candidate {
@@ -82,7 +83,7 @@ async function probe(c: Candidate): Promise<string[]> {
     /xml|rss|atom/i.test(type) || /^\s*<\?xml|<rss|<feed/i.test(body.slice(0, 500));
   if (looksXml) {
     try {
-      const feed = await parser.parseString(body);
+      const feed = await parser.parseString(normalizeFeedXml(body));
       const dates = feed.items
         .map((i) => Date.parse(i.isoDate ?? i.pubDate ?? ""))
         .filter(Number.isFinite)
