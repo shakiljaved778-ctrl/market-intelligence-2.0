@@ -10,11 +10,7 @@ import { CountUp } from "@/components/ui/CountUp";
 import { ChangePill } from "@/components/market/ChangePill";
 import { PriceStamp } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import {
-  readSectionSummaries,
-  readWire,
-  type WireCluster,
-} from "@/lib/news/read";
+import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/read";
 import { pickFeatured } from "@/lib/news/featured";
 import { buildHomepage } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
