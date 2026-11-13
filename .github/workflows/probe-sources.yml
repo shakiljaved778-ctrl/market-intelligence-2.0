@@ -1,0 +1,35 @@
+name: probe-sources
+
+# Read-only check of candidate Gulf news sources (content/source-candidates.yaml):
+# robots.txt, HTTP status, and whether a usable RSS/Atom feed exists. Stores
+# nothing and enables nothing; the report is the job log. Runs when the
+# candidate list or the probe changes, or by hand.
+
+on:
+  push:
+    paths:
+      - "content/source-candidates.yaml"
+      - "scripts/probe-sources.ts"
+      - ".github/workflows/probe-sources.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: probe-sources-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Probe candidate sources
+        run: pnpm exec tsx scripts/probe-sources.ts
