@@ -55,7 +55,7 @@ Database migrations are applied automatically when they reach `main`
 3. Locally, run the one-time table setup (the migration enables the `pgvector`
    extension the news clustering needs):
    ```bash
-   POSTGRES_URL="<paste from Vercel>" pnpm db:migrate
+   POSTGRES_URL="<paste from Vercel>" pnpm db:migrate   # safe to re-run
    POSTGRES_URL="<paste from Vercel>" pnpm db:seed   # optional: loads the demo universe
    ```
    If `pgvector` isn't enabled automatically, run once in the Vercel Postgres SQL

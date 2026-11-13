@@ -2,8 +2,9 @@ name: migrate
 
 # Applies committed database migrations (lib/db/migrations) to the production
 # database as soon as they reach main, so a deploy never runs against a schema
-# that is missing a column it reads or writes. `drizzle-kit migrate` is
-# idempotent: already-applied migrations are skipped.
+# that is missing a column it reads or writes. `scripts/migrate.ts` is safe to
+# re-run: applied migrations are skipped, and a database whose tables exist but
+# which has no migration history is baselined from its own schema first.
 #
 # Also runnable by hand (workflow_dispatch) — e.g. after restoring a database.
 
@@ -13,6 +14,8 @@ on:
     paths:
       - "lib/db/migrations/**"
       - "lib/db/schema.ts"
+      - "scripts/migrate.ts"
+      - ".github/workflows/migrate.yml"
   workflow_dispatch:
 
 concurrency:
