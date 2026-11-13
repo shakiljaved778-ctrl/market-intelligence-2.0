@@ -27,6 +27,7 @@ describe("wire read — live mode: real news leads, demo fixtures dropped, Eurek
       getDb: () => null,
     }));
     vi.doMock("@/lib/db/queries/wire", () => ({
+      dbReadWireBySlug: async () => null,
       dbReadWire: async () => [
         {
           slug: "live-markets-story",
@@ -36,11 +37,13 @@ describe("wire read — live mode: real news leads, demo fixtures dropped, Eurek
           entities: [],
           sourceIds: ["reuters"],
           sourceCount: 3,
-          eventTime: "2026-09-26T12:00:00.000Z",
-          // A recent, well-sourced live story — it must LEAD the wire.
-          importanceScore: 99,
+          // A recent, well-sourced live story — it must LEAD the wire. (The
+          // stored score is ignored: importance is recomputed at read time.)
+          eventTime: new Date(Date.now() - 3_600_000).toISOString(),
+          importanceScore: 1,
           articleIds: [9001],
           primaryId: 9001,
+          primarySourceId: "reuters",
           primaryDek: "Equities climbed as traders priced in easier policy.",
           brief: null,
           imageUrl: null,
@@ -50,7 +53,7 @@ describe("wire read — live mode: real news leads, demo fixtures dropped, Eurek
               headline: "Stocks rally as rate-cut bets build",
               sourceName: "Reuters",
               url: "https://example.com/live",
-              publishedAt: "2026-09-26T12:00:00.000Z",
+              publishedAt: new Date(Date.now() - 3_600_000).toISOString(),
               dek: "Equities climbed.",
             },
           ],
@@ -121,6 +124,7 @@ describe("wire read — stored tickers are re-derived", () => {
       getDb: () => null,
     }));
     vi.doMock("@/lib/db/queries/wire", () => ({
+      dbReadWireBySlug: async () => null,
       dbReadWire: async () => [
         {
           slug: "nasa-escapade",
@@ -135,6 +139,7 @@ describe("wire read — stored tickers are re-derived", () => {
           importanceScore: 40,
           articleIds: [1],
           primaryId: 1,
+          primarySourceId: "nasa-news",
           primaryDek:
             "NASA's two ESCAPADE spacecraft have each completed a powered Earth flyby and are now on their way to Mars.",
           brief: null,

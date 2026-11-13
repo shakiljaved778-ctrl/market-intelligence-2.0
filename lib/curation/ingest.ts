@@ -33,8 +33,10 @@ async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
   const xml = await res.text();
   const feed = await parser.parseString(xml);
 
-  return feed.items
-    .filter((item) => item.title && item.link)
+  const articles = feed.items
+    // An item with no publication date is skipped: we never stamp a story with
+    // the time we happened to fetch it (that made old documents look new).
+    .filter((item) => item.title && item.link && (item.isoDate ?? item.pubDate))
     .map((item): NormalizedArticle => {
       const url = item.link as string;
       const headline = normalizeText(item.title as string);
@@ -47,15 +49,24 @@ async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
         canonicalUrl: canonicalizeUrl(url),
         headline,
         dek,
-        publishedAt: (
-          item.isoDate ??
-          item.pubDate ??
-          new Date().toISOString()
-        ).toString(),
+        publishedAt: (item.isoDate ?? item.pubDate ?? "").toString(),
         author: item.creator ?? null,
         rawHash: headlineHash(headline),
       };
-    });
+    })
+    .filter((a) => Number.isFinite(Date.parse(a.publishedAt)));
+  return capNewest(articles, source.max_items_per_run);
+}
+
+/** Keep only the `max` newest items of a feed (no cap when `max` is unset). */
+export function capNewest(
+  articles: NormalizedArticle[],
+  max: number | undefined,
+): NormalizedArticle[] {
+  if (!max || articles.length <= max) return articles;
+  return [...articles]
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .slice(0, max);
 }
 
 /** Deduplicate a batch on canonical URL and on the normalised-headline hash. */

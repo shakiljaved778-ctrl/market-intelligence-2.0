@@ -51,10 +51,8 @@ describe("section classifier (deterministic, dictionary-driven)", () => {
     ).toBe("markets");
   });
 
-  it("defaults to markets when nothing matches", () => {
-    expect(classifySection({ title: "A quiet, uneventful trading day" })).toBe(
-      "markets",
-    );
+  it("files an unplaceable story under the hidden General bucket, never Markets", () => {
+    expect(classifySection({ title: "A quiet, uneventful afternoon" })).toBe("general");
   });
 
   it("knows which sections are financial", () => {
@@ -179,5 +177,90 @@ describe("editorial mix (§13 product rule)", () => {
     expect(nonFinancialPct).toBeGreaterThanOrEqual(30);
     // ...and still markets-first: non-financial is a minority of the wire.
     expect(nonFinancialPct).toBeLessThan(50);
+  });
+});
+
+/**
+ * Phase 2 regressions: the live headlines the 12 Nov audit found misfiled. A
+ * NASA story must never land in Markets, Economy or Health, and the acronym WHO
+ * must not match the word "who".
+ */
+describe("section classifier — misfiled NASA stories (Phase 2)", () => {
+  beforeEach(() => __resetSectionCache());
+
+  const NASA: { title: string; dek: string }[] = [
+    {
+      title: "NASA’s ESCAPADE Completes Powered Earth Flybys, Now En Route to Mars",
+      dek: "NASA’s two ESCAPADE spacecraft have each completed a powered Earth flyby, using Earth’s gravity to slingshot themselves toward Mars.",
+    },
+    {
+      title: "NASA Names Astronaut Christina Koch Acting Deputy Chief Engineer",
+      dek: "NASA engineer and astronaut Christina Koch will serve as the agency’s acting deputy chief engineer, following the retirement of Katherine Van Hooser, who will conclude more than 35 years of service.",
+    },
+    {
+      title: "NASA’s SpaceX CRS-35 Mission to Launch Health Research",
+      dek: "The resupply mission carries experiments on human health in space to the International Space Station.",
+    },
+    {
+      title: "CHAPEA Crew Leaves a Mark",
+      dek: "The crew of NASA’s yearlong simulated Mars mission reflects on what the habitat taught researchers about health and performance.",
+    },
+    {
+      title: "Newest Sample, Oldest Rock?",
+      dek: "Perseverance collected a rock core that may be among the oldest material sampled on Mars.",
+    },
+    {
+      title:
+        "Johnson Space Center Sparks Curiosity at Houston’s 33rd Annual Japan Festival",
+      dek: "NASA’s Johnson Space Center brought space exploration to the festival at Hermann Park.",
+    },
+    {
+      title: "Reliable Robots: Meet Johnson’s Dexterous Robotics Team",
+      dek: "Human-robot collaboration could become reality as NASA launches complex missions deeper into space.",
+    },
+  ];
+
+  it("never files a NASA story under Markets, Economy or Health", () => {
+    for (const s of NASA) {
+      const section = classifySection({ ...s, sourceId: "nasa-news" });
+      expect(["markets", "economy", "health"], s.title).not.toContain(section);
+      expect(["science", "technology"], s.title).toContain(section);
+    }
+  });
+
+  it("keeps a NASA feed in its allowed sections even when tickers or topics appear", () => {
+    const section = classifySection({
+      title: "NASA awards launch services contract",
+      dek: "The agency selected a provider for an upcoming science mission.",
+      tickers: ["BA"],
+      topics: ["earnings"],
+      sourceId: "nasa-news",
+    });
+    expect(section).toBe("science");
+  });
+
+  it("does not read the word 'who' as the WHO", () => {
+    expect(
+      classifySection({
+        title: "Engineer who led the rover team retires",
+        dek: "Colleagues praised a career who spanned three Mars missions.",
+      }),
+    ).not.toBe("health");
+    expect(classifySection({ title: "WHO declares the mpox emergency over" })).toBe(
+      "health",
+    );
+  });
+
+  it("files an unplaceable story under the hidden General bucket", () => {
+    expect(classifySection({ title: "Newest Sample, Oldest Rock?" })).toBe("general");
+  });
+
+  it("lets a single-subject feed fall back to its default section", () => {
+    expect(
+      classifySection({
+        title: "Agency marks anniversary of first flight",
+        sourceId: "nasa-news",
+      }),
+    ).toBe("science");
   });
 });

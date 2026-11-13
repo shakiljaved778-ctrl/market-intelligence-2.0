@@ -21,6 +21,18 @@ const SourceSchema = z.object({
   trust_score: z.number(),
   license_note: z.string().min(1), // §10: every source needs an explicit note
   active: z.boolean(),
+  /**
+   * The section a story from this feed takes when no rule places it, and the
+   * only sections the feed may publish into. They stop a single-subject feed
+   * (NASA, WHO) from being mis-filed by a stray keyword (lib/curation/section.ts).
+   */
+  default_section: z.string().optional(),
+  allowed_sections: z.array(z.string()).optional(),
+  /**
+   * At most this many of the feed's stories are taken per ingest run, newest
+   * first — so one prolific feed cannot swamp the wire.
+   */
+  max_items_per_run: z.number().int().positive().optional(),
 });
 export type SourceConfig = z.infer<typeof SourceSchema>;
 
