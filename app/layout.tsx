@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
@@ -100,7 +101,11 @@ export default async function RootLayout({
           </p>
         ) : null}
         <Header currency={currency} themePref={themePref} />
-        <TickerTape />
+        {/* The tape reads stored prices; it streams in after the page shell so
+            a slow read can never hold the whole page. */}
+        <Suspense fallback={null}>
+          <TickerTape />
+        </Suspense>
         <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
           {children}
         </main>

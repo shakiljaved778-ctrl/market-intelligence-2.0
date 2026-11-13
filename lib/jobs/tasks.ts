@@ -5,7 +5,7 @@ import { worldBankSeries } from "@/lib/providers/worldbank";
 import { getRegistry } from "@/lib/providers";
 import { cachePut } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
-import { dbLatestQuotes, persistQuote } from "@/lib/db/queries/quotes";
+import { dbLatestQuotesForJob, persistQuote } from "@/lib/db/queries/quotes";
 import { persistFundamentals } from "@/lib/db/queries/fundamentals";
 import { persistFxRates, persistRecap, persistSeries } from "@/lib/db/queries/market";
 import { pruneRetention } from "@/lib/db/queries/retention";
@@ -89,7 +89,7 @@ export async function macroTask(): Promise<JobSummary> {
  * Returns false (and writes nothing) when coverage is below the gate.
  */
 async function sessionRecapTask(): Promise<boolean> {
-  const stored = await dbLatestQuotes(36);
+  const stored = await dbLatestQuotesForJob(36);
   const rows: SessionRow[] = [];
   for (const inst of INSTRUMENTS) {
     const quote = stored.get(inst.symbol);

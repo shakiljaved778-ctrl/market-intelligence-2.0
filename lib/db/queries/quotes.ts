@@ -1,6 +1,6 @@
 import { desc, gte, sql } from "drizzle-orm";
 import { instrumentBySymbol } from "@/content/instruments";
-import { getDb } from "@/lib/db/client";
+import { dbRead, getDb } from "@/lib/db/client";
 import { instruments, quotes } from "@/lib/db/schema";
 import type { Quote } from "@/lib/providers/types";
 
@@ -80,7 +80,7 @@ function rowToQuote(row: QuoteRow, nativeCurrency: string): Quote {
  * universe of ~120 instruments; one round-trip, not one per symbol). Only looks
  * back `sinceHours` — anything older is too stale to show anyway.
  */
-export async function dbLatestQuotes(sinceHours = 168): Promise<Map<string, Quote>> {
+async function latestQuotesQuery(sinceHours: number): Promise<Map<string, Quote>> {
   const out = new Map<string, Quote>();
   const db = getDb();
   if (!db) return out;
@@ -100,6 +100,18 @@ export async function dbLatestQuotes(sinceHours = 168): Promise<Map<string, Quot
   const cur = new Map(inst.map((i) => [i.symbol, i.nativeCurrency]));
   for (const r of rows) out.set(r.symbol, rowToQuote(r, cur.get(r.symbol) ?? "USD"));
   return out;
+}
+
+/** Latest stored quote per symbol, for PAGE rendering (time-limited read). */
+export async function dbLatestQuotes(sinceHours = 168): Promise<Map<string, Quote>> {
+  return dbRead("dbLatestQuotes", () => latestQuotesQuery(sinceHours));
+}
+
+/** The same read for scheduled jobs, which are allowed to wait longer. */
+export async function dbLatestQuotesForJob(
+  sinceHours = 168,
+): Promise<Map<string, Quote>> {
+  return latestQuotesQuery(sinceHours);
 }
 
 /** Count of quote rows written in the last `hours` — a cheap feed-health probe. */
