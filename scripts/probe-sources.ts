@@ -96,6 +96,8 @@ async function probe(c: Candidate): Promise<string[]> {
       lines.push(
         `feed: unparseable (${err instanceof Error ? err.message : String(err)})`,
       );
+      // Show the start of the document so its format can be identified.
+      lines.push(`  head: ${body.slice(0, 1200).replace(/\s+/g, " ")}`);
     }
   } else {
     const links = feedLinks(body, res.url);
