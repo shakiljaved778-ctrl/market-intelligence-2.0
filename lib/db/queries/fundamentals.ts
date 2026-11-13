@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { getDb } from "@/lib/db/client";
+import { dbRead, getDb } from "@/lib/db/client";
 import { fundamentals, instruments } from "@/lib/db/schema";
 import type { Fundamentals } from "@/lib/providers/types";
 
@@ -44,32 +44,34 @@ export async function persistFundamentals(f: Fundamentals): Promise<void> {
 export async function dbLatestFundamentals(
   symbol: string,
 ): Promise<Fundamentals | null> {
-  const db = getDb();
-  if (!db) return null;
-  const sym = symbol.toUpperCase();
-  const [row] = await db
-    .select()
-    .from(fundamentals)
-    .where(eq(fundamentals.symbol, sym))
-    .orderBy(desc(fundamentals.ts))
-    .limit(1);
-  if (!row) return null;
-  return {
-    symbol: row.symbol,
-    peRatio: row.peRatio,
-    pegRatio: row.pegRatio,
-    priceToSales: row.priceToSales,
-    priceToBook: row.priceToBook,
-    grossMargin: row.grossMargin,
-    operatingMargin: row.operatingMargin,
-    netMargin: row.netMargin,
-    returnOnEquity: row.returnOnEquity,
-    returnOnAssets: row.returnOnAssets,
-    debtToEquity: row.debtToEquity,
-    currentRatio: row.currentRatio,
-    dividendYield: row.dividendYield,
-    payoutRatio: row.payoutRatio,
-    provider: row.provider,
-    asOf: row.ts.toISOString(),
-  };
+  return dbRead("dbLatestFundamentals", async () => {
+    const db = getDb();
+    if (!db) return null;
+    const sym = symbol.toUpperCase();
+    const [row] = await db
+      .select()
+      .from(fundamentals)
+      .where(eq(fundamentals.symbol, sym))
+      .orderBy(desc(fundamentals.ts))
+      .limit(1);
+    if (!row) return null;
+    return {
+      symbol: row.symbol,
+      peRatio: row.peRatio,
+      pegRatio: row.pegRatio,
+      priceToSales: row.priceToSales,
+      priceToBook: row.priceToBook,
+      grossMargin: row.grossMargin,
+      operatingMargin: row.operatingMargin,
+      netMargin: row.netMargin,
+      returnOnEquity: row.returnOnEquity,
+      returnOnAssets: row.returnOnAssets,
+      debtToEquity: row.debtToEquity,
+      currentRatio: row.currentRatio,
+      dividendYield: row.dividendYield,
+      payoutRatio: row.payoutRatio,
+      provider: row.provider,
+      asOf: row.ts.toISOString(),
+    };
+  });
 }

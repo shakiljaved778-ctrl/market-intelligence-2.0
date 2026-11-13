@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
-import { getDb } from "@/lib/db/client";
+import { dbRead, getDb } from "@/lib/db/client";
 import { fxRates, macroObs, macroSeries, recaps } from "@/lib/db/schema";
 
 /**
@@ -36,23 +36,25 @@ export async function dbRecentFxRates(
   base: string,
   sinceDays = 21,
 ): Promise<FxRateRow[]> {
-  const db = getDb();
-  if (!db) return [];
-  const since = new Date(Date.now() - sinceDays * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-  const rows = await db
-    .select()
-    .from(fxRates)
-    .where(and(eq(fxRates.base, base), gte(fxRates.date, since)))
-    .orderBy(fxRates.quote, desc(fxRates.date));
-  return rows.map((r) => ({
-    base: r.base,
-    quote: r.quote,
-    date: r.date,
-    rate: r.rate,
-    source: r.source,
-  }));
+  return dbRead("dbRecentFxRates", async () => {
+    const db = getDb();
+    if (!db) return [];
+    const since = new Date(Date.now() - sinceDays * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const rows = await db
+      .select()
+      .from(fxRates)
+      .where(and(eq(fxRates.base, base), gte(fxRates.date, since)))
+      .orderBy(fxRates.quote, desc(fxRates.date));
+    return rows.map((r) => ({
+      base: r.base,
+      quote: r.quote,
+      date: r.date,
+      rate: r.rate,
+      source: r.source,
+    }));
+  });
 }
 
 // ── Macro / commodity series ─────────────────────────────────────────────────
@@ -112,22 +114,24 @@ export async function dbSeriesObservations(
   ids: string[],
   sinceDays: number,
 ): Promise<StoredObservation[]> {
-  const db = getDb();
-  if (!db || ids.length === 0) return [];
-  const since = new Date(Date.now() - sinceDays * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-  const rows = await db
-    .select()
-    .from(macroObs)
-    .where(and(inArray(macroObs.seriesId, ids), gte(macroObs.date, since)))
-    .orderBy(macroObs.seriesId, macroObs.date);
-  const out: StoredObservation[] = [];
-  for (const r of rows) {
-    if (r.value === null) continue;
-    out.push({ seriesId: r.seriesId, date: r.date, value: r.value });
-  }
-  return out;
+  return dbRead("dbSeriesObservations", async () => {
+    const db = getDb();
+    if (!db || ids.length === 0) return [];
+    const since = new Date(Date.now() - sinceDays * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const rows = await db
+      .select()
+      .from(macroObs)
+      .where(and(inArray(macroObs.seriesId, ids), gte(macroObs.date, since)))
+      .orderBy(macroObs.seriesId, macroObs.date);
+    const out: StoredObservation[] = [];
+    for (const r of rows) {
+      if (r.value === null) continue;
+      out.push({ seriesId: r.seriesId, date: r.date, value: r.value });
+    }
+    return out;
+  });
 }
 
 // ── Recaps ───────────────────────────────────────────────────────────────────
@@ -165,34 +169,38 @@ export async function persistRecap(r: Omit<StoredRecap, "generatedAt">): Promise
 }
 
 export async function dbRecentRecaps(limit = 30): Promise<StoredRecap[]> {
-  const db = getDb();
-  if (!db) return [];
-  const rows = await db
-    .select()
-    .from(recaps)
-    .orderBy(desc(recaps.generatedAt))
-    .limit(limit);
-  return rows.map((r) => ({
-    slug: r.slug,
-    kind: r.kind,
-    bodyMd: r.bodyMd,
-    inputs: r.inputs,
-    templateVersion: r.templateVersion,
-    generatedAt: r.generatedAt.toISOString(),
-  }));
+  return dbRead("dbRecentRecaps", async () => {
+    const db = getDb();
+    if (!db) return [];
+    const rows = await db
+      .select()
+      .from(recaps)
+      .orderBy(desc(recaps.generatedAt))
+      .limit(limit);
+    return rows.map((r) => ({
+      slug: r.slug,
+      kind: r.kind,
+      bodyMd: r.bodyMd,
+      inputs: r.inputs,
+      templateVersion: r.templateVersion,
+      generatedAt: r.generatedAt.toISOString(),
+    }));
+  });
 }
 
 export async function dbRecap(slug: string): Promise<StoredRecap | null> {
-  const db = getDb();
-  if (!db) return null;
-  const [r] = await db.select().from(recaps).where(eq(recaps.slug, slug)).limit(1);
-  if (!r) return null;
-  return {
-    slug: r.slug,
-    kind: r.kind,
-    bodyMd: r.bodyMd,
-    inputs: r.inputs,
-    templateVersion: r.templateVersion,
-    generatedAt: r.generatedAt.toISOString(),
-  };
+  return dbRead("dbRecap", async () => {
+    const db = getDb();
+    if (!db) return null;
+    const [r] = await db.select().from(recaps).where(eq(recaps.slug, slug)).limit(1);
+    if (!r) return null;
+    return {
+      slug: r.slug,
+      kind: r.kind,
+      bodyMd: r.bodyMd,
+      inputs: r.inputs,
+      templateVersion: r.templateVersion,
+      generatedAt: r.generatedAt.toISOString(),
+    };
+  });
 }

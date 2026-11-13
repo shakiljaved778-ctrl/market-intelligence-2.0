@@ -39,4 +39,71 @@ export function getDb(): PostgresJsDatabase<typeof schema> | null {
   return db;
 }
 
+/**
+ * Drop the current connection so the next query opens a fresh socket. Used
+ * when a read times out: a stalled socket would otherwise hold every later
+ * query on this instance (the pool has a single connection).
+ */
+export function resetDb(): void {
+  const old = client;
+  client = null;
+  db = null;
+  if (old) void old.end({ timeout: 0 }).catch(() => {});
+}
+
+/** A page-side database read did not finish in time, or was skipped. */
+export class DbUnavailableError extends Error {}
+
+/** Page reads must answer within this budget, or the page renders without them. */
+export const READ_TIMEOUT_MS = 3_000;
+/** After a timeout, skip reads on this instance for this long, then retry. */
+export const READ_BREAKER_MS = 30_000;
+let breakerUntil = 0;
+
+/**
+ * Run a PAGE-SIDE read with a hard time limit.
+ *
+ * A page must never wait on the database indefinitely. If the read takes longer
+ * than READ_TIMEOUT_MS, it is abandoned with a DbUnavailableError (callers
+ * already treat a failed read as "no data" and render an empty state), the
+ * connection is reset, and for READ_BREAKER_MS this instance skips database
+ * reads immediately instead of making each one wait out its own timeout.
+ *
+ * Scheduled jobs do not use this: their writes are allowed to take longer.
+ */
+export async function dbRead<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  if (Date.now() < breakerUntil) {
+    throw new DbUnavailableError(
+      `[db] ${label} skipped: database recently unresponsive`,
+    );
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () =>
+        reject(
+          new DbUnavailableError(`[db] ${label} timed out after ${READ_TIMEOUT_MS}ms`),
+        ),
+      READ_TIMEOUT_MS,
+    );
+  });
+  try {
+    return await Promise.race([fn(), timeout]);
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      breakerUntil = Date.now() + READ_BREAKER_MS;
+      console.error(err.message);
+      resetDb();
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Test seam: clear the read breaker. */
+export function __resetDbReadBreaker(): void {
+  breakerUntil = 0;
+}
+
 export { schema };

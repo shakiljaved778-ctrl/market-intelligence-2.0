@@ -64,6 +64,9 @@ class RestStore implements KvStore {
       },
       body: JSON.stringify(parts),
       cache: "no-store",
+      // A cache call must never hold a page: give up after 2.5 s and let the
+      // caller fall back (every caller already treats a failure as a miss).
+      signal: AbortSignal.timeout(2_500),
     });
     if (!res.ok) {
       throw new Error(`KV command failed: ${res.status}`);
