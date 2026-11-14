@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { __resetSectionCache } from "@/lib/curation/section";
 import type { WireCluster } from "./read";
-import { buildHomepage, NON_FINANCIAL_ROW_SIZE, TOP_SLOT_MAX_AGE_H } from "./homepage";
+import {
+  buildHomepage,
+  GCC_BAND_SIZE,
+  NON_FINANCIAL_ROW_SIZE,
+  TOP_SLOT_MAX_AGE_H,
+} from "./homepage";
 
 const NOW = Date.parse("2026-11-13T12:00:00.000Z");
 const hoursAgo = (h: number) => new Date(NOW - h * 3_600_000).toISOString();
@@ -31,6 +36,7 @@ function story(section: string, ageH: number, score: number): WireCluster {
 
 function allSlots(l: ReturnType<typeof buildHomepage>): WireCluster[] {
   return [
+    ...l.gcc,
     ...(l.lead ? [l.lead] : []),
     ...l.heroSide,
     ...l.threeUp,
@@ -128,12 +134,45 @@ describe("buildHomepage", () => {
     expect(l2.leadLabel).toBeNull();
   });
 
-  it("puts a fresh GCC financial story ahead of a stronger global one", () => {
-    const gcc = { ...story("markets", 6, 30), region: "QA" as const };
+  it("opens with a band of fresh GCC market news, newest first", () => {
+    const qa = (ageH: number, score: number) => ({
+      ...story("markets", ageH, score),
+      region: "QA" as const,
+    });
+    const older = qa(20, 90);
+    const newer = qa(3, 10);
     const global = story("markets", 2, 80);
-    const l = buildHomepage([global, gcc], { now: NOW });
-    expect(l.lead?.slug).toBe(gcc.slug);
-    expect(l.heroSide[0]?.slug).toBe(global.slug);
+    const l = buildHomepage([older, global, newer], { now: NOW });
+    expect(l.gcc.map((c) => c.slug)).toEqual([newer.slug, older.slug]);
+    // The lead is the strongest remaining story; nothing is shown twice.
+    expect(l.lead?.slug).toBe(global.slug);
+  });
+
+  it("keeps the GCC band to financial sections, fresh stories and its size", () => {
+    const gulfScience = { ...story("science", 2, 50), region: "QA" as const };
+    const staleGulf = { ...story("economy", 200, 50), region: "SA" as const };
+    const many = Array.from({ length: GCC_BAND_SIZE + 2 }, (_, i) => ({
+      ...story("economy", i + 1, 40),
+      region: "GCC" as const,
+    }));
+    const l = buildHomepage([gulfScience, staleGulf, ...many], { now: NOW });
+    expect(l.gcc).toHaveLength(GCC_BAND_SIZE);
+    expect(l.gcc.map((c) => c.slug)).not.toContain(gulfScience.slug);
+    expect(l.gcc.map((c) => c.slug)).not.toContain(staleGulf.slug);
+  });
+
+  it("has an empty GCC band when there is no GCC news", () => {
+    expect(buildHomepage(wire, { now: NOW }).gcc).toEqual([]);
+  });
+
+  it("does not repeat an editor's pick in the GCC band", () => {
+    const gulf = { ...story("markets", 2, 50), region: "QA" as const };
+    const l = buildHomepage([gulf], {
+      now: NOW,
+      featured: { cluster: gulf, label: "Editor's pick" },
+    });
+    expect(l.lead?.slug).toBe(gulf.slug);
+    expect(l.gcc).toEqual([]);
   });
 
   it("has no lead when nothing is fresh", () => {

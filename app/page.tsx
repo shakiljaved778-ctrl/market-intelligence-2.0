@@ -120,13 +120,18 @@ export default async function BoardPage() {
   // story, nothing older than 72 hours in a top slot, finance leads, and
   // non-finance sections get one row each.
   const featured = pickFeatured(clusters);
-  const { lead, leadLabel, heroSide, threeUp, blocks, latest } = buildHomepage(
-    clusters,
-    {
-      now: now.getTime(),
-      featured,
-    },
-  );
+  const {
+    gcc: gccNews,
+    lead,
+    leadLabel,
+    heroSide,
+    threeUp,
+    blocks,
+    latest,
+  } = buildHomepage(clusters, {
+    now: now.getTime(),
+    featured,
+  });
   // The latest session recap — shown only while it is recent (a week-old recap
   // is not "the session recap"). Built from real stored closes, or absent.
   const latestRecap = (await listRecaps(currency)).find(
@@ -155,6 +160,45 @@ export default async function BoardPage() {
             The wire <span aria-hidden>→</span>
           </Link>
         </div>
+
+        {/* GCC market news opens the page (owner request, 2026-11-14). */}
+        {gccNews.length ? (
+          <section className="mb-8" aria-labelledby="gcc-markets-heading">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 id="gcc-markets-heading" className="t-h3 font-editorial text-ink">
+                GCC markets
+              </h2>
+              <Link
+                href="/news/section/markets"
+                className="text-ink-3 hover:text-brand text-[12px]"
+              >
+                Markets news <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {gccNews.map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/news/${c.slug}`}
+                  className="group border-hairline bg-surface hover:bg-surface-2 block min-w-0 rounded-[8px] border p-4 transition-colors"
+                >
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
+                    <SectionTag section={c.section} region={c.region} />
+                  </div>
+                  <h3 className="font-editorial text-ink mt-2 text-[15px] leading-snug underline-offset-2 group-hover:underline">
+                    {c.title}
+                  </h3>
+                  {c.dek ? (
+                    <p className="text-ink-3 mt-2 line-clamp-2 text-[13px] leading-relaxed">
+                      {c.dek}
+                    </p>
+                  ) : null}
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Lead */}

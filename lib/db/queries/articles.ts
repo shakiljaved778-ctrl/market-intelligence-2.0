@@ -155,15 +155,23 @@ export async function persistClusters(ranked: SluggedCluster[]): Promise<number>
 }
 
 /** Slugs among `slugs` whose cluster already has an AI brief (skip regeneration). */
-export async function existingClusterBriefs(slugs: string[]): Promise<Set<string>> {
-  const have = new Set<string>();
+/**
+ * Word counts of the stored briefs for these clusters (slug -> words). A cluster
+ * with no brief is absent from the map.
+ */
+export async function existingClusterBriefs(
+  slugs: string[],
+): Promise<Map<string, number>> {
+  const have = new Map<string, number>();
   const db = getDb();
   if (!db || slugs.length === 0) return have;
   const rows = await db
     .select({ slug: clusters.slug, briefMd: clusters.briefMd })
     .from(clusters)
     .where(inArray(clusters.slug, slugs));
-  for (const r of rows) if (r.briefMd) have.add(r.slug);
+  for (const r of rows) {
+    if (r.briefMd) have.set(r.slug, r.briefMd.split(/\s+/).filter(Boolean).length);
+  }
   return have;
 }
 
