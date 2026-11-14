@@ -17,6 +17,12 @@
 #   saudi-exchange-news                 we do not work around a block.
 #   qse-home                            robots.txt unreachable, no feed found.
 #   dfm-home                            only a YouTube feed — not news text.
+# Probe run 5, 2026-11-14:
+#   qna-qatar / -general / -analysis   ADDED — robots allow, HTTP 200, all dated.
+#   treasury-press, worldbank-news,    switched OFF in sources.yaml: Treasury's
+#   cdc-newsroom                       feed times out (no feed on its page); the
+#                                      World Bank URL now returns HTML; the CDC
+#                                      feed is an old COVID-19 feed, 0 items.
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
