@@ -253,7 +253,11 @@ export async function clusterTask(): Promise<JobSummary> {
     await import("@/lib/providers/groq");
   const { searchPexels, isPexelsConfigured } = await import("@/lib/providers/pexels");
   if (isGroqConfigured() || isPexelsConfigured()) {
-    const { classifySection } = await import("@/lib/curation/section");
+    const { classifySection, sectionMeta } = await import("@/lib/curation/section");
+    // Stories in a hidden section (the "general" bucket) are never shown, so
+    // they get no article and no cover — the free-tier budget goes to stories
+    // readers can see.
+    const shown = (section: string) => !sectionMeta(section).hidden;
     const { coverQuery } = await import("@/lib/news/cover-query");
     const {
       existingClusterBriefs,
@@ -290,6 +294,7 @@ export async function clusterTask(): Promise<JobSummary> {
         tickers: c.tickers,
         sourceId: sourceById.get(c.primaryId) ?? null,
       });
+      if (!shown(section)) continue;
 
       const stored = haveBrief.get(c.slug);
       const needsBrief = stored === undefined;
@@ -343,17 +348,22 @@ export async function clusterTask(): Promise<JobSummary> {
     // missed their run, or lost it when a later run split them), newest first.
     let backfilled = 0;
     if (isGroqConfigured() && callsLeft > 0) {
-      for (const b of await clustersNeedingBrief(callsLeft)) {
+      // Read extra candidates: hidden-section stories are skipped, not written.
+      for (const b of await clustersNeedingBrief(callsLeft * 4)) {
+        if (callsLeft <= 0) break;
+        const section = classifySection({
+          title: b.title,
+          dek: b.primaryDek,
+          topics: b.primaryTopic ? [b.primaryTopic] : [],
+          tickers: b.tickers,
+          sourceId: b.sourceSlugs[0] ?? null,
+        });
+        if (!shown(section)) continue;
+        callsLeft -= 1;
         const brief = await generateBrief(String(b.primaryArticleId), {
           title: b.title,
           dek: b.primaryDek,
-          section: classifySection({
-            title: b.title,
-            dek: b.primaryDek,
-            topics: b.primaryTopic ? [b.primaryTopic] : [],
-            tickers: b.tickers,
-            sourceId: b.sourceSlugs[0] ?? null,
-          }),
+          section,
           tickers: b.tickers,
           sources: b.sourceSlugs.map((id) => sourceName.get(id) ?? id),
           sourceDeks: b.deks,

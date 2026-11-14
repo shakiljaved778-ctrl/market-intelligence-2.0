@@ -68,7 +68,7 @@ sources:
     tier: primary
     trust_score: 98
     license_note: U.S. government work, public domain.
-    active: true
+    active: false # 2026-11-14: feed times out and the press page lists no feed (probe run 5)
     default_section: economy
     allowed_sections: [economy, markets, world]
 
@@ -132,6 +132,46 @@ sources:
     max_items_per_run: 15
     default_section: markets
     allowed_sections: [economy, markets]
+
+  # More QNA feeds (probe run 5, 2026-11-14: robots allow, HTTP 200, fresh,
+  # every item dated). Same agency and terms as the economy feeds above.
+  # Local Qatar news: placed by the classifier; unplaceable items go to the
+  # hidden General bucket rather than to a financial section.
+  - id: qna-qatar
+    name: Qatar News Agency — Qatar
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Qatar
+    kind: rss
+    region: QA
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 15
+
+  # Regional and world news; tagged by each story's own text.
+  - id: qna-general
+    name: Qatar News Agency — General
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/General
+    kind: rss
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 15
+    default_section: world
+
+  - id: qna-analysis
+    name: Qatar News Agency — Analysis and Reports
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Analysis-and-Reports
+    kind: rss
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 10
 
   # The Conversation — expert-authored news & analysis across markets, world,
   # tech, science, health. CC-BY-ND explicitly permits commercial republication
@@ -230,7 +270,7 @@ sources:
     tier: regulator
     trust_score: 95
     license_note: U.S. government work, public domain. Attribution + link retained.
-    active: true
+    active: false # 2026-11-14: feed is an old COVID-19 feed with 0 items; cdc.gov/rss lists others, unverified
     default_section: health
     allowed_sections: [health]
 
@@ -258,7 +298,7 @@ sources:
     tier: primary
     trust_score: 96
     license_note: World Bank content under CC BY 4.0 with attribution; headline + dek + link only.
-    active: true
+    active: false # 2026-11-14: ?format=rss now returns an HTML page, no feed found (probe run 5)
     default_section: economy
     allowed_sections: [economy, world, science, health]
 
