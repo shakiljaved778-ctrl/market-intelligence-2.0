@@ -1,3 +1,4 @@
+import { loadEntities } from "./config";
 import { cosine, type Embedder } from "./embed";
 
 /**
@@ -56,10 +57,26 @@ function overlap(a: string[], b: string[]): number {
   return b.filter((x) => set.has(x)).length;
 }
 
+/**
+ * Entities too broad to show that two reports cover the same event. A country
+ * is named by nearly every story from that country's news agency (all Qatar
+ * News Agency stories name Qatar), so sharing one must not merge them.
+ */
+let broadEntities: Set<string> | null = null;
+function isBroadEntity(name: string): boolean {
+  broadEntities ??= new Set(
+    loadEntities()
+      .filter((e) => e.kind === "country")
+      .map((e) => e.name),
+  );
+  return broadEntities.has(name);
+}
+
 function boost(a: ClusterInput, b: ClusterInput): number {
   let s = 0;
   if (overlap(a.tickers, b.tickers) > 0) s += BOOST_TICKER;
-  if (overlap(a.entities, b.entities) > 0) s += BOOST_ENTITY;
+  const specific = (e: string[]) => e.filter((x) => !isBroadEntity(x));
+  if (overlap(specific(a.entities), specific(b.entities)) > 0) s += BOOST_ENTITY;
   if (overlap(a.topics, b.topics) > 0) s += BOOST_TOPIC;
   return Math.min(s, BOOST_CAP);
 }

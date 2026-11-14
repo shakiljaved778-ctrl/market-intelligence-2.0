@@ -45,6 +45,39 @@ describe("clustering a multi-source event (§9 gate)", () => {
     const sec = clusters.find((c) => c.articleIds.includes(8));
     expect(sec?.articleIds).toEqual([8]); // regulator enforcement — its own story
   });
+
+  it("keeps unrelated stories from one country's news agency apart", async () => {
+    // Every Qatar News Agency story names Qatar; a shared country is not a
+    // shared event (live over-merge found 14 Nov).
+    const at = "2026-11-13T10:00:00.000Z";
+    const qna = (id: number, headline: string, dek: string) =>
+      toClusterInput({
+        id,
+        sourceId: "qna-economy-local",
+        trustScore: 90,
+        tier: "wire",
+        headline,
+        dek,
+        publishedAt: at,
+        url: `https://example.org/${id}`,
+      } as (typeof FIXTURE_ARTICLES)[number]);
+    const clusters = await clusterArticles(
+      [
+        qna(
+          9101,
+          "Qatar Stock Exchange Index Gains 52 Points",
+          "Doha (QNA) - The Qatar Stock Exchange general index rose 0.49 percent to close at 10,640 points.",
+        ),
+        qna(
+          9102,
+          "Finance Ministry: Government Tenders Reach QAR 6 Billion in Q3 2026",
+          "Doha (QNA) - Government tenders and auctions in Qatar totaled QAR 6 billion in the third quarter.",
+        ),
+      ],
+      embedder,
+    );
+    expect(clusters).toHaveLength(2);
+  });
 });
 
 describe("runPipeline ranking + slugs", () => {

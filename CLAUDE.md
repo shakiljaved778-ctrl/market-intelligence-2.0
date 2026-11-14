@@ -156,7 +156,9 @@ is weak, so the overlap boost dominates: `BOOST_TICKER=0.30`, `BOOST_ENTITY=0.30
 `BOOST_TOPIC=0.10` (cap 0.45), `SIM_THRESHOLD=0.50`. Evidence: on the fixture wire
 this merges one Fed decision across four sources into **one** cluster and one
 OPEC+ story across three, while keeping the SEC enforcement and Apple items as
-singletons (`lib/curation/pipeline.test.ts`). With `EMBEDDER=minilm`, lower boosts
+singletons (`lib/curation/pipeline.test.ts`). Country entities (e.g. Qatar) do not count towards the entity
+boost: a national news agency names its country in nearly every story, so a shared
+country is not a shared event (same test file). With `EMBEDDER=minilm`, lower boosts
 to ≈0.12 and raise `SIM_THRESHOLD` toward ~0.68 pure cosine.
 
 **Ranking** (`lib/curation/rank.ts`), weights sum to 1, one place, tunable:
