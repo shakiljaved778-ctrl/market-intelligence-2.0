@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { swr } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
+import { PROVIDER_TIMEOUT_MS } from "./timeout";
 
 /**
  * FRED (St. Louis Fed) — US macro series (§6). Free key, no hard limit. Macro
@@ -49,7 +50,10 @@ export async function fredSeries(
         const url = `${BASE_URL}/series/observations?series_id=${encodeURIComponent(
           seriesId,
         )}&api_key=${key}&file_type=json${start ? `&observation_start=${start}` : ""}`;
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+        });
         if (!res.ok) throw new Error(`FRED ${res.status}`);
         const parsed = ObservationsResponse.parse(await res.json());
         return parsed.observations.map(

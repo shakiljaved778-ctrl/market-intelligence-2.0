@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { swr } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
+import { PROVIDER_TIMEOUT_MS } from "./timeout";
 
 /**
  * Frankfurter FX reference rates (§6) — ECB-based, open, no key. Used at
@@ -32,6 +33,7 @@ export async function usdPerUnit(native: string): Promise<number | null> {
       // Ask for USD priced in `cur`, then invert: 1 native = (1/rate) USD.
       const res = await fetch(`${BASE_URL}/latest?base=${cur}&symbols=USD`, {
         cache: "no-store",
+        signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
       });
       if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
       const parsed = FrankfurterResponse.parse(await res.json());
@@ -79,7 +81,7 @@ export async function referenceRates(
     const { value } = await swr(key, TTL.fxReference, async () => {
       const res = await fetch(
         `${BASE_URL}/${start}..?base=${b}&symbols=${syms.join(",")}`,
-        { cache: "no-store" },
+        { cache: "no-store", signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) },
       );
       if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
       const parsed = SeriesResponse.parse(await res.json());
