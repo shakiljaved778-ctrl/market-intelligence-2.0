@@ -108,10 +108,15 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
       const items = await fetchFeed(source);
       perSource[source.id] = items.length;
       collected.push(...items);
-    } catch {
-      perSource[source.id] = 0; // failure recorded via job_runs upstream
+    } catch (err) {
+      // One bad feed must not stop the run, but it must be visible in the log.
+      perSource[source.id] = 0;
+      console.warn(
+        `[ingest] ${source.id} failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
+  console.log(`[ingest] items per source: ${JSON.stringify(perSource)}`);
 
   // Quality gate (Phase 2 §3/§4): drop seed-style headlines that name nothing
   // specific, but KEEP raw institutional titles — the summariser rewrites those
