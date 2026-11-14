@@ -58,9 +58,23 @@ export async function quotesTask(): Promise<JobSummary> {
  * benchmarks) and ECB reference FX rates. Everything fetched is PERSISTED so the
  * pages read stored, source-stamped observations — never a fixture.
  */
+/**
+ * Time the macro job spends on series before it stops starting new ones, so the
+ * whole run (series, then FX, each request capped by PROVIDER_TIMEOUT_MS) ends
+ * inside the route's 60 s limit. Series left out are fetched on the next run.
+ */
+export const MACRO_SERIES_BUDGET_MS = 35_000;
+
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
+  const started = Date.now();
   for (const cfg of SERIES) {
+    if (Date.now() - started > MACRO_SERIES_BUDGET_MS) {
+      console.warn(
+        `[macro] time budget reached; ${cfg.id} and later series wait for the next run`,
+      );
+      break;
+    }
     const obs =
       cfg.provider === "fred"
         ? await fredSeries(cfg.code, cfg.historyDays)

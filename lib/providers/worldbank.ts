@@ -2,6 +2,7 @@ import { z } from "zod";
 import { swr } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
 import type { MacroObservation } from "./fred";
+import { PROVIDER_TIMEOUT_MS } from "./timeout";
 
 /**
  * World Bank — cross-country macro incl. GCC GDP/inflation (§6). Open, no key.
@@ -25,7 +26,10 @@ export async function worldBankSeries(
       TTL.macroSeries,
       async () => {
         const url = `${BASE_URL}/country/${country}/indicator/${indicator}?format=json&per_page=60`;
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+        });
         if (!res.ok) throw new Error(`World Bank ${res.status}`);
         const [, rows] = Response.parse(await res.json());
         return (rows ?? [])
