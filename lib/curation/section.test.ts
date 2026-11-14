@@ -256,6 +256,30 @@ describe("section classifier — misfiled NASA stories (Phase 2)", () => {
     expect(classifySection({ title: "Newest Sample, Oldest Rock?" })).toBe("general");
   });
 
+  it("does not file an essay or review under Markets on a lone topic tag", () => {
+    // Live misfilings, 14 Nov: a stray topic tag was the only evidence.
+    expect(
+      classifySection({
+        title:
+          "Fjord turns a Norwegian child protection battle into a chilling moral thriller",
+        topics: ["earnings"],
+        sourceId: "the-conversation",
+      }),
+    ).not.toBe("markets");
+    expect(
+      classifySection({
+        title:
+          "While California’s wealth tax failed, states are taking other steps to collect more revenue",
+        topics: ["earnings"],
+        sourceId: "the-conversation",
+      }),
+    ).not.toBe("markets");
+    // A named instrument is still enough.
+    expect(classifySection({ title: "Tesla shares slide", tickers: ["TSLA"] })).toBe(
+      "markets",
+    );
+  });
+
   it("lets a single-subject feed fall back to its default section", () => {
     expect(
       classifySection({

@@ -148,7 +148,14 @@ export function scoreSections(input: SectionInput): Map<string, number> {
   if (topics.some((t) => ECONOMY_TOPICS.has(t))) add("economy", W_ECONOMY_TOPIC);
   if (topics.includes("crypto")) add("crypto", W_CRYPTO_TOPIC);
   if (tickers.length > 0) add("markets", W_TICKER);
-  if (topics.some((t) => !ECONOMY_TOPICS.has(t) && t !== "crypto" && t !== "gcc")) {
+  // A financial topic tag (earnings, energy, regulation …) reinforces Markets
+  // but cannot place a story there on its own: tags are matched loosely, and a
+  // lone tag is how essays and film reviews landed in Markets. It counts only
+  // when a Markets keyword or a named instrument is already present.
+  if (
+    (scores.get("markets") ?? 0) > 0 &&
+    topics.some((t) => !ECONOMY_TOPICS.has(t) && t !== "crypto" && t !== "gcc")
+  ) {
     add("markets", W_FINANCIAL_TOPIC);
   }
   return scores;
