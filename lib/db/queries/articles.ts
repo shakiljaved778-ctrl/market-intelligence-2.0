@@ -128,7 +128,12 @@ export async function persistClusters(ranked: SluggedCluster[]): Promise<number>
       })
       .onConflictDoUpdate({
         target: clusters.slug,
+        // A re-run can change a story's membership (a split or merge), so its
+        // time, instruments and topic follow the current members too.
         set: {
+          primaryTopic: c.topics[0] ?? null,
+          tickers: c.tickers,
+          eventTime: new Date(c.eventTime),
           importanceScore: c.importanceScore,
           sourceCount: c.sourceCount,
           articleCount: c.articleIds.length,
@@ -137,6 +142,18 @@ export async function persistClusters(ranked: SluggedCluster[]): Promise<number>
       })
       .returning({ id: clusters.id });
     if (!row) continue;
+
+    // Drop links to articles that are no longer members of this story.
+    if (c.articleIds.length > 0) {
+      await db
+        .delete(clusterArticles)
+        .where(
+          and(
+            eq(clusterArticles.clusterId, row.id),
+            notInArray(clusterArticles.articleId, c.articleIds),
+          ),
+        );
+    }
 
     // Mark member articles clustered and (re)link them.
     await db

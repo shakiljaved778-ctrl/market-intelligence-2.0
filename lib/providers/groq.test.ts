@@ -5,6 +5,7 @@ import {
   BRIEF_TARGET_WORDS,
   generateBrief,
   ungroundedFigures,
+  ungroundedInstitutions,
   wordCount,
 } from "./groq";
 
@@ -121,7 +122,7 @@ describe("generateBrief figure check", () => {
     const second = JSON.parse(
       (fetchMock.mock.calls[1] as unknown as [string, RequestInit])[1].body as string,
     );
-    expect(second.messages.at(-1).content).toContain("not in the facts: 7");
+    expect(second.messages.at(-1).content).toContain("not in the facts: figure 7");
   });
 
   it("publishes nothing when the rewrite still invents a figure", async () => {
@@ -133,5 +134,34 @@ describe("generateBrief figure check", () => {
     expect(
       await generateBrief("figure-reject", { title: "Oil rises", section: "markets" }),
     ).toBeNull();
+  });
+});
+
+describe("ungroundedInstitutions", () => {
+  const input = {
+    title: "Real estate trading volume exceeds QR 665 million",
+    dek: "The Department of Real Estate Registration at the Ministry of Justice said trading rose.",
+    section: "realestate",
+  };
+
+  it("flags a ministry the facts never mention (live case, 14 Nov)", () => {
+    expect(
+      ungroundedInstitutions("The Omani Ministry of Oil announced the price.", input),
+    ).toEqual(["Ministry of Oil"]);
+  });
+
+  it("accepts institutions named in the facts", () => {
+    expect(
+      ungroundedInstitutions(
+        "The Ministry of Justice and its Department of Real Estate Registration reported it.",
+        input,
+      ),
+    ).toEqual([]);
+  });
+
+  it("flags an invented authority written the other way round", () => {
+    expect(
+      ungroundedInstitutions("The Qatar Financial Markets Authority said so.", input),
+    ).toEqual(["Qatar Financial Markets Authority"]);
   });
 });
