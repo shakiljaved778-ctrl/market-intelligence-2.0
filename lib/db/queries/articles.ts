@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, notInArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, notInArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { articles, clusterArticles, clusters, sources } from "@/lib/db/schema";
 import { classify } from "@/lib/curation/classify";
@@ -273,6 +273,90 @@ export async function supersedeReplacedClusters(
     );
   }
   return replaced.length + trimmed.length;
+}
+
+/** A published story with no AI article yet, with what is needed to write one. */
+export interface ClusterNeedingBrief {
+  slug: string;
+  title: string;
+  tickers: string[];
+  primaryTopic: string | null;
+  eventTime: Date;
+  primaryArticleId: number;
+  primaryDek: string | null;
+  /** Content ids (content/sources.yaml) of the member articles' sources. */
+  sourceSlugs: string[];
+  deks: string[];
+}
+
+/**
+ * Published stories from the last `windowDays` with no AI article, newest
+ * first. The cluster job writes their articles with whatever Groq calls are
+ * left after the current run's stories — so a story that missed its run, or
+ * lost its article when a later run split it, is not left as a bare headline.
+ */
+export async function clustersNeedingBrief(
+  limit: number,
+  windowDays = 14,
+): Promise<ClusterNeedingBrief[]> {
+  const db = getDb();
+  if (!db || limit <= 0) return [];
+  const since = new Date(Date.now() - windowDays * 86_400_000);
+  const rows = await db
+    .select({
+      id: clusters.id,
+      slug: clusters.slug,
+      title: clusters.title,
+      tickers: clusters.tickers,
+      primaryTopic: clusters.primaryTopic,
+      eventTime: clusters.eventTime,
+    })
+    .from(clusters)
+    .where(
+      and(
+        eq(clusters.status, "published"),
+        isNull(clusters.briefMd),
+        gte(clusters.eventTime, since),
+      ),
+    )
+    .orderBy(desc(clusters.eventTime))
+    .limit(limit);
+  if (rows.length === 0) return [];
+  const members = await db
+    .select({
+      clusterId: clusterArticles.clusterId,
+      articleId: clusterArticles.articleId,
+      isPrimary: clusterArticles.isPrimary,
+      dek: articles.dek,
+      sourceSlug: sources.slug,
+    })
+    .from(clusterArticles)
+    .innerJoin(articles, eq(articles.id, clusterArticles.articleId))
+    .innerJoin(sources, eq(sources.id, articles.sourceId))
+    .where(
+      inArray(
+        clusterArticles.clusterId,
+        rows.map((r) => r.id),
+      ),
+    );
+  return rows.flatMap((r) => {
+    const m = members.filter((x) => x.clusterId === r.id);
+    const primary = m.find((x) => x.isPrimary) ?? m[0];
+    if (!primary || !r.eventTime) return [];
+    return [
+      {
+        slug: r.slug,
+        title: r.title,
+        tickers: r.tickers ?? [],
+        primaryTopic: r.primaryTopic,
+        eventTime: r.eventTime,
+        primaryArticleId: primary.articleId,
+        primaryDek: primary.dek,
+        sourceSlugs: [...new Set(m.map((x) => x.sourceSlug))],
+        deks: m.map((x) => x.dek).filter((d): d is string => Boolean(d && d.trim())),
+      },
+    ];
+  });
 }
 
 /**
