@@ -10,13 +10,9 @@ import { CountUp } from "@/components/ui/CountUp";
 import { ChangePill } from "@/components/market/ChangePill";
 import { PriceStamp } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
-import {
-  allSections,
-  readSectionSummaries,
-  readWire,
-  type WireCluster,
-} from "@/lib/news/read";
+import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/read";
 import { pickFeatured } from "@/lib/news/featured";
+import { buildHomepage } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
 import { readGccIndices, type IndexLevel } from "@/lib/market/indices";
@@ -48,7 +44,7 @@ function LatestRow({ c }: { c: WireCluster }) {
     >
       <div className="flex items-center gap-2 text-[11px]">
         <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
-        <SectionTag section={c.section} />
+        <SectionTag section={c.section} region={c.region} />
       </div>
       <h3 className="font-editorial text-ink mt-1 text-[15px] leading-snug underline-offset-2 group-hover:underline">
         {c.title}
@@ -120,18 +116,17 @@ export default async function BoardPage() {
   const distinctSources = new Set(clusters.flatMap((c) => c.sourceIds)).size;
   const sectionsWithStories = summary.sections.filter((s) => s.count > 0).length;
 
-  // Editor's Pick (§13): if a configured rule matches a real story in the wire,
-  // it leads the hero (labelled), overriding the automatic ranking; otherwise
-  // the top-ranked story leads as normal.
+  // Slot selection lives in lib/news/homepage.ts (pure, tested): one slot per
+  // story, nothing older than 72 hours in a top slot, finance leads, and
+  // non-finance sections get one row each.
   const featured = pickFeatured(clusters);
-  const lead = featured?.cluster ?? clusters[0];
-  const rest = clusters.filter((c) => c.slug !== lead?.slug);
-  const heroSide = rest.slice(0, 3); // secondary stories in the hero rail
-  const threeUp = rest.slice(3, 6);
-  // Latest rail is TIME-ordered (newest first), not rank-ordered.
-  const latest = [...clusters]
-    .sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime())
-    .slice(0, 8);
+  const { lead, leadLabel, heroSide, threeUp, blocks, latest } = buildHomepage(
+    clusters,
+    {
+      now: now.getTime(),
+      featured,
+    },
+  );
   // The latest session recap — shown only while it is recent (a week-old recap
   // is not "the session recap"). Built from real stored closes, or absent.
   const latestRecap = (await listRecaps(currency)).find(
@@ -146,25 +141,6 @@ export default async function BoardPage() {
   // Real GCC index levels only — the block does not render until a licensed
   // feed supplies them.
   const gcc = await readGccIndices();
-
-  const bySection = new Map<string, WireCluster[]>();
-  for (const c of clusters) {
-    const arr = bySection.get(c.section) ?? [];
-    arr.push(c);
-    bySection.set(c.section, arr);
-  }
-  const blocks = allSections()
-    .map((s) => ({ section: s, stories: bySection.get(s.id) ?? [] }))
-    .filter((b) => b.stories.length >= 1)
-    .slice(0, 7);
-
-  if (!lead) {
-    return (
-      <div className="text-ink-3 py-24 text-center text-[14px]">
-        The wire is quiet right now.
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -183,46 +159,55 @@ export default async function BoardPage() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Lead */}
           <div className="lg:col-span-8">
-            <Link href={`/news/${lead.slug}`} className="group block">
-              <div className="border-hairline bg-surface aspect-[16/9] w-full overflow-hidden rounded-[8px] border">
-                <CoverArt
-                  section={lead.section}
-                  seed={lead.slug}
-                  imageUrl={lead.imageUrl}
-                  className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
-                />
-              </div>
-              <div className="mt-4 flex items-center gap-3 text-[12px]">
-                {featured ? (
-                  <span className="border-line text-brand inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
-                    <span aria-hidden>◆</span> {featured.label}
-                  </span>
+            {lead ? (
+              <>
+                <Link href={`/news/${lead.slug}`} className="group block">
+                  <div className="border-hairline bg-surface aspect-[16/9] w-full overflow-hidden rounded-[8px] border">
+                    <CoverArt
+                      section={lead.section}
+                      seed={lead.slug}
+                      imageUrl={lead.imageUrl}
+                      className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
+                    />
+                  </div>
+                  <div className="mt-4 flex items-center gap-3 text-[12px]">
+                    {leadLabel ? (
+                      <span className="border-line text-brand inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
+                        <span aria-hidden>◆</span> {leadLabel}
+                      </span>
+                    ) : null}
+                    <SectionTag section={lead.section} region={lead.region} />
+                    <SignalScore score={lead.importanceScore} />
+                    <span className="text-signal-strong tnum">
+                      {lead.sourceCount} {lead.sourceCount === 1 ? "source" : "sources"}
+                    </span>
+                    <span className="text-ink-3 ml-auto">
+                      {relativeTime(lead.eventTime)}
+                    </span>
+                  </div>
+                  <h1 className="t-h1 font-editorial text-ink mt-2 underline-offset-2 group-hover:underline">
+                    {lead.title}
+                  </h1>
+                  {lead.dek ? (
+                    <p className="text-ink-2 mt-3 max-w-[68ch] text-[16px] leading-relaxed">
+                      {lead.dek}
+                    </p>
+                  ) : null}
+                </Link>
+                {lead.tickers.length ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {lead.tickers.slice(0, 6).map((t) => (
+                      <InstrumentChip key={t} symbol={t} />
+                    ))}
+                  </div>
                 ) : null}
-                <SectionTag section={lead.section} />
-                <SignalScore score={lead.importanceScore} />
-                <span className="text-signal-strong tnum">
-                  {lead.sourceCount} {lead.sourceCount === 1 ? "source" : "sources"}
-                </span>
-                <span className="text-ink-3 ml-auto">
-                  {relativeTime(lead.eventTime)}
-                </span>
-              </div>
-              <h1 className="t-h1 font-editorial text-ink mt-2 underline-offset-2 group-hover:underline">
-                {lead.title}
-              </h1>
-              {lead.dek ? (
-                <p className="text-ink-2 mt-3 max-w-[68ch] text-[16px] leading-relaxed">
-                  {lead.dek}
-                </p>
-              ) : null}
-            </Link>
-            {lead.tickers.length ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {lead.tickers.slice(0, 6).map((t) => (
-                  <InstrumentChip key={t} symbol={t} />
-                ))}
-              </div>
-            ) : null}
+              </>
+            ) : (
+              <p className="border-hairline text-ink-3 rounded-[8px] border px-4 py-16 text-center text-[14px]">
+                No new stories in the last 72 hours. The wire updates as sources
+                publish.
+              </p>
+            )}
           </div>
 
           {/* Right rail: computed counters + secondary stories. */}
@@ -294,9 +279,42 @@ export default async function BoardPage() {
 
       {/* ============ Section blocks ============ */}
       <div className="mt-12">
-        {blocks.map(({ section, stories }) => {
+        {blocks.map(({ section, stories, row }) => {
           const blockLead = stories[0]!;
           const rest = stories.slice(1, 5);
+          if (row) {
+            // Non-finance sections: one row of cards, with a link to the rest.
+            return (
+              <section key={section.id} className="border-hairline border-t py-8">
+                <div className="mb-5 flex items-baseline justify-between">
+                  <Link
+                    href={`/news?section=${section.id}`}
+                    className="group inline-flex items-center gap-2.5"
+                  >
+                    <span
+                      aria-hidden
+                      className="inline-block h-5 w-[3px] rounded-[2px]"
+                      style={{ background: section.hue }}
+                    />
+                    <span className="t-h3 font-editorial text-ink group-hover:underline">
+                      {section.label}
+                    </span>
+                  </Link>
+                  <Link
+                    href={`/news?section=${section.id}`}
+                    className="text-ink-3 hover:text-brand text-[12px]"
+                  >
+                    View all <span aria-hidden>→</span>
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {stories.map((c) => (
+                    <StoryCard key={c.slug} cluster={c} variant="card" />
+                  ))}
+                </div>
+              </section>
+            );
+          }
           return (
             <section key={section.id} className="border-hairline border-t py-8">
               <div className="mb-5 flex items-baseline justify-between">
@@ -371,20 +389,22 @@ export default async function BoardPage() {
         </section>
       ) : null}
 
-      {/* ============ Latest (time-ordered) ============ */}
-      <section className="border-hairline border-t py-8">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="t-h3 font-editorial text-ink">Latest</h2>
-          <Link href="/news" className="text-ink-3 hover:text-brand text-[12px]">
-            The wire <span aria-hidden>→</span>
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
-          {latest.map((c) => (
-            <LatestRow key={c.slug} c={c} />
-          ))}
-        </div>
-      </section>
+      {/* ============ Latest (time-ordered, not already shown) ============ */}
+      {latest.length ? (
+        <section className="border-hairline border-t py-8">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="t-h3 font-editorial text-ink">Latest</h2>
+            <Link href="/news" className="text-ink-3 hover:text-brand text-[12px]">
+              The wire <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
+            {latest.map((c) => (
+              <LatestRow key={c.slug} c={c} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

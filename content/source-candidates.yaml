@@ -1,0 +1,86 @@
+# Gulf sources under assessment (Phase 2). NOTHING here is ingested: a source
+# moves to content/sources.yaml only after its terms of use have been read, its
+# robots.txt allows us, and it has a working feed or an API we may use.
+#
+# `scripts/probe-sources.ts` (run by .github/workflows/probe-sources.yml on
+# GitHub, where these sites are reachable) checks robots.txt, fetches each URL,
+# parses it if it is a feed, and lists any feed links if it is a web page.
+#
+# Probe results, 2026-11-13 (GitHub Actions runs 43439141971 and 43439826314):
+#   qna-economy-local / -international  ADDED to sources.yaml — robots allow, HTTP
+#                                       200, RSS 2.0 with fresh items.
+#   wam-home, spa-home, cma-sa-news     robots allow, page loads, no feed found.
+#   qcb-news, sama-news                 site unreachable from the runner.
+#   qfma-news                           news URL returns 404.
+#   sca-news                            redirects to a "page not found" page.
+#   cbuae-news, adx-home,               HTTP 403 to automated requests — skipped;
+#   saudi-exchange-news                 we do not work around a block.
+#   qse-home                            robots.txt unreachable, no feed found.
+#   dfm-home                            only a YouTube feed — not news text.
+# None of the skipped sources is scraped: without a feed or a published API, a
+# source needs either a licence or a terms-of-use check for HTML collection,
+# which is the owner's decision.
+candidates:
+  # --- Official news agencies ---
+  - id: qna-rss-hub
+    name: Qatar News Agency — RSS index
+    url: https://www.qna.org.qa/en/RSS-Feeds
+    region: QA
+  - id: qna-economy-international
+    name: Qatar News Agency — Economy (international)
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Economy-International
+    region: QA
+  - id: qna-economy-local
+    name: Qatar News Agency — Economy (local)
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Economy-Local
+    region: QA
+  - id: wam-home
+    name: Emirates News Agency (WAM)
+    url: https://www.wam.ae/en
+    region: AE
+  - id: spa-home
+    name: Saudi Press Agency (SPA)
+    url: https://www.spa.gov.sa/en
+    region: SA
+  # --- Central banks and regulators ---
+  - id: qcb-news
+    name: Qatar Central Bank — news
+    url: https://www.qcb.gov.qa/en/news
+    region: QA
+  - id: qfma-news
+    name: Qatar Financial Markets Authority — news
+    url: https://www.qfma.org.qa/English/News/Pages/default.aspx
+    region: QA
+  - id: sama-news
+    name: Saudi Central Bank (SAMA) — news
+    url: https://www.sama.gov.sa/en-US/News/Pages/allnews.aspx
+    region: SA
+  - id: cma-sa-news
+    name: Capital Market Authority (Saudi) — news
+    url: https://cma.org.sa/en/MediaCenter/PR/Pages/default.aspx
+    region: SA
+  - id: cbuae-news
+    name: Central Bank of the UAE — news
+    url: https://www.centralbank.ae/en/news-and-publications/news/
+    region: AE
+  - id: sca-news
+    name: UAE Securities and Commodities Authority — news
+    url: https://www.sca.gov.ae/en/media-center/news.aspx
+    region: AE
+  # --- Exchanges ---
+  - id: qse-home
+    name: Qatar Stock Exchange
+    url: https://www.qe.com.qa/
+    region: QA
+  - id: saudi-exchange-news
+    name: Saudi Exchange — news
+    url: https://www.saudiexchange.sa/wps/portal/saudiexchange/newsandreports/exchange-news
+    region: SA
+  - id: adx-home
+    name: Abu Dhabi Securities Exchange
+    url: https://www.adx.ae/
+    region: AE
+  - id: dfm-home
+    name: Dubai Financial Market
+    url: https://www.dfm.ae/
+    region: AE

@@ -17,6 +17,8 @@ sources:
     trust_score: 100
     license_note: U.S. government work, public domain. Attribution + link retained.
     active: true
+    default_section: markets
+    allowed_sections: [markets, economy, crypto]
 
   - id: fed-press
     name: U.S. Federal Reserve — Press
@@ -28,6 +30,8 @@ sources:
     trust_score: 100
     license_note: U.S. government work, public domain. Attribution + link retained.
     active: true
+    default_section: economy
+    allowed_sections: [economy, markets]
 
   - id: ecb-press
     name: European Central Bank — Press
@@ -39,6 +43,8 @@ sources:
     trust_score: 98
     license_note: ECB content reproducible with acknowledgement of source.
     active: true
+    default_section: economy
+    allowed_sections: [economy, markets]
 
   - id: boe-news
     name: Bank of England — News
@@ -50,6 +56,8 @@ sources:
     trust_score: 98
     license_note: Open Government Licence v3.0 — attribution required.
     active: true
+    default_section: economy
+    allowed_sections: [economy, markets, realestate]
 
   - id: treasury-press
     name: U.S. Treasury — Press
@@ -61,6 +69,8 @@ sources:
     trust_score: 98
     license_note: U.S. government work, public domain.
     active: true
+    default_section: economy
+    allowed_sections: [economy, markets, world]
 
   - id: qcb-news
     name: Qatar Central Bank — News
@@ -72,6 +82,8 @@ sources:
     trust_score: 96
     license_note: Official Qatari regulator publication; headline + link only.
     active: false # 2026-11-07: skipped by owner; feed also returned 0 items (URL/robots unverified)
+    default_section: economy
+    allowed_sections: [economy, markets]
 
   - id: qse-disclosures
     name: Qatar Stock Exchange — Disclosures
@@ -83,12 +95,50 @@ sources:
     trust_score: 96
     license_note: Exchange regulatory disclosures; headline + link only.
     active: false # 2026-11-07: disabled — feed returned 0 items (itemsIn unchanged); verify URL before re-enabling
+    default_section: markets
+    allowed_sections: [markets]
+
+  # Qatar News Agency — the state news agency, which publishes these RSS feeds for
+  # reuse (index: https://www.qna.org.qa/en/RSS-Feeds). Probed 2026-11-13 from
+  # GitHub Actions (scripts/probe-sources.ts): robots.txt allows the paths, HTTP
+  # 200, RSS 2.0 with fresh items (the root omits version="2.0"; the fetcher
+  # normalises that). Headline + dek (≤ 40 words) + link only, attributed and
+  # linked; no body stored (§10).
+  - id: qna-economy-local
+    name: Qatar News Agency — Economy
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Economy-Local
+    kind: rss
+    region: QA
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 20
+    default_section: economy
+    allowed_sections: [economy, markets, realestate]
+
+  # The international feed covers world markets, so it carries no region: each
+  # story is tagged from its own text (a Nikkei story is not tagged Qatar).
+  - id: qna-economy-international
+    name: Qatar News Agency — World economy
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Economy-International
+    kind: rss
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 15
+    default_section: markets
+    allowed_sections: [economy, markets]
 
   # The Conversation — expert-authored news & analysis across markets, world,
   # tech, science, health. CC-BY-ND explicitly permits commercial republication
   # with attribution; we take headline + dek + link + link-out only (no body
   # stored, §10). Feed verified 2026-11-07: https://theconversation.com/articles.atom
   # → HTTP 200, valid Atom, 50 fresh entries, robots.txt allows the path.
+
   - id: the-conversation
     name: The Conversation
     homepage: https://theconversation.com
@@ -139,6 +189,9 @@ sources:
     trust_score: 96
     license_note: U.S. government work, public domain. Attribution + link retained.
     active: true
+    default_section: science
+    allowed_sections: [science, technology]
+    max_items_per_run: 4
 
   - id: mit-news
     name: MIT News
@@ -150,8 +203,11 @@ sources:
     trust_score: 80
     license_note: MIT News reproducible for non-commercial use with attribution; headline + dek + link only.
     active: false # verify feed URL + terms before enabling (§6)
+    default_section: science
+    allowed_sections: [science, technology, health]
 
   # --- Health (public domain / open) ---
+
   - id: who-news
     name: World Health Organization — News
     homepage: https://www.who.int
@@ -162,6 +218,8 @@ sources:
     trust_score: 96
     license_note: WHO content reproducible with attribution to source; headline + link only.
     active: true
+    default_section: health
+    allowed_sections: [health]
 
   - id: cdc-newsroom
     name: U.S. CDC — Newsroom
@@ -173,8 +231,11 @@ sources:
     trust_score: 95
     license_note: U.S. government work, public domain. Attribution + link retained.
     active: true
+    default_section: health
+    allowed_sections: [health]
 
   # --- Economy / statistics (public domain / open) ---
+
   - id: bls-news
     name: U.S. Bureau of Labor Statistics — News
     homepage: https://www.bls.gov
@@ -185,6 +246,8 @@ sources:
     trust_score: 98
     license_note: U.S. government work, public domain. Attribution + link retained.
     active: true
+    default_section: economy
+    allowed_sections: [economy]
 
   - id: worldbank-news
     name: World Bank — News
@@ -196,8 +259,11 @@ sources:
     trust_score: 96
     license_note: World Bank content under CC BY 4.0 with attribution; headline + dek + link only.
     active: true
+    default_section: economy
+    allowed_sections: [economy, world, science, health]
 
   # --- Sports & culture (commercial outlets — inactive pending terms review) ---
+
   - id: sports-outlet
     name: Sports Outlet (placeholder)
     homepage: https://example.com

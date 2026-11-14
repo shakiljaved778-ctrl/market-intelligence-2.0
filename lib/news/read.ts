@@ -9,13 +9,16 @@ import {
 import { demo } from "@/lib/demo/fixtures";
 import { isDemoMode } from "@/lib/demo/mode";
 import { isDbConfigured } from "@/lib/db/client";
-import { dbReadWire, type DbWireRow } from "@/lib/db/queries/wire";
+import { dbReadWire, dbReadWireBySlug, type DbWireRow } from "@/lib/db/queries/wire";
 import { classify } from "@/lib/curation/classify";
 import { HashEmbedder } from "@/lib/curation/embed";
 import { demoNow, shiftFixtureDate } from "@/lib/demo/clock";
 import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedupe";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
-import type { RankContext } from "@/lib/curation/rank";
+import { computeImportance, type RankContext } from "@/lib/curation/rank";
+import { loadSources } from "@/lib/curation/config";
+import { classifyRegion, type Region } from "@/lib/curation/region";
+import { getQuotes } from "@/lib/market/service";
 import {
   classifySection,
   loadSections,
@@ -33,6 +36,8 @@ import {
 /** A ranked cluster enriched with its editorial section + cover image. */
 export interface WireCluster extends SluggedCluster {
   section: string;
+  /** GCC country, "GCC", or "GLOBAL" (lib/curation/region.ts). */
+  region: Region;
   dek: string | null;
   imageUrl: string | null;
   imageCredit: { credit: string; creditUrl: string } | null;
@@ -90,6 +95,7 @@ function fixtureLoaded(
     dek: primary?.dek ?? null,
     topics: cluster.topics,
     tickers: cluster.tickers,
+    sourceId: primary?.sourceId ?? null,
   });
   // Prefer a resolved cover (demo only); fall back to any image reference on
   // the article, else null → the UI draws the generated section cover.
@@ -97,6 +103,11 @@ function fixtureLoaded(
   const wire: WireCluster = {
     ...cluster,
     section,
+    region: classifyRegion({
+      title: cluster.title,
+      dek: primary?.dek ?? null,
+      sourceRegion: sourceRegion(primary?.sourceId),
+    }),
     dek: primary?.dek ?? null,
     imageUrl: cover?.url ?? primary?.imageUrl ?? null,
     imageCredit: cover ? { credit: cover.credit, creditUrl: cover.creditUrl } : null,
@@ -116,6 +127,17 @@ function fixtureLoaded(
     // bodies exist only under DEMO_MODE.
     body: eurekaBody(cluster.primaryId) ?? demo.articleBody(cluster.primaryId),
   };
+}
+
+let sourceRegions: Map<string, string> | null = null;
+/** The registered region of a source (content/sources.yaml), if any. */
+function sourceRegion(sourceId: string | null | undefined): string | null {
+  if (!sourceId) return null;
+  if (!sourceRegions) {
+    sourceRegions = new Map();
+    for (const s of loadSources()) if (s.region) sourceRegions.set(s.id, s.region);
+  }
+  return sourceRegions.get(sourceId) ?? null;
 }
 
 /** Build a cluster from a persisted (live) row. Live articles carry no stored
@@ -144,6 +166,12 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
       dek: row.primaryDek,
       topics: row.topics,
       tickers,
+      sourceId: row.primarySourceId,
+    }),
+    region: classifyRegion({
+      title: row.title,
+      dek: row.primaryDek,
+      sourceRegion: sourceRegion(row.primarySourceId),
     }),
     dek: row.primaryDek,
     imageUrl: row.imageUrl,
@@ -253,6 +281,34 @@ async function computeEditorialClusters(): Promise<LoadedCluster[]> {
 }
 
 /**
+ * Recompute every live story's importance with the CURRENT clock (Phase 2).
+ *
+ * The score the cluster job stores is frozen the moment a story leaves the
+ * 48-hour clustering window, so sorting on it kept weeks-old stories at the top
+ * of the wire. Every input to the score is available at read time — source
+ * count, source tiers, the instruments' current moves and the event time — so
+ * the score is simply computed again here, and the recency decay is always
+ * measured from now.
+ */
+async function rerankNow(list: LoadedCluster[]): Promise<LoadedCluster[]> {
+  if (list.length === 0) return list;
+  const tiers: Record<string, string> = {};
+  for (const s of loadSources()) tiers[s.id] = s.tier;
+  const symbols = [...new Set(list.flatMap((l) => l.cluster.tickers))];
+  const tickerMovePct: Record<string, number> = {};
+  if (symbols.length > 0) {
+    for (const [symbol, p] of await getQuotes(symbols)) {
+      if (p.value) tickerMovePct[symbol] = Math.abs(p.value.changePct);
+    }
+  }
+  const ctx: RankContext = { tiers, tickerMovePct, now: new Date() };
+  for (const l of list) {
+    l.cluster.importanceScore = computeImportance(l.cluster, ctx);
+  }
+  return list;
+}
+
+/**
  * Load the whole ranked wire once per request (React `cache` dedupes the calls
  * from readWire / readCluster / readSectionSummaries in a single render).
  *
@@ -271,9 +327,11 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
   let live: LoadedCluster[] = [];
   if (isDbConfigured()) {
     try {
-      // Collapse near-duplicate live clusters (same section, title Jaccard ≥
-      // threshold) so a paraphrase never shows twice.
-      live = collapseNearDuplicates((await dbReadWire()).map(dbLoaded));
+      // Re-rank against the CURRENT clock, then collapse near-duplicate clusters
+      // (same section, title Jaccard ≥ threshold) so a paraphrase never shows
+      // twice — the stronger of the pair is the one kept.
+      const loaded = await rerankNow((await dbReadWire()).map(dbLoaded));
+      live = collapseNearDuplicates(loaded.sort(byImportance));
     } catch (err) {
       console.error("[wire] DB read failed:", err);
     }
@@ -327,7 +385,17 @@ export interface ClusterDetail {
 }
 
 export async function readCluster(slug: string): Promise<ClusterDetail | null> {
-  const loaded = (await loadAll()).find((l) => l.cluster.slug === slug);
+  let loaded = (await loadAll()).find((l) => l.cluster.slug === slug) ?? null;
+  // A story older than the wire window is no longer in the lists, but its own
+  // page must keep working (existing URLs never break).
+  if (!loaded && isDbConfigured()) {
+    try {
+      const row = await dbReadWireBySlug(slug);
+      if (row) loaded = (await rerankNow([dbLoaded(row)]))[0] ?? null;
+    } catch (err) {
+      console.error("[wire] story read failed:", err);
+    }
+  }
   if (!loaded) return null;
   // Fixtures carry authored demo bodies; live stories carry the Groq brief the
   // cluster job persisted. No brief → the UI falls back to the dek + source list.

@@ -60,7 +60,7 @@ export function StoryCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <SectionTag section={cluster.section} />
+            <SectionTag section={cluster.section} region={cluster.region} />
             <SignalScore score={cluster.importanceScore} showValue={false} />
           </div>
           <h3 className="font-editorial text-ink mt-1.5 line-clamp-2 text-[15px] leading-snug underline-offset-2 group-hover:underline">
@@ -88,7 +88,7 @@ export function StoryCard({
       </div>
       <div className={`flex flex-1 flex-col ${isLead ? "p-6" : "p-5"}`}>
         <div className="mb-3 flex items-center gap-2 text-[12px]">
-          <SectionTag section={cluster.section} />
+          <SectionTag section={cluster.section} region={cluster.region} />
           <span className="ml-auto">{sources}</span>
           <span aria-hidden className="text-ink-4">
             ·

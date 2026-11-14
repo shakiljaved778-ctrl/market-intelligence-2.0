@@ -2,6 +2,7 @@ import Link from "next/link";
 import { canonical } from "@/lib/seo";
 import { Prose } from "@/components/layout/Prose";
 import { QAR_PER_USD, pegReviewedOn } from "@/lib/currency/peg";
+import { SHARIAH_STANDARD } from "@/content/shariah-standard";
 
 export const metadata = {
   title: "Methodology",
@@ -94,12 +95,36 @@ export default function MethodologyPage() {
       </p>
 
       <h2>Shariah screening</h2>
-      <p>
-        Mizaan does not currently show a Shariah-compliance status for any instrument. A
-        screen will be published here — the standard applied, the financial ratios and
-        thresholds, and the date of the underlying data — before any status appears on
-        the site. It will be a rule-based screen, not a fatwa.
-      </p>
+      {SHARIAH_STANDARD.published ? (
+        <>
+          <p>
+            Where a Shariah status is shown, it is the result of a rule-based financial
+            screen against <strong>{SHARIAH_STANDARD.name}</strong>. It is not a fatwa
+            and not investment advice. A company fails if its core business is{" "}
+            {SHARIAH_STANDARD.prohibitedActivities
+              .map((a) => a.replace(/_/g, " "))
+              .join(", ")}
+            , or if any ratio below exceeds its limit. If a figure needed for a ratio
+            has not been reported, the status is &ldquo;insufficient data&rdquo; — we
+            never estimate a missing figure. Each status shows the date and source of
+            the financial statements it is based on.
+          </p>
+          <ul>
+            {SHARIAH_STANDARD.ratios.map((r) => (
+              <li key={r.id}>
+                {r.label}: at most {Math.round(r.max * 100)}%
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>
+          Mizaan does not currently show a Shariah-compliance status for any instrument.
+          A screen will be published here — the standard applied, the financial ratios
+          and thresholds, and the date of the underlying data — before any status
+          appears on the site. It will be a rule-based screen, not a fatwa.
+        </p>
+      )}
 
       <h2>Delays and currency</h2>
       <p>

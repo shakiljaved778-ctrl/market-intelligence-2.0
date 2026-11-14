@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Wire } from "@/components/news/Wire";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { allSections, allTopics, readWire } from "@/lib/news/read";
+import { pageOf } from "@/lib/news/paginate";
 import { canonical } from "@/lib/seo";
 
 interface SearchParams {
@@ -47,6 +48,7 @@ export default async function NewsPage({ searchParams }: SearchParams) {
     ticker: ticker || undefined,
     section: section || undefined,
   });
+  const paged = pageOf(clusters, one(sp.page));
   const sections = allSections();
   const activeSection = section
     ? (sections.find((s) => s.id === section) ?? null)
@@ -180,7 +182,42 @@ export default async function NewsPage({ searchParams }: SearchParams) {
       </div>
 
       <div className="fade-up mt-6" style={{ "--d": "140ms" } as React.CSSProperties}>
-        <Wire clusters={clusters} />
+        <Wire clusters={paged.items} />
+        {paged.pages > 1 ? (
+          <nav
+            aria-label="Pages"
+            className="mt-6 flex flex-wrap items-center justify-between gap-3"
+          >
+            {paged.page > 1 ? (
+              <Link
+                href={keep({
+                  ticker,
+                  page: paged.page > 2 ? String(paged.page - 1) : "",
+                })}
+                className={chip(false)}
+                rel="prev"
+              >
+                ← Newer stories
+              </Link>
+            ) : (
+              <span />
+            )}
+            <span className="text-text-low tnum text-[12px]">
+              Page {paged.page} of {paged.pages}
+            </span>
+            {paged.page < paged.pages ? (
+              <Link
+                href={keep({ ticker, page: String(paged.page + 1) })}
+                className={chip(false)}
+                rel="next"
+              >
+                Older stories →
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        ) : null}
       </div>
     </div>
   );

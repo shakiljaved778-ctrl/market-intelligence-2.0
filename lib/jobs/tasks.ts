@@ -245,6 +245,7 @@ export async function clusterTask(): Promise<JobSummary> {
       isPexelsConfigured() ? existingClusterCovers(slugs) : Promise.resolve(empty),
     ]);
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
+    const sourceById = new Map(recent.map((a) => [a.id, a.sourceId]));
     let briefsWritten = 0;
     let coversWritten = 0;
     for (const c of top) {
@@ -254,6 +255,7 @@ export async function clusterTask(): Promise<JobSummary> {
         dek,
         topics: c.topics,
         tickers: c.tickers,
+        sourceId: sourceById.get(c.primaryId) ?? null,
       });
 
       if (isGroqConfigured() && !haveBrief.has(c.slug)) {

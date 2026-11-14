@@ -11,6 +11,12 @@
 # broad audience engaged. `financial: false` marks those verticals; the ratio is
 # guarded by a test (lib/curation/section.test.ts).
 #
+# KEYWORD MATCHING (lib/curation/section.ts): a keyword matches as a whole token.
+# A keyword written in CAPITALS or with a capital initial (WHO, NASA, Mars,
+# "Bank of England") is matched CASE-SENSITIVELY — so "WHO" never matches the
+# word "who". All-lower-case keywords match in any case. A match in the headline
+# scores more than a match in the description; the highest score wins.
+#
 # `hue` is an editorial SECTION tint used ONLY inside cover art and the section
 # tag — never on chrome and never on data. It is intentionally muted and avoids
 # gain-green / loss-red so it can never be confused with price direction (§12).
@@ -37,19 +43,32 @@ sections:
         gold,
         currency,
         forex,
-        index,
-        nasdaq,
-        s&p,
-        ftse,
+        Nasdaq,
+        "S&P",
+        FTSE,
         dow jones,
         nikkei,
-        dax,
+        DAX,
         hang seng,
         earnings,
-        ipo,
+        IPO,
         dividend,
         merger,
         acquisition,
+        stocks,
+        bonds,
+        "stock market",
+        "share price",
+        Brent,
+        Tadawul,
+        "Qatar Stock Exchange",
+        QSE,
+        ADX,
+        DFM,
+        sukuk,
+        "initial public offering",
+        "rights issue",
+        "bond yields",
       ]
 
   - id: economy
@@ -61,8 +80,8 @@ sections:
     keywords:
       [
         inflation,
-        cpi,
-        gdp,
+        CPI,
+        GDP,
         growth forecast,
         unemployment,
         jobs report,
@@ -74,8 +93,24 @@ sections:
         recession,
         trade deficit,
         world bank,
-        imf,
-        oecd,
+        IMF,
+        OECD,
+        "interest rates",
+        "rate cut",
+        "rate hike",
+        "central bank",
+        budget,
+        "fiscal",
+        "economic growth",
+        "consumer prices",
+        "Federal Reserve",
+        FOMC,
+        "Bank of England",
+        ECB,
+        "Qatar Central Bank",
+        SAMA,
+        "trade balance",
+        PMI,
       ]
 
   - id: crypto
@@ -114,7 +149,7 @@ sections:
         mortgage,
         home sales,
         homebuilder,
-        reit,
+        REIT,
         commercial property,
         house prices,
         rents,
@@ -167,13 +202,18 @@ sections:
         chip,
         quantum,
         software,
-        app,
         smartphone,
-        gadget,
-        startup,
         cybersecurity,
         data center,
         robotics,
+        "AI model",
+        "artificial intelligence",
+        "large language model",
+        semiconductors,
+        chips,
+        "data centre",
+        cyberattack,
+        "generative AI",
       ]
 
   - id: health
@@ -184,21 +224,33 @@ sections:
     glyph: pulse
     keywords:
       [
-        health,
         vaccine,
         disease,
         outbreak,
         virus,
-        who,
         clinical trial,
         drug approval,
         medicine,
         mental health,
-        nutrition,
-        fitness,
         cancer,
         pandemic,
         hospital,
+        WHO,
+        "public health",
+        "health care",
+        healthcare,
+        "health system",
+        vaccines,
+        outbreaks,
+        patients,
+        "clinical trials",
+        CDC,
+        FDA,
+        "World Health Organization",
+        hospitals,
+        dengue,
+        measles,
+        cholera,
       ]
 
   - id: sports
@@ -212,19 +264,21 @@ sections:
         football,
         soccer,
         world cup,
-        fifa,
+        FIFA,
         olympic,
         tennis,
         cricket,
         basketball,
-        nba,
+        NBA,
         formula 1,
         grand prix,
         championship,
         tournament,
-        match,
-        league,
         athlete,
+        "Premier League",
+        "Champions League",
+        "Formula One",
+        Olympics,
       ]
 
   - id: entertainment
@@ -240,17 +294,17 @@ sections:
         box office,
         streaming,
         album,
-        music,
         concert,
         festival,
-        series,
         television,
         celebrity,
-        award,
         oscars,
         grammy,
         gaming,
         video game,
+        "box office",
+        Netflix,
+        Hollywood,
       ]
 
   - id: science
@@ -261,8 +315,6 @@ sections:
     glyph: atom
     keywords:
       [
-        research,
-        study,
         climate,
         renewable,
         emissions,
@@ -270,11 +322,10 @@ sections:
         physics,
         biology,
         genome,
-        nasa,
+        NASA,
         telescope,
         experiment,
         breakthrough,
-        environment,
         wildlife,
         space launch,
         satellite,
@@ -283,4 +334,36 @@ sections:
         rocket launch,
         asteroid,
         astronomy,
+        ESA,
+        Mars,
+        Moon,
+        lunar,
+        astronaut,
+        astronauts,
+        spaceflight,
+        "space station",
+        rover,
+        galaxy,
+        planet,
+        comet,
+        orbit,
+        "climate change",
+        scientists,
+        researchers,
+        fossil,
+        "space exploration",
+        Artemis,
+        SpaceX,
       ]
+
+  # Catch-all for a story no rule can place. It is NEVER shown on the homepage or
+  # in section navigation (hidden: true) — it exists so that an unplaceable story
+  # is not mis-filed under Markets, which is what the old default did.
+  - id: general
+    label: General
+    blurb: Stories that do not fit a section yet.
+    financial: false
+    hidden: true
+    hue: "#8a8f98"
+    glyph: wave
+    keywords: []

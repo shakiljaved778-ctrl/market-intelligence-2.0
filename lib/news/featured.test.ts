@@ -19,6 +19,7 @@ function wc(over: Partial<WireCluster>): WireCluster {
     articleIds: [1],
     primaryId: 1,
     section: "markets",
+    region: "GLOBAL",
     dek: null,
     imageUrl: null,
     imageCredit: null,
