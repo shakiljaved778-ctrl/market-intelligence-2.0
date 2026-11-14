@@ -219,21 +219,30 @@ export async function supersedeReplacedClusters(
 }
 
 /**
- * Word counts of the stored briefs for these clusters (slug -> words). A cluster
- * with no brief is absent from the map.
+ * The stored briefs for these clusters: word count and the model tag they were
+ * written with (slug -> info). A cluster with no brief is absent from the map.
  */
 export async function existingClusterBriefs(
   slugs: string[],
-): Promise<Map<string, number>> {
-  const have = new Map<string, number>();
+): Promise<Map<string, { words: number; model: string | null }>> {
+  const have = new Map<string, { words: number; model: string | null }>();
   const db = getDb();
   if (!db || slugs.length === 0) return have;
   const rows = await db
-    .select({ slug: clusters.slug, briefMd: clusters.briefMd })
+    .select({
+      slug: clusters.slug,
+      briefMd: clusters.briefMd,
+      briefModel: clusters.briefModel,
+    })
     .from(clusters)
     .where(inArray(clusters.slug, slugs));
   for (const r of rows) {
-    if (r.briefMd) have.set(r.slug, r.briefMd.split(/\s+/).filter(Boolean).length);
+    if (r.briefMd) {
+      have.set(r.slug, {
+        words: r.briefMd.split(/\s+/).filter(Boolean).length,
+        model: r.briefModel,
+      });
+    }
   }
   return have;
 }

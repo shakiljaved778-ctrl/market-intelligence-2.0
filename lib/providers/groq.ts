@@ -25,11 +25,12 @@ const BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
  * for the rest of the process so we don't re-probe dead names per story.
  */
 const FALLBACK_MODELS = [
-  "llama-3.1-8b-instant",
-  "openai/gpt-oss-20b",
+  // Largest first: it follows the accuracy rules most reliably (the 20b model
+  // invented background facts, 14 Nov). Retired IDs are skipped automatically.
   "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
   "llama-3.3-70b-versatile",
-  "gemma2-9b-it",
+  "llama-3.1-8b-instant",
 ];
 
 function candidateModels(): string[] {
@@ -48,6 +49,8 @@ export interface BriefInput {
   sources?: string[];
   /** ticker -> latest % move, for grounding the "market response" line. */
   moves?: Record<string, number>;
+  /** When the story was published (ISO), so dates can be grounded. */
+  publishedAt?: string;
   /** Deks from every clustered report — more cited facts to synthesise from,
    * so multi-source stories get a full, grounded article. */
   sourceDeks?: string[];
@@ -90,6 +93,7 @@ function prompt(input: BriefInput): string {
     input.tickers?.length ? `Instruments: ${input.tickers.join(", ")}` : "",
     moves ? `Latest moves: ${moves}` : "",
     input.sources?.length ? `Reported by: ${input.sources.join(", ")}` : "",
+    input.publishedAt ? `Published: ${input.publishedAt.slice(0, 10)}` : "",
     `Section: ${input.section}`,
   ]
     .filter(Boolean)
@@ -100,9 +104,50 @@ function prompt(input: BriefInput): string {
 export const BRIEF_TARGET_WORDS = { min: 400, max: 550 } as const;
 /** A stored brief shorter than this is rewritten by the cluster job. */
 export const BRIEF_MIN_WORDS = 300;
+/**
+ * Version of the article rules, stored with each article's model name. The
+ * cluster job rewrites articles written under older rules (v3: tightened
+ * background rules and the figure check, 2026-11-14).
+ */
+export const BRIEF_FORMAT = "v3";
 
 export function wordCount(text: string): number {
   return text.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
+}
+
+/** Numbers in a text, normalised ("1,234.50" -> "1234.5", "05" -> "5"). */
+function figures(text: string): string[] {
+  return (text.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((n) => {
+    const v = n.replace(/,/g, "");
+    return v.includes(".")
+      ? v.replace(/0+$/, "").replace(/\.$/, "")
+      : String(Number(v));
+  });
+}
+
+/** Every figure the model was given: headline, summaries, moves and date. */
+function factsText(input: BriefInput): string {
+  const moves = Object.entries(input.moves ?? {})
+    .map(([s, m]) => `${s} ${m.toFixed(2)}`)
+    .join(" ");
+  return [
+    input.title,
+    input.dek ?? "",
+    ...(input.sourceDeks ?? []),
+    ...(input.tickers ?? []),
+    ...(input.sources ?? []),
+    moves,
+    input.publishedAt?.slice(0, 10) ?? "",
+  ].join(" ");
+}
+
+/**
+ * Figures in a generated article that do not appear in the facts it was given.
+ * Deterministic guard against invented numbers (§17: never a fabricated figure).
+ */
+export function ungroundedFigures(body: string, input: BriefInput): string[] {
+  const allowed = new Set(figures(factsText(input)));
+  return [...new Set(figures(body).filter((f) => !allowed.has(f)))];
 }
 
 const SYSTEM = [
@@ -110,14 +155,16 @@ const SYSTEM = [
   `Write ${BRIEF_TARGET_WORDS.min}-${BRIEF_TARGET_WORDS.max} words, neutral and factual, in this structure:`,
   "an opening paragraph of two or three sentences saying what happened, with no heading;",
   "then sections, each starting with a line of the form '## Heading' followed by one or two paragraphs:",
-  "'## The details' (everything the reported facts establish);",
+  "'## The details' (everything the reported facts establish, without repeating the opening);",
   "'## Market context' (ONLY if instruments or moves are given; use those numbers exactly; otherwise omit this section);",
-  "'## Background' (what the institutions, markets or terms involved are and how this kind of event usually works);",
-  "'## What to watch' (the scheduled or likely next steps the facts point to, stated without prediction or advice).",
+  "'## Background' (explain in general terms what the words and kinds of institution named in the facts mean);",
+  "'## What to watch' (only next steps the facts themselves mention; if they mention none, say in one sentence what the facts leave open).",
   "End with a final line that starts with '**Why it matters:**' (one sentence).",
-  "Accuracy rules, which outrank length: every specific name, number, date, quote and event must come from the facts given;",
-  "the Background section may explain general, well-established context but must not add any new specific figure, date, name, quote or event;",
-  "never invent prices or market moves; if the facts are thin, keep each section short rather than pad it.",
+  "Accuracy rules, which outrank length: every name, number, date, quote and event must come from the facts given.",
+  "In Background and What to watch never state which organisations anyone belongs to, how often anything happens, which ministry or body is responsible, history, rankings, forecasts or dates — unless the facts say so.",
+  "Use no number that is not in the facts; never compute new figures, prices or percentages.",
+  "Refer to sources by the names given under 'Reported by'.",
+  "If the facts are thin, keep each section short rather than pad it.",
   "Do NOT copy or closely paraphrase sentences from any source; synthesise in your own words.",
   "No investment advice, no buy/sell/hold language, no hype, no first person, no bullet lists.",
 ].join(" ");
@@ -128,11 +175,28 @@ const SYSTEM = [
  */
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Minimum gap between calls. The free tier allows about 8,000 tokens a minute
+ * and one article costs about 2,300 (prompt, reasoning and text), so calls are
+ * spaced rather than fired back to back into rate-limit errors.
+ */
+let minIntervalMs = 20_000;
+let lastCallAt = 0;
+/** Tests only. */
+export function __setGroqPacing(ms: number): void {
+  minIntervalMs = ms;
+  lastCallAt = 0;
+}
+
 async function callGroq(
   model: string,
   input: BriefInput,
   retried = false,
+  correction?: string,
 ): Promise<Brief> {
+  const wait = lastCallAt + minIntervalMs - Date.now();
+  if (wait > 0) await sleep(wait);
+  lastCallAt = Date.now();
   const res = await fetch(BASE_URL, {
     method: "POST",
     headers: {
@@ -149,6 +213,7 @@ async function callGroq(
       messages: [
         { role: "system", content: SYSTEM },
         { role: "user", content: prompt(input) },
+        ...(correction ? [{ role: "user", content: correction }] : []),
       ],
     }),
   });
@@ -158,7 +223,7 @@ async function callGroq(
     await sleep(
       Math.min(Number.isFinite(after) && after > 0 ? after * 1000 : 10_000, 30_000),
     );
-    return callGroq(model, input, true);
+    return callGroq(model, input, true, correction);
   }
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -185,14 +250,28 @@ export async function generateBrief(
   if (!isGroqConfigured()) return null;
   try {
     const { value } = await swr<Brief | null>(
-      // v2: the longer, sectioned article format (2026-11-14).
-      `brief:v2:${key}`,
+      // v3: sectioned format with the figure check (2026-11-14).
+      `brief:v3:${key}`,
       TTL.fundamentals,
       async () => {
         const models = resolvedModel ? [resolvedModel] : candidateModels();
         for (const model of models) {
           try {
-            const brief = await callGroq(model, input);
+            let brief = await callGroq(model, input);
+            let bad = ungroundedFigures(brief.body, input);
+            if (bad.length) {
+              // One rewrite, told exactly which figures were not in the facts.
+              brief = await callGroq(
+                model,
+                input,
+                false,
+                `Your draft used figures that are not in the facts: ${bad.join(", ")}. Rewrite it using only figures that appear in the facts.`,
+              );
+              bad = ungroundedFigures(brief.body, input);
+              if (bad.length) {
+                throw new Error(`ungrounded figures after rewrite: ${bad.join(", ")}`);
+              }
+            }
             if (resolvedModel !== model) {
               resolvedModel = model;
               console.log(`[groq] using model ${model}`);

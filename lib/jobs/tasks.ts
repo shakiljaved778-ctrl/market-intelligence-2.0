@@ -28,6 +28,12 @@ const BACKFILL_RANGES = ["1M", "6M", "1Y", "5Y"] as const;
 
 /** Short, older-format briefs rewritten per cluster run (Groq free tier). */
 export const BRIEF_REWRITES_PER_RUN = 12;
+/**
+ * Most Groq articles written per cluster run, new and rewritten together. With
+ * calls spaced 20 s apart for the free tier's token limit, this keeps a run to
+ * about five minutes; stories left over are written on the next run.
+ */
+export const BRIEF_CALLS_PER_RUN = 15;
 
 export async function quotesTask(): Promise<JobSummary> {
   const registry = getRegistry();
@@ -229,9 +235,8 @@ export async function clusterTask(): Promise<JobSummary> {
   // gated on its own key and only for clusters that don't already have one, so a
   // story costs at most one call per provider. Both are persisted on the cluster
   // row (URL/attribution + synthesised prose only — never source text, §10).
-  const { generateBrief, isGroqConfigured, BRIEF_MIN_WORDS } = await import(
-    "@/lib/providers/groq"
-  );
+  const { generateBrief, isGroqConfigured, BRIEF_MIN_WORDS, BRIEF_FORMAT } =
+    await import("@/lib/providers/groq");
   const { searchPexels, isPexelsConfigured } = await import("@/lib/providers/pexels");
   if (isGroqConfigured() || isPexelsConfigured()) {
     const { classifySection } = await import("@/lib/curation/section");
@@ -247,14 +252,16 @@ export async function clusterTask(): Promise<JobSummary> {
     const [haveBrief, haveCover] = await Promise.all([
       isGroqConfigured()
         ? existingClusterBriefs(slugs)
-        : Promise.resolve(new Map<string, number>()),
+        : Promise.resolve(new Map<string, { words: number; model: string | null }>()),
       isPexelsConfigured()
         ? existingClusterCovers(slugs)
         : Promise.resolve(new Set<string>()),
     ]);
-    // Briefs written before the longer format (owner request, 2026-11-14) are
+    // Articles that are short or written under older rules (BRIEF_FORMAT) are
     // rewritten a few per run, so the free-tier rate limit is respected.
     let rewritesLeft = BRIEF_REWRITES_PER_RUN;
+    let callsLeft = BRIEF_CALLS_PER_RUN;
+    const sourceName = new Map(loadSources().map((s) => [s.id, s.name]));
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
     const sourceById = new Map(recent.map((a) => [a.id, a.sourceId]));
     let briefsWritten = 0;
@@ -269,10 +276,15 @@ export async function clusterTask(): Promise<JobSummary> {
         sourceId: sourceById.get(c.primaryId) ?? null,
       });
 
-      const words = haveBrief.get(c.slug);
-      const needsBrief = words === undefined;
-      const needsRewrite = !needsBrief && words < BRIEF_MIN_WORDS && rewritesLeft > 0;
-      if (isGroqConfigured() && (needsBrief || needsRewrite)) {
+      const stored = haveBrief.get(c.slug);
+      const needsBrief = stored === undefined;
+      // Rewrite articles that are short or were written under older rules.
+      const outdated =
+        stored !== undefined &&
+        (stored.words < BRIEF_MIN_WORDS || !stored.model?.endsWith(`#${BRIEF_FORMAT}`));
+      const needsRewrite = outdated && rewritesLeft > 0;
+      if (isGroqConfigured() && (needsBrief || needsRewrite) && callsLeft > 0) {
+        callsLeft -= 1;
         if (needsRewrite) rewritesLeft -= 1;
         const moves: Record<string, number> = {};
         for (const t of c.tickers) {
@@ -289,12 +301,15 @@ export async function clusterTask(): Promise<JobSummary> {
           dek,
           section,
           tickers: c.tickers,
-          sources: c.sourceIds,
+          // Names, not ids: the article credits "Qatar News Agency", never
+          // "qna-economy-local".
+          sources: c.sourceIds.map((id) => sourceName.get(id) ?? id),
           moves,
           sourceDeks,
+          publishedAt: c.eventTime,
         });
         if (brief) {
-          await setClusterBrief(c.slug, brief.body, brief.model);
+          await setClusterBrief(c.slug, brief.body, `${brief.model}#${BRIEF_FORMAT}`);
           briefsWritten += 1;
         }
       }
