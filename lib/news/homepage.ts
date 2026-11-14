@@ -22,6 +22,9 @@ import type { WireCluster } from "@/lib/news/read";
  *     up to FINANCIAL_BLOCK_SIZE stories; every other section ONE row of at most
  *     NON_FINANCIAL_ROW_SIZE.
  *  5. The "Latest" rail lists only fresh stories not already shown.
+ *  6. GCC market news opens the page (owner request, 2026-11-14): a band of up
+ *     to GCC_BAND_SIZE fresh GCC stories from the financial sections, newest
+ *     first, above the lead. It is omitted when there are none.
  */
 export const TOP_SLOT_MAX_AGE_H = 72;
 export const HERO_SIDE_SIZE = 3;
@@ -29,6 +32,7 @@ export const THREE_UP_SIZE = 3;
 export const FINANCIAL_BLOCK_SIZE = 5;
 export const NON_FINANCIAL_ROW_SIZE = 3;
 export const LATEST_SIZE = 8;
+export const GCC_BAND_SIZE = 4;
 
 export interface HomepageBlock {
   section: SectionConfig;
@@ -38,6 +42,8 @@ export interface HomepageBlock {
 }
 
 export interface HomepageLayout {
+  /** GCC market news shown at the top of the page, newest first. */
+  gcc: WireCluster[];
   lead: WireCluster | null;
   /** Set when the lead is an editor's pick. */
   leadLabel: string | null;
@@ -84,12 +90,25 @@ export function buildHomepage(
     ...nonFin.filter((c) => !isGccRegion(c.region)),
   ];
 
-  // Lead: a current editor's pick, else the strongest fresh financial story.
+  // An editor's pick (when current) keeps the lead slot, so it is not also
+  // repeated in the GCC band.
   const pick =
     opts.featured && ageHours(opts.featured.cluster, now) <= TOP_SLOT_MAX_AGE_H
       ? opts.featured
       : null;
-  const leadStory = pick?.cluster ?? financialFirst[0] ?? null;
+  if (pick) used.add(pick.cluster.slug);
+
+  // GCC market band: the newest fresh GCC stories from the financial sections.
+  const gcc = fin
+    .filter((c) => isGccRegion(c.region) && !used.has(c.slug))
+    .sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime))
+    .slice(0, GCC_BAND_SIZE)
+    .map(take);
+
+  // Lead: a current editor's pick, else the strongest fresh financial story not
+  // already in the band.
+  const leadStory =
+    pick?.cluster ?? financialFirst.find((c) => !used.has(c.slug)) ?? null;
   const lead = leadStory ? take(leadStory) : null;
 
   const heroSide = financialFirst
@@ -134,5 +153,13 @@ export function buildHomepage(
     .slice(0, LATEST_SIZE)
     .map(take);
 
-  return { lead, leadLabel: pick?.label ?? null, heroSide, threeUp, blocks, latest };
+  return {
+    gcc,
+    lead,
+    leadLabel: pick?.label ?? null,
+    heroSide,
+    threeUp,
+    blocks,
+    latest,
+  };
 }
