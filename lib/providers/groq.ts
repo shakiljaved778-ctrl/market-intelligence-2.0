@@ -106,10 +106,10 @@ export const BRIEF_TARGET_WORDS = { min: 400, max: 550 } as const;
 export const BRIEF_MIN_WORDS = 300;
 /**
  * Version of the article rules, stored with each article's model name. The
- * cluster job rewrites articles written under older rules (v3: tightened
- * background rules and the figure check, 2026-11-14).
+ * cluster job rewrites articles written under older rules (v4: tightened
+ * background rules, figure and institution-name checks, 2026-11-14).
  */
-export const BRIEF_FORMAT = "v3";
+export const BRIEF_FORMAT = "v4";
 
 export function wordCount(text: string): number {
   return text.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
@@ -139,6 +139,34 @@ function factsText(input: BriefInput): string {
     moves,
     input.publishedAt?.slice(0, 10) ?? "",
   ].join(" ");
+}
+
+// "Ministry of Oil" first; then "Financial Markets Authority" in what remains.
+const INSTITUTION_OF =
+  /\b(?:Ministry|Department|Authority|Agency|Commission|Directorate)\s+of\s+(?:the\s+)?[A-Z][\w'-]*(?:\s+(?:and\s+|&\s+)?[A-Z][\w'-]*)*/g;
+const INSTITUTION_SUFFIX =
+  /\b[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*)*\s+(?:Ministry|Authority|Agency|Commission|Directorate)\b/g;
+const LEADING = /^(?:(?:The|An?|Omani|Qatari|Saudi|Emirati|Kuwaiti|Bahraini)\s+)+/;
+
+/**
+ * Named ministries, authorities and agencies in a generated article that the
+ * facts never mention — the model has been seen inventing them ("the Omani
+ * Ministry of Oil"). Matched case-insensitively against the facts.
+ */
+export function ungroundedInstitutions(body: string, input: BriefInput): string[] {
+  const facts = factsText(input).toLowerCase();
+  const ofForm = body.match(INSTITUTION_OF) ?? [];
+  const rest = body.replace(INSTITUTION_OF, " ");
+  const suffixForm = (rest.match(INSTITUTION_SUFFIX) ?? []).map((n) =>
+    n.replace(LEADING, ""),
+  );
+  return [
+    ...new Set(
+      [...ofForm, ...suffixForm]
+        .map((n) => n.trim())
+        .filter((n) => /\s/.test(n) && !facts.includes(n.toLowerCase())),
+    ),
+  ];
 }
 
 /**
@@ -250,26 +278,30 @@ export async function generateBrief(
   if (!isGroqConfigured()) return null;
   try {
     const { value } = await swr<Brief | null>(
-      // v3: sectioned format with the figure check (2026-11-14).
-      `brief:v3:${key}`,
+      // v4: sectioned format with the figure and name checks (2026-11-14).
+      `brief:v4:${key}`,
       TTL.fundamentals,
       async () => {
         const models = resolvedModel ? [resolvedModel] : candidateModels();
         for (const model of models) {
           try {
+            const problems = (body: string) => [
+              ...ungroundedFigures(body, input).map((f) => `figure ${f}`),
+              ...ungroundedInstitutions(body, input).map((n) => `name "${n}"`),
+            ];
             let brief = await callGroq(model, input);
-            let bad = ungroundedFigures(brief.body, input);
+            let bad = problems(brief.body);
             if (bad.length) {
-              // One rewrite, told exactly which figures were not in the facts.
+              // One rewrite, told exactly what was not in the facts.
               brief = await callGroq(
                 model,
                 input,
                 false,
-                `Your draft used figures that are not in the facts: ${bad.join(", ")}. Rewrite it using only figures that appear in the facts.`,
+                `Your draft used details that are not in the facts: ${bad.join(", ")}. Rewrite it without them, using only what appears in the facts.`,
               );
-              bad = ungroundedFigures(brief.body, input);
+              bad = problems(brief.body);
               if (bad.length) {
-                throw new Error(`ungrounded figures after rewrite: ${bad.join(", ")}`);
+                throw new Error(`ungrounded details after rewrite: ${bad.join(", ")}`);
               }
             }
             if (resolvedModel !== model) {
