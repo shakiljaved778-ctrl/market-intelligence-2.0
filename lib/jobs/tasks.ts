@@ -27,7 +27,7 @@ import type { JobSummary } from "./job-runs";
 const BACKFILL_RANGES = ["1M", "6M", "1Y", "5Y"] as const;
 
 /** Short, older-format briefs rewritten per cluster run (Groq free tier). */
-export const BRIEF_REWRITES_PER_RUN = 12;
+export const BRIEF_REWRITES_PER_RUN = 8;
 /**
  * Most Groq articles written per cluster run, new and rewritten together. With
  * calls spaced 20 s apart for the free tier's token limit, this keeps a run to
@@ -243,6 +243,7 @@ export async function clusterTask(): Promise<JobSummary> {
     const { coverQuery } = await import("@/lib/news/cover-query");
     const {
       existingClusterBriefs,
+      clustersNeedingBrief,
       setClusterBrief,
       existingClusterCovers,
       setClusterCover,
@@ -324,8 +325,34 @@ export async function clusterTask(): Promise<JobSummary> {
         }
       }
     }
+    // Spare calls go to published stories that still have no article (they
+    // missed their run, or lost it when a later run split them), newest first.
+    let backfilled = 0;
+    if (isGroqConfigured() && callsLeft > 0) {
+      for (const b of await clustersNeedingBrief(callsLeft)) {
+        const brief = await generateBrief(String(b.primaryArticleId), {
+          title: b.title,
+          dek: b.primaryDek,
+          section: classifySection({
+            title: b.title,
+            dek: b.primaryDek,
+            topics: b.primaryTopic ? [b.primaryTopic] : [],
+            tickers: b.tickers,
+            sourceId: b.sourceSlugs[0] ?? null,
+          }),
+          tickers: b.tickers,
+          sources: b.sourceSlugs.map((id) => sourceName.get(id) ?? id),
+          sourceDeks: b.deks,
+          publishedAt: b.eventTime.toISOString(),
+        });
+        if (brief) {
+          await setClusterBrief(b.slug, brief.body, `${brief.model}#${BRIEF_FORMAT}`);
+          backfilled += 1;
+        }
+      }
+    }
     console.log(
-      `[cluster] enrich: ${briefsWritten} briefs, ${coversWritten} covers written`,
+      `[cluster] enrich: ${briefsWritten} briefs, ${backfilled} backfilled, ${coversWritten} covers written`,
     );
   }
 
