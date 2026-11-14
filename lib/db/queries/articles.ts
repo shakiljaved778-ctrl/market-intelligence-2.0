@@ -181,8 +181,8 @@ const RECLUSTER_WINDOW_MS = 48 * 3_600_000;
  * ALL belong to clusters this run did produce, has been replaced: it is marked
  * "stale" so the wire stops showing it (the wire reads published clusters
  * only). Nothing is deleted; its page redirects to the story that now holds its
- * main article (dbSupersedingSlug). Clusters with any article this run did not
- * cover are left alone. Returns the number retired.
+ * main article (dbSupersedingSlug). A story only partly taken over keeps its
+ * remaining articles (see below). Returns the number retired or trimmed.
  */
 export async function supersedeReplacedClusters(
   ranked: SluggedCluster[],
@@ -220,19 +220,59 @@ export async function supersedeReplacedClusters(
   const members = new Map<number, number[]>();
   for (const l of links)
     members.set(l.clusterId, [...(members.get(l.clusterId) ?? []), l.articleId]);
-  const replaced = candidates
-    .map((c) => c.id)
-    .filter((id) => {
-      const ids = members.get(id) ?? [];
-      return ids.length > 0 && ids.every((a) => current.has(a));
-    });
-  if (replaced.length === 0) return 0;
-  await db
-    .update(clusters)
-    .set({ status: "stale", lastUpdatedAt: new Date() })
-    .where(inArray(clusters.id, replaced));
-  console.log(`[cluster] retired ${replaced.length} replaced stories`);
-  return replaced.length;
+  const replaced: number[] = [];
+  const trimmed: number[] = [];
+  for (const { id } of candidates) {
+    const ids = members.get(id) ?? [];
+    const moved = ids.filter((a) => current.has(a));
+    if (moved.length === 0) continue;
+    if (moved.length === ids.length) {
+      replaced.push(id);
+      continue;
+    }
+    // Partly split: some articles now belong to this run's stories, the rest
+    // are older than the window. Keep the story for the articles that remain,
+    // with its time and counts taken from them, and drop the article text,
+    // which was written from facts that are no longer its own.
+    const remaining = ids.filter((a) => !current.has(a));
+    const rows = await db
+      .select({ publishedAt: articles.publishedAt, sourceId: articles.sourceId })
+      .from(articles)
+      .where(inArray(articles.id, remaining));
+    if (rows.length === 0) continue;
+    await db
+      .delete(clusterArticles)
+      .where(
+        and(
+          eq(clusterArticles.clusterId, id),
+          inArray(clusterArticles.articleId, moved),
+        ),
+      );
+    await db
+      .update(clusters)
+      .set({
+        eventTime: new Date(Math.max(...rows.map((r) => r.publishedAt.getTime()))),
+        articleCount: rows.length,
+        sourceCount: new Set(rows.map((r) => r.sourceId)).size,
+        briefMd: null,
+        briefModel: null,
+        lastUpdatedAt: new Date(),
+      })
+      .where(eq(clusters.id, id));
+    trimmed.push(id);
+  }
+  if (replaced.length > 0) {
+    await db
+      .update(clusters)
+      .set({ status: "stale", lastUpdatedAt: new Date() })
+      .where(inArray(clusters.id, replaced));
+  }
+  if (replaced.length || trimmed.length) {
+    console.log(
+      `[cluster] retired ${replaced.length} replaced stories, trimmed ${trimmed.length} split stories`,
+    );
+  }
+  return replaced.length + trimmed.length;
 }
 
 /**
