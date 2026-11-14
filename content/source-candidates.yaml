@@ -84,3 +84,41 @@ candidates:
     name: Dubai Financial Market
     url: https://www.dfm.ae/
     region: AE
+  # --- Round 2 (2026-11-14): more QNA feeds, and replacements for three
+  # feeds that return nothing (Treasury 404, World Bank unparseable, CDC 0). ---
+  - id: qna-qatar
+    name: Qatar News Agency — Qatar
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Qatar
+    region: QA
+  - id: qna-general
+    name: Qatar News Agency — General
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/General
+    region: QA
+  - id: qna-analysis
+    name: Qatar News Agency — Analysis and Reports
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Analysis-and-Reports
+    region: QA
+  - id: treasury-press-current
+    name: U.S. Treasury — press feed (current URL)
+    url: https://home.treasury.gov/rss/press.xml
+    region: US
+  - id: treasury-press-page
+    name: U.S. Treasury — press releases page
+    url: https://home.treasury.gov/news/press-releases
+    region: US
+  - id: worldbank-news-current
+    name: World Bank — news feed (current URL)
+    url: https://www.worldbank.org/en/news/all?format=rss
+    region: GLOBAL
+  - id: worldbank-news-page
+    name: World Bank — news page
+    url: https://www.worldbank.org/en/news
+    region: GLOBAL
+  - id: cdc-newsroom-current
+    name: CDC — newsroom feed (current URL)
+    url: https://tools.cdc.gov/api/v2/resources/media/403372.rss
+    region: US
+  - id: cdc-newsroom-page
+    name: CDC — newsroom page
+    url: https://www.cdc.gov/media/index.html
+    region: US
