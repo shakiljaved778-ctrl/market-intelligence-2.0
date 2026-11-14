@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne } from "drizzle-orm";
 import { dbRead, getDb } from "@/lib/db/client";
 import { articles, clusterArticles, clusters, sources } from "@/lib/db/schema";
 
@@ -78,6 +78,45 @@ export async function dbReadWireBySlug(slug: string): Promise<DbWireRow | null> 
     "dbReadWireBySlug",
     async () => (await readClusters({ slug }))[0] ?? null,
   );
+}
+
+/**
+ * For a story retired by a later clustering run: the slug of the published
+ * story that now holds its main article, so the old URL keeps working.
+ */
+export async function dbSupersedingSlug(slug: string): Promise<string | null> {
+  return dbRead("dbSupersedingSlug", async () => {
+    const db = getDb();
+    if (!db) return null;
+    const [old] = await db
+      .select({ id: clusters.id })
+      .from(clusters)
+      .where(and(eq(clusters.slug, slug), eq(clusters.status, "stale")))
+      .limit(1);
+    if (!old) return null;
+    const [primary] = await db
+      .select({ articleId: clusterArticles.articleId })
+      .from(clusterArticles)
+      .where(
+        and(eq(clusterArticles.clusterId, old.id), eq(clusterArticles.isPrimary, true)),
+      )
+      .limit(1);
+    if (!primary) return null;
+    const [next] = await db
+      .select({ slug: clusters.slug })
+      .from(clusterArticles)
+      .innerJoin(clusters, eq(clusters.id, clusterArticles.clusterId))
+      .where(
+        and(
+          eq(clusterArticles.articleId, primary.articleId),
+          eq(clusters.status, "published"),
+          ne(clusters.id, old.id),
+        ),
+      )
+      .orderBy(desc(clusters.lastUpdatedAt))
+      .limit(1);
+    return next?.slug ?? null;
+  });
 }
 
 async function readClusters(filter: {

@@ -1,4 +1,4 @@
-import { eq, gte, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, notInArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { articles, clusterArticles, clusters, sources } from "@/lib/db/schema";
 import { classify } from "@/lib/curation/classify";
@@ -151,10 +151,73 @@ export async function persistClusters(ranked: SluggedCluster[]): Promise<number>
     }
     stored += 1;
   }
+  await supersedeReplacedClusters(ranked);
   return stored;
 }
 
-/** Slugs among `slugs` whose cluster already has an AI brief (skip regeneration). */
+/** How far back a run re-clusters (jobs read the last 48h of articles). */
+const RECLUSTER_WINDOW_MS = 48 * 3_600_000;
+
+/**
+ * Retire stories a later run has split or merged. A published cluster from the
+ * re-clustered window whose slug this run did not produce, and whose articles
+ * ALL belong to clusters this run did produce, has been replaced: it is marked
+ * "stale" so the wire stops showing it (the wire reads published clusters
+ * only). Nothing is deleted; its page redirects to the story that now holds its
+ * main article (dbSupersedingSlug). Clusters with any article this run did not
+ * cover are left alone. Returns the number retired.
+ */
+export async function supersedeReplacedClusters(
+  ranked: SluggedCluster[],
+): Promise<number> {
+  const db = getDb();
+  if (!db || ranked.length === 0) return 0;
+  const current = new Set(ranked.flatMap((c) => c.articleIds));
+  const since = new Date(Date.now() - RECLUSTER_WINDOW_MS);
+  const candidates = await db
+    .select({ id: clusters.id })
+    .from(clusters)
+    .where(
+      and(
+        eq(clusters.status, "published"),
+        gte(clusters.eventTime, since),
+        notInArray(
+          clusters.slug,
+          ranked.map((c) => c.slug),
+        ),
+      ),
+    );
+  if (candidates.length === 0) return 0;
+  const links = await db
+    .select({
+      clusterId: clusterArticles.clusterId,
+      articleId: clusterArticles.articleId,
+    })
+    .from(clusterArticles)
+    .where(
+      inArray(
+        clusterArticles.clusterId,
+        candidates.map((c) => c.id),
+      ),
+    );
+  const members = new Map<number, number[]>();
+  for (const l of links)
+    members.set(l.clusterId, [...(members.get(l.clusterId) ?? []), l.articleId]);
+  const replaced = candidates
+    .map((c) => c.id)
+    .filter((id) => {
+      const ids = members.get(id) ?? [];
+      return ids.length > 0 && ids.every((a) => current.has(a));
+    });
+  if (replaced.length === 0) return 0;
+  await db
+    .update(clusters)
+    .set({ status: "stale", lastUpdatedAt: new Date() })
+    .where(inArray(clusters.id, replaced));
+  console.log(`[cluster] retired ${replaced.length} replaced stories`);
+  return replaced.length;
+}
+
 /**
  * Word counts of the stored briefs for these clusters (slug -> words). A cluster
  * with no brief is absent from the map.

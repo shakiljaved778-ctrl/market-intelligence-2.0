@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { dbSupersedingSlug } from "@/lib/db/queries/wire";
 import { readCluster, readWire } from "@/lib/news/read";
 import { getQuote, type Priced } from "@/lib/market/service";
 import { instrumentBySymbol } from "@/content/instruments";
@@ -59,7 +60,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function ClusterPage({ params }: Params) {
   const { slug } = await params;
   const detail = await readCluster(slug);
-  if (!detail) notFound();
+  if (!detail) {
+    // A story a later clustering run split or merged keeps its URL: it points
+    // to the story that now holds its main article.
+    const next = await dbSupersedingSlug(slug).catch(() => null);
+    if (next) permanentRedirect(`/news/${next}`);
+    notFound();
+  }
   const { cluster, members, body } = detail;
 
   // Right-rail context (real data only): the instruments this story concerns with
