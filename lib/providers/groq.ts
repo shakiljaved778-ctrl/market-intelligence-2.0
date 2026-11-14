@@ -49,7 +49,7 @@ export interface BriefInput {
   /** ticker -> latest % move, for grounding the "market response" line. */
   moves?: Record<string, number>;
   /** Deks from every clustered report — more cited facts to synthesise from,
-   * so multi-source stories get a full, grounded 2–3 paragraph brief. */
+   * so multi-source stories get a full, grounded article. */
   sourceDeks?: string[];
 }
 
@@ -96,20 +96,43 @@ function prompt(input: BriefInput): string {
     .join("\n");
 }
 
+/** Target length of a brief (owner request, 2026-11-14: fuller articles). */
+export const BRIEF_TARGET_WORDS = { min: 400, max: 550 } as const;
+/** A stored brief shorter than this is rewritten by the cluster job. */
+export const BRIEF_MIN_WORDS = 300;
+
+export function wordCount(text: string): number {
+  return text.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
+}
+
 const SYSTEM = [
-  "You are a markets news editor writing ORIGINAL briefs for an intelligence site.",
-  "Write 150-210 words in 2-3 short paragraphs, neutral and factual.",
-  "Do NOT copy or paraphrase sentences from any source; synthesise from the facts given.",
-  "Ground any market figures only in the numbers provided; never invent prices.",
+  "You are a markets news editor writing ORIGINAL articles for a GCC and global market intelligence site.",
+  `Write ${BRIEF_TARGET_WORDS.min}-${BRIEF_TARGET_WORDS.max} words, neutral and factual, in this structure:`,
+  "an opening paragraph of two or three sentences saying what happened, with no heading;",
+  "then sections, each starting with a line of the form '## Heading' followed by one or two paragraphs:",
+  "'## The details' (everything the reported facts establish);",
+  "'## Market context' (ONLY if instruments or moves are given; use those numbers exactly; otherwise omit this section);",
+  "'## Background' (what the institutions, markets or terms involved are and how this kind of event usually works);",
+  "'## What to watch' (the scheduled or likely next steps the facts point to, stated without prediction or advice).",
   "End with a final line that starts with '**Why it matters:**' (one sentence).",
-  "No investment advice, no hype, no first person.",
+  "Accuracy rules, which outrank length: every specific name, number, date, quote and event must come from the facts given;",
+  "the Background section may explain general, well-established context but must not add any new specific figure, date, name, quote or event;",
+  "never invent prices or market moves; if the facts are thin, keep each section short rather than pad it.",
+  "Do NOT copy or closely paraphrase sentences from any source; synthesise in your own words.",
+  "No investment advice, no buy/sell/hold language, no hype, no first person, no bullet lists.",
 ].join(" ");
 
 /**
  * Generate an original brief for a story. Cached by a stable key so a story is
  * generated once. Returns null when unconfigured or on any failure.
  */
-async function callGroq(model: string, input: BriefInput): Promise<Brief> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function callGroq(
+  model: string,
+  input: BriefInput,
+  retried = false,
+): Promise<Brief> {
   const res = await fetch(BASE_URL, {
     method: "POST",
     headers: {
@@ -120,15 +143,23 @@ async function callGroq(model: string, input: BriefInput): Promise<Brief> {
     body: JSON.stringify({
       model,
       temperature: 0.4,
-      // Headroom for reasoning models (e.g. gpt-oss): the ~300-token brief plus
-      // the reasoning pass. Too small a budget yields empty content.
-      max_tokens: 2000,
+      // Headroom for reasoning models (e.g. gpt-oss): the ~800-token article
+      // plus the reasoning pass. Too small a budget yields empty content.
+      max_tokens: 3000,
       messages: [
         { role: "system", content: SYSTEM },
         { role: "user", content: prompt(input) },
       ],
     }),
   });
+  if (res.status === 429 && !retried) {
+    // Free-tier rate limit: wait as asked (capped) and try once more.
+    const after = Number(res.headers.get("retry-after"));
+    await sleep(
+      Math.min(Number.isFinite(after) && after > 0 ? after * 1000 : 10_000, 30_000),
+    );
+    return callGroq(model, input, true);
+  }
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new Error(`Groq ${res.status} (model=${model}): ${detail.slice(0, 300)}`);
@@ -154,7 +185,8 @@ export async function generateBrief(
   if (!isGroqConfigured()) return null;
   try {
     const { value } = await swr<Brief | null>(
-      `brief:${key}`,
+      // v2: the longer, sectioned article format (2026-11-14).
+      `brief:v2:${key}`,
       TTL.fundamentals,
       async () => {
         const models = resolvedModel ? [resolvedModel] : candidateModels();

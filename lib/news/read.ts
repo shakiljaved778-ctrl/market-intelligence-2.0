@@ -254,7 +254,7 @@ async function computeEurekaClusters(): Promise<LoadedCluster[]> {
 
 /**
  * A cluster is shown only when a reader actually gets an article: either an
- * AI-written brief (2–3 paragraphs), OR a genuine dek — a real sentence, not a
+ * AI-written article (a sectioned brief), OR a genuine dek — a real sentence, not a
  * government feed's description that just repeats the headline. Content-free
  * stubs (bare headline, no brief) are hidden until their brief is generated, so
  * the wire never shows a two-line "article". Applied to LIVE data only; the
