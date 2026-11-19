@@ -9,7 +9,7 @@ import { formatAsOf } from "@/lib/market/provenance";
 export const metadata = pageMeta(
   "/economy",
   "Economy — macro dashboard",
-  "US rates, inflation and jobs from FRED, and Gulf GDP from the World Bank — each series with its source and the date of its latest observation.",
+  "Gulf GDP, growth and inflation from the World Bank, and US rates, inflation and jobs from FRED — each series with its source and the date of its latest observation.",
 );
 
 export default async function EconomyPage() {

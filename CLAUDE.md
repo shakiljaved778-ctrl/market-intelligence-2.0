@@ -110,6 +110,13 @@ releases); quoting ≤ 25 words from any single article, quoted, attributed, lin
 - Ingesting from any source absent from `content/sources.yaml` with an explicit
   `license_note`.
 - Rendering a dek longer than 40 words (truncate at the formatter + "read at source").
+- **Editorial exclusions (owner decision, 2026-11-19 — strict).** No news about
+  the Qatar Central Bank, and nothing about Qatar politics, government or
+  diplomacy. Terms live in `content/exclusions.yaml`; `lib/curation/exclusions.ts`
+  applies them at ingest, in the cluster job (no clusters, no briefs), at read
+  time (hidden from every list/feed/sitemap; the story page 404s) and on AI
+  articles. Never add the `qcb-news` source or the QNA Qatar/General/Analysis
+  feeds.
 
 ## Dual currency (§7)
 

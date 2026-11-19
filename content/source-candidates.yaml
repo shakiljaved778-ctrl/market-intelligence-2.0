@@ -17,6 +17,26 @@
 #   saudi-exchange-news                 we do not work around a block.
 #   qse-home                            robots.txt unreachable, no feed found.
 #   dfm-home                            only a YouTube feed — not news text.
+# Probe run 5, 2026-11-14:
+#   qna-qatar / -general / -analysis   robots allow, HTTP 200, all dated — NOT
+#                                      added: mostly Qatar politics, excluded by
+#                                      the owner (2026-11-19).
+#   treasury-press, worldbank-news,    switched OFF in sources.yaml: Treasury's
+#   cdc-newsroom                       feed times out (no feed on its page); the
+#                                      World Bank URL now returns HTML; the CDC
+#                                      feed is an old COVID-19 feed, 0 items.
+# Probe round 3, 2026-11-19 (run 44427670166):
+#   fed-speeches, cftc-press,          ADDED — robots allow, HTTP 200, fresh, all
+#   census-indicators, bis-press,      items dated.
+#   fda-press
+#   eia-*, bea-news                    robots.txt DISALLOWS the feed paths — skipped.
+#   iea-news, opec-press, oecd-news,   HTTP 403 to automated requests — skipped.
+#   bna-home
+#   imf-news                           404 / 429; kuna-rss 404; wam/spa: no feed.
+#   ona-home                           unreachable from the runner.
+#   nih-news                           items carry no dates (ingest rejects them).
+#   bis-cbspeeches                     newest item 7 days old: outside the 48h
+#                                      clustering window, so it would never show.
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
@@ -43,6 +63,7 @@ candidates:
     url: https://www.spa.gov.sa/en
     region: SA
   # --- Central banks and regulators ---
+  # qcb-news: never to be added (owner decision 2026-11-19, content/exclusions.yaml).
   - id: qcb-news
     name: Qatar Central Bank — news
     url: https://www.qcb.gov.qa/en/news
@@ -84,3 +105,127 @@ candidates:
     name: Dubai Financial Market
     url: https://www.dfm.ae/
     region: AE
+  # --- Round 2 (2026-11-14): more QNA feeds, and replacements for three
+  # feeds that return nothing (Treasury 404, World Bank unparseable, CDC 0). ---
+  - id: qna-qatar
+    name: Qatar News Agency — Qatar
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Qatar
+    region: QA
+  - id: qna-general
+    name: Qatar News Agency — General
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/General
+    region: QA
+  - id: qna-analysis
+    name: Qatar News Agency — Analysis and Reports
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Analysis-and-Reports
+    region: QA
+  - id: treasury-press-current
+    name: U.S. Treasury — press feed (current URL)
+    url: https://home.treasury.gov/rss/press.xml
+    region: US
+  - id: treasury-press-page
+    name: U.S. Treasury — press releases page
+    url: https://home.treasury.gov/news/press-releases
+    region: US
+  - id: worldbank-news-current
+    name: World Bank — news feed (current URL)
+    url: https://www.worldbank.org/en/news/all?format=rss
+    region: GLOBAL
+  - id: worldbank-news-page
+    name: World Bank — news page
+    url: https://www.worldbank.org/en/news
+    region: GLOBAL
+  - id: cdc-newsroom-current
+    name: CDC — newsroom feed (current URL)
+    url: https://tools.cdc.gov/api/v2/resources/media/403372.rss
+    region: US
+  - id: cdc-newsroom-page
+    name: CDC — newsroom page
+    url: https://www.cdc.gov/media/index.html
+    region: US
+  # --- Round 3 (2026-11-19): more free, primary sources — energy, global
+  # institutions, health/science, and other Gulf state news agencies. ---
+  - id: eia-today-in-energy
+    name: U.S. EIA — Today in Energy
+    url: https://www.eia.gov/rss/todayinenergy.xml
+    region: US
+  - id: eia-press
+    name: U.S. EIA — Press releases
+    url: https://www.eia.gov/rss/press_rss.xml
+    region: US
+  - id: iea-news
+    name: International Energy Agency — News
+    url: https://www.iea.org/news
+    region: GLOBAL
+  - id: opec-press
+    name: OPEC — Press releases
+    url: https://www.opec.org/opec_web/en/press_room/28.htm
+    region: GLOBAL
+  - id: imf-news
+    name: IMF — News
+    url: https://www.imf.org/en/News/RSS?Language=ENG
+    region: GLOBAL
+  - id: imf-news-page
+    name: IMF — RSS index
+    url: https://www.imf.org/en/News/RSS
+    region: GLOBAL
+  - id: bis-press
+    name: BIS — Press releases
+    url: https://www.bis.org/doclist/all_pressrels.rss
+    region: GLOBAL
+  - id: bis-cbspeeches
+    name: BIS — Central bankers' speeches
+    url: https://www.bis.org/doclist/cbspeeches.rss
+    region: GLOBAL
+  - id: oecd-news
+    name: OECD — Newsroom
+    url: https://www.oecd.org/en/about/newsroom.html
+    region: GLOBAL
+  - id: cftc-press
+    name: U.S. CFTC — General press releases
+    url: https://www.cftc.gov/RSS/RSSGP/rssgp.xml
+    region: US
+  - id: bea-news
+    name: U.S. BEA — News releases
+    url: https://apps.bea.gov/rss/rss.xml
+    region: US
+  - id: census-indicators
+    name: U.S. Census — Economic indicators
+    url: https://www.census.gov/economic-indicators/indicator.xml
+    region: US
+  - id: fed-speeches
+    name: U.S. Federal Reserve — Speeches
+    url: https://www.federalreserve.gov/feeds/speeches.xml
+    region: US
+  - id: nih-news
+    name: U.S. NIH — News releases
+    url: https://www.nih.gov/news-releases/feed.xml
+    region: US
+  - id: fda-press
+    name: U.S. FDA — Press releases
+    url: https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml
+    region: US
+  - id: kuna-rss
+    name: Kuwait News Agency (KUNA) — RSS
+    url: https://www.kuna.net.kw/Rss.aspx?Language=en
+    region: KW
+  - id: kuna-home
+    name: Kuwait News Agency (KUNA)
+    url: https://www.kuna.net.kw/Default.aspx?language=en
+    region: KW
+  - id: bna-home
+    name: Bahrain News Agency (BNA)
+    url: https://www.bna.bh/en/
+    region: BH
+  - id: ona-home
+    name: Oman News Agency (ONA)
+    url: https://omannews.gov.om/
+    region: OM
+  - id: wam-rss
+    name: Emirates News Agency (WAM) — RSS
+    url: https://www.wam.ae/en/rss
+    region: AE
+  - id: spa-rss
+    name: Saudi Press Agency (SPA) — RSS
+    url: https://www.spa.gov.sa/en/rss
+    region: SA

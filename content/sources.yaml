@@ -33,6 +33,64 @@ sources:
     default_section: economy
     allowed_sections: [economy, markets]
 
+  # Probe round 3 (2026-11-19, GitHub Actions run 44427670166): robots allow,
+  # HTTP 200, valid RSS, fresh, every item dated. Headline + dek + link only.
+  - id: fed-speeches
+    name: U.S. Federal Reserve — Speeches
+    homepage: https://www.federalreserve.gov
+    feed_url: https://www.federalreserve.gov/feeds/speeches.xml
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 100
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true
+    max_items_per_run: 5
+    default_section: economy
+    allowed_sections: [economy, markets, crypto]
+
+  - id: cftc-press
+    name: U.S. CFTC — Press Releases
+    homepage: https://www.cftc.gov
+    feed_url: https://www.cftc.gov/RSS/RSSGP/rssgp.xml
+    kind: rss
+    region: US
+    tier: regulator
+    trust_score: 98
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true
+    max_items_per_run: 5
+    default_section: markets
+    allowed_sections: [markets, crypto, economy]
+
+  - id: census-indicators
+    name: U.S. Census Bureau — Economic Indicators
+    homepage: https://www.census.gov
+    feed_url: https://www.census.gov/economic-indicators/indicator.xml
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 98
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, realestate]
+
+  - id: bis-press
+    name: Bank for International Settlements — Press Releases
+    homepage: https://www.bis.org
+    feed_url: https://www.bis.org/doclist/all_pressrels.rss
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 97
+    license_note: BIS material may be reproduced with the source stated; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 4
+    default_section: economy
+    allowed_sections: [economy, markets, crypto]
+
   - id: ecb-press
     name: European Central Bank — Press
     homepage: https://www.ecb.europa.eu
@@ -68,7 +126,7 @@ sources:
     tier: primary
     trust_score: 98
     license_note: U.S. government work, public domain.
-    active: true
+    active: false # 2026-11-14: feed times out and the press page lists no feed (probe run 5)
     default_section: economy
     allowed_sections: [economy, markets, world]
 
@@ -81,7 +139,7 @@ sources:
     tier: regulator
     trust_score: 96
     license_note: Official Qatari regulator publication; headline + link only.
-    active: false # 2026-11-07: skipped by owner; feed also returned 0 items (URL/robots unverified)
+    active: false # PERMANENTLY OFF — owner decision 2026-11-19: no Qatar Central Bank news (content/exclusions.yaml)
     default_section: economy
     allowed_sections: [economy, markets]
 
@@ -132,6 +190,11 @@ sources:
     max_items_per_run: 15
     default_section: markets
     allowed_sections: [economy, markets]
+
+  # The QNA "Qatar", "General" and "Analysis and Reports" feeds were probed
+  # (2026-11-14) and are NOT used: they are mostly Qatar politics and
+  # diplomacy, which Mizaan does not publish (owner decision, 2026-11-19;
+  # content/exclusions.yaml).
 
   # The Conversation — expert-authored news & analysis across markets, world,
   # tech, science, health. CC-BY-ND explicitly permits commercial republication
@@ -221,6 +284,20 @@ sources:
     default_section: health
     allowed_sections: [health]
 
+  - id: fda-press
+    name: U.S. FDA — Press Releases
+    homepage: https://www.fda.gov
+    feed_url: https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml
+    kind: rss
+    region: US
+    tier: regulator
+    trust_score: 96
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true # probe round 3, 2026-11-19
+    max_items_per_run: 4
+    default_section: health
+    allowed_sections: [health, science]
+
   - id: cdc-newsroom
     name: U.S. CDC — Newsroom
     homepage: https://www.cdc.gov
@@ -230,7 +307,7 @@ sources:
     tier: regulator
     trust_score: 95
     license_note: U.S. government work, public domain. Attribution + link retained.
-    active: true
+    active: false # 2026-11-14: feed is an old COVID-19 feed with 0 items; cdc.gov/rss lists others, unverified
     default_section: health
     allowed_sections: [health]
 
@@ -258,7 +335,7 @@ sources:
     tier: primary
     trust_score: 96
     license_note: World Bank content under CC BY 4.0 with attribution; headline + dek + link only.
-    active: true
+    active: false # 2026-11-14: ?format=rss now returns an HTML page, no feed found (probe run 5)
     default_section: economy
     allowed_sections: [economy, world, science, health]
 

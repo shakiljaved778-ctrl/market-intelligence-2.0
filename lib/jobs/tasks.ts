@@ -68,7 +68,11 @@ export const MACRO_SERIES_BUDGET_MS = 35_000;
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
   const started = Date.now();
-  for (const cfg of SERIES) {
+  // Start at a different series each run (rotating every hour), so when the
+  // time budget cuts a run short it is never the same series that waits.
+  const shift = Math.floor(started / 3_600_000) % SERIES.length;
+  const ordered = [...SERIES.slice(shift), ...SERIES.slice(0, shift)];
+  for (const cfg of ordered) {
     if (Date.now() - started > MACRO_SERIES_BUDGET_MS) {
       console.warn(
         `[macro] time budget reached; ${cfg.id} and later series wait for the next run`,
@@ -217,7 +221,17 @@ export async function clusterTask(): Promise<JobSummary> {
   const { getEmbedder } = await import("@/lib/curation/embed");
   const { loadSources } = await import("@/lib/curation/config");
 
-  const recent = await dbRecentArticles(48);
+  // Stored articles that fall under the editorial exclusions (stored before the
+  // rule existed) are never clustered, ranked or written up.
+  const { isExcluded } = await import("@/lib/curation/exclusions");
+  const regionOf = new Map(loadSources().map((s) => [s.id, s.region ?? null]));
+  const recent = (await dbRecentArticles(48)).filter(
+    (a) =>
+      !isExcluded({
+        texts: [a.headline, a.dek],
+        sourceRegion: regionOf.get(a.sourceId) ?? null,
+      }),
+  );
   if (recent.length === 0) return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
 
   // Rank context: source tiers from the registry.
@@ -253,7 +267,11 @@ export async function clusterTask(): Promise<JobSummary> {
     await import("@/lib/providers/groq");
   const { searchPexels, isPexelsConfigured } = await import("@/lib/providers/pexels");
   if (isGroqConfigured() || isPexelsConfigured()) {
-    const { classifySection } = await import("@/lib/curation/section");
+    const { classifySection, sectionMeta } = await import("@/lib/curation/section");
+    // Stories in a hidden section (the "general" bucket) are never shown, so
+    // they get no article and no cover — the free-tier budget goes to stories
+    // readers can see.
+    const shown = (section: string) => !sectionMeta(section).hidden;
     const { coverQuery } = await import("@/lib/news/cover-query");
     const {
       existingClusterBriefs,
@@ -290,6 +308,7 @@ export async function clusterTask(): Promise<JobSummary> {
         tickers: c.tickers,
         sourceId: sourceById.get(c.primaryId) ?? null,
       });
+      if (!shown(section)) continue;
 
       const stored = haveBrief.get(c.slug);
       const needsBrief = stored === undefined;
@@ -343,17 +362,29 @@ export async function clusterTask(): Promise<JobSummary> {
     // missed their run, or lost it when a later run split them), newest first.
     let backfilled = 0;
     if (isGroqConfigured() && callsLeft > 0) {
-      for (const b of await clustersNeedingBrief(callsLeft)) {
+      // Read extra candidates: hidden-section stories are skipped, not written.
+      for (const b of await clustersNeedingBrief(callsLeft * 4)) {
+        if (callsLeft <= 0) break;
+        const section = classifySection({
+          title: b.title,
+          dek: b.primaryDek,
+          topics: b.primaryTopic ? [b.primaryTopic] : [],
+          tickers: b.tickers,
+          sourceId: b.sourceSlugs[0] ?? null,
+        });
+        if (!shown(section)) continue;
+        if (
+          isExcluded({
+            texts: [b.title, b.primaryDek, ...b.deks],
+            sourceRegion: regionOf.get(b.sourceSlugs[0] ?? "") ?? null,
+          })
+        )
+          continue;
+        callsLeft -= 1;
         const brief = await generateBrief(String(b.primaryArticleId), {
           title: b.title,
           dek: b.primaryDek,
-          section: classifySection({
-            title: b.title,
-            dek: b.primaryDek,
-            topics: b.primaryTopic ? [b.primaryTopic] : [],
-            tickers: b.tickers,
-            sourceId: b.sourceSlugs[0] ?? null,
-          }),
+          section,
           tickers: b.tickers,
           sources: b.sourceSlugs.map((id) => sourceName.get(id) ?? id),
           sourceDeks: b.deks,

@@ -25,6 +25,9 @@ export interface SeriesConfig {
    * yoy = percent change on the same month a year earlier; bn = value / 1e9.
    */
   transform?: "yoy" | "bn";
+  /** Decimal places a value is shown to (presentation only; storage keeps the
+   * provider's full value). */
+  decimals?: number;
   /** Yield-curve tenor label. */
   tenor?: string;
   /** How much history the job requests and the page charts, in days. */
@@ -34,6 +37,70 @@ export interface SeriesConfig {
 const D = 400; // daily series: a little over a year
 const M = 365 * 6; // monthly: six years (five charted + twelve months for YoY)
 const A = 365 * 30; // annual
+
+/** The six GCC economies: World Bank ISO3 code, our region code, display name. */
+const GCC_WB: [string, string, string][] = [
+  ["QAT", "QA", "Qatar"],
+  ["SAU", "SA", "Saudi Arabia"],
+  ["ARE", "AE", "UAE"],
+  ["KWT", "KW", "Kuwait"],
+  ["BHR", "BH", "Bahrain"],
+  ["OMN", "OM", "Oman"],
+];
+
+/** World Bank indicators tracked for every GCC economy. */
+const GCC_INDICATORS: {
+  code: string;
+  name: (country: string) => string;
+  unit: string;
+  transform?: "bn";
+  decimals?: number;
+}[] = [
+  {
+    code: "NY.GDP.MKTP.CD",
+    name: (c) => `${c} GDP (current USD)`,
+    unit: "USD bn",
+    transform: "bn",
+  },
+  {
+    code: "NY.GDP.MKTP.KD.ZG",
+    name: (c) => `${c} real GDP growth`,
+    unit: "%",
+    decimals: 1,
+  },
+  {
+    code: "FP.CPI.TOTL.ZG",
+    name: (c) => `${c} inflation (consumer prices)`,
+    unit: "%",
+    decimals: 1,
+  },
+];
+
+/**
+ * One series per GCC economy and indicator, ordered country by country. Ids
+ * keep the existing "WB:<ISO3>:<indicator>" form, so stored GDP history and
+ * indicator URLs are unchanged. A series the World Bank has no data for is
+ * simply not stored (the macro job skips empty results) — never filled in.
+ */
+function gccWorldBankSeries(): SeriesConfig[] {
+  return GCC_WB.flatMap(([iso3, region, country]) =>
+    GCC_INDICATORS.map((ind) => ({
+      id: `WB:${iso3}:${ind.code}`,
+      provider: "worldbank" as const,
+      code: ind.code,
+      country: iso3,
+      name: ind.name(country),
+      unit: ind.unit,
+      frequency: "annual" as const,
+      region,
+      source: "World Bank",
+      groups: ["macro" as const],
+      ...(ind.transform ? { transform: ind.transform } : {}),
+      ...(ind.decimals !== undefined ? { decimals: ind.decimals } : {}),
+      historyDays: A,
+    })),
+  );
+}
 
 export const SERIES: SeriesConfig[] = [
   {
@@ -224,49 +291,8 @@ export const SERIES: SeriesConfig[] = [
     groups: ["commodity"],
     historyDays: D,
   },
-  // GCC national accounts — World Bank open data (annual).
-  {
-    id: "WB:QAT:NY.GDP.MKTP.CD",
-    provider: "worldbank",
-    code: "NY.GDP.MKTP.CD",
-    country: "QAT",
-    name: "Qatar GDP (current USD)",
-    unit: "USD bn",
-    frequency: "annual",
-    region: "QA",
-    source: "World Bank",
-    groups: ["macro"],
-    transform: "bn",
-    historyDays: A,
-  },
-  {
-    id: "WB:SAU:NY.GDP.MKTP.CD",
-    provider: "worldbank",
-    code: "NY.GDP.MKTP.CD",
-    country: "SAU",
-    name: "Saudi Arabia GDP (current USD)",
-    unit: "USD bn",
-    frequency: "annual",
-    region: "SA",
-    source: "World Bank",
-    groups: ["macro"],
-    transform: "bn",
-    historyDays: A,
-  },
-  {
-    id: "WB:ARE:NY.GDP.MKTP.CD",
-    provider: "worldbank",
-    code: "NY.GDP.MKTP.CD",
-    country: "ARE",
-    name: "UAE GDP (current USD)",
-    unit: "USD bn",
-    frequency: "annual",
-    region: "AE",
-    source: "World Bank",
-    groups: ["macro"],
-    transform: "bn",
-    historyDays: A,
-  },
+  // GCC national accounts and prices — World Bank open data (annual, no key).
+  ...gccWorldBankSeries(),
 ];
 
 export function seriesConfig(id: string): SeriesConfig | null {

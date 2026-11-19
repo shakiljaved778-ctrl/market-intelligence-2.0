@@ -89,7 +89,7 @@ async function probe(c: Candidate): Promise<string[]> {
         .filter(Number.isFinite)
         .sort((a, b) => b - a);
       lines.push(
-        `feed: ${feed.items.length} items · newest ${dates[0] ? new Date(dates[0]).toISOString() : "undated"} · title "${feed.title ?? ""}"`,
+        `feed: ${feed.items.length} items (${feed.items.length - dates.length} undated) · newest ${dates[0] ? new Date(dates[0]).toISOString() : "undated"} · title "${feed.title ?? ""}"`,
       );
       for (const i of feed.items.slice(0, 3))
         lines.push(`  - ${i.title ?? "(untitled)"}`);

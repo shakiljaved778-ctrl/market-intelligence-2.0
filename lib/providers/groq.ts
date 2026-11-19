@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { swr } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
+import { excludedTermsIn } from "@/lib/curation/exclusions";
 
 /**
  * Groq — hosted LLM used to generate ORIGINAL article bodies from a story's
@@ -288,6 +289,9 @@ export async function generateBrief(
             const problems = (body: string) => [
               ...ungroundedFigures(body, input).map((f) => `figure ${f}`),
               ...ungroundedInstitutions(body, input).map((n) => `name "${n}"`),
+              // Editorial exclusions: never the Qatar Central Bank or Qatar's
+              // head of state or government (content/exclusions.yaml).
+              ...excludedTermsIn(body).map((t) => `excluded topic "${t}"`),
             ];
             let brief = await callGroq(model, input);
             let bad = problems(brief.body);
