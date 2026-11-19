@@ -84,6 +84,15 @@ ingest.yml  */10 * * * *   cluster.yml */20 * * * *   quotes.yml */5 * * * *
 macro.yml   0 */6 * * *    eod.yml     0 22 * * *      (all UTC)
 ```
 
+GitHub delays scheduled starts by hours, so `quotes.yml` does not really run every
+5 minutes. For a real intraday refresh (owner request, 2026-11-19),
+`quotes-session.yml` starts four times on weekdays (13:20, 15:20, 17:20, 19:20
+UTC) and, once running, **loops** — calling `/api/cron/quotes` every 15 minutes
+while the US market is open (09:25–16:15 New York time, EST/EDT handled by TZ).
+It stops at once on HTTP 402 (deployment disabled) and fails after 3 failures in
+a row. The repo is public, so runner minutes are free; it costs ~27 Vercel
+invocations a trading day.
+
 ## Stack (exact — §4)
 
 Next.js 15 App Router / React 19 (Server Components default; `'use client'` only for
