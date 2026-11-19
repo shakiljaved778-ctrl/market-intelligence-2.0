@@ -60,6 +60,10 @@ function applyTransform(cfg: SeriesConfig, obs: Obs[]): Obs[] {
   if (cfg.transform === "bn") {
     return obs.map((o) => ({ date: o.date, value: round(o.value / 1e9, 1) }));
   }
+  if (cfg.decimals !== undefined) {
+    const d = cfg.decimals;
+    return obs.map((o) => ({ date: o.date, value: round(o.value, d) }));
+  }
   return obs;
 }
 
@@ -142,9 +146,14 @@ async function readGroup(
   return out;
 }
 
+const GCC_REGIONS = new Set(["QA", "SA", "AE", "KW", "BH", "OM", "GCC"]);
+
+/** Macro tiles, Gulf economies first (product rule: GCC leads), then the rest
+ * in registry order. */
 export async function readMacroSeries(): Promise<MacroSeries[]> {
   const real = await readGroup("macro");
-  if (real.length > 0) return real;
+  const gcc = (s: MacroSeries) => (GCC_REGIONS.has(s.region) ? 0 : 1);
+  if (real.length > 0) return [...real].sort((a, b) => gcc(a) - gcc(b));
   return isDemoMode() ? demoSeries() : [];
 }
 

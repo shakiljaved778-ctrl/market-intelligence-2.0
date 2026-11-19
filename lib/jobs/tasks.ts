@@ -68,7 +68,11 @@ export const MACRO_SERIES_BUDGET_MS = 35_000;
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
   const started = Date.now();
-  for (const cfg of SERIES) {
+  // Start at a different series each run (rotating every hour), so when the
+  // time budget cuts a run short it is never the same series that waits.
+  const shift = Math.floor(started / 3_600_000) % SERIES.length;
+  const ordered = [...SERIES.slice(shift), ...SERIES.slice(0, shift)];
+  for (const cfg of ordered) {
     if (Date.now() - started > MACRO_SERIES_BUDGET_MS) {
       console.warn(
         `[macro] time budget reached; ${cfg.id} and later series wait for the next run`,
