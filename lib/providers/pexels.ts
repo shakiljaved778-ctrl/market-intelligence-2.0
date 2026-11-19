@@ -59,12 +59,14 @@ function pickIndex(query: string, length: number): number {
  * cached per query; the photo is then picked from them by the query plus an
  * optional `seed` (the story's slug), so two stories that search the same
  * phrase ("economy finance city Doha") get different photos without another
- * request. Returns null when unconfigured or on any failure, so callers degrade
- * gracefully.
+ * request. Photos whose URL is in `exclude` (already on another recent story)
+ * are skipped. Returns null when unconfigured, when every result is taken, or on
+ * any failure, so callers degrade gracefully.
  */
 export async function searchPexels(
   query: string,
   seed = "",
+  exclude: ReadonlySet<string> = new Set(),
 ): Promise<CoverImage | null> {
   if (!isPexelsConfigured()) return null;
   const key = process.env.PEXELS_API_KEY as string;
@@ -90,7 +92,14 @@ export async function searchPexels(
       },
     );
     if (!value || value.length === 0) return null;
-    return value[pickIndex(seed ? `${normalized}#${seed}` : normalized, value.length)]!;
+    // Start at the story's own pick, then take the next photo not already used
+    // by another recent story; null when every result is taken.
+    const start = pickIndex(seed ? `${normalized}#${seed}` : normalized, value.length);
+    for (let k = 0; k < value.length; k += 1) {
+      const photo = value[(start + k) % value.length]!;
+      if (!exclude.has(photo.url)) return photo;
+    }
+    return null;
   } catch {
     return null;
   }

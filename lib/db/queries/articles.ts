@@ -422,6 +422,41 @@ export async function existingClusterCovers(slugs: string[]): Promise<Set<string
   return have;
 }
 
+/**
+ * Cover photos must not repeat across recent stories (owner feedback,
+ * 2026-11-19: "these are duplicated images"). For published stories from the
+ * last `windowDays`, a photo URL held by more than one story is kept on the
+ * oldest holder and cleared from the rest, so the cluster job can give them a
+ * different photo. Returns the URLs still in use (to exclude from new picks)
+ * and how many covers were cleared.
+ */
+export async function dedupeRecentCovers(
+  windowDays = 14,
+): Promise<{ inUse: Set<string>; cleared: number }> {
+  const inUse = new Set<string>();
+  const db = getDb();
+  if (!db) return { inUse, cleared: 0 };
+  const since = new Date(Date.now() - windowDays * 86_400_000);
+  const rows = await db
+    .select({ id: clusters.id, coverUrl: clusters.coverUrl })
+    .from(clusters)
+    .where(and(eq(clusters.status, "published"), gte(clusters.eventTime, since)))
+    .orderBy(clusters.id);
+  const repeats: number[] = [];
+  for (const r of rows) {
+    if (!r.coverUrl) continue;
+    if (inUse.has(r.coverUrl)) repeats.push(r.id);
+    else inUse.add(r.coverUrl);
+  }
+  if (repeats.length > 0) {
+    await db
+      .update(clusters)
+      .set({ coverUrl: null, coverCredit: null, coverCreditUrl: null })
+      .where(inArray(clusters.id, repeats));
+  }
+  return { inUse, cleared: repeats.length };
+}
+
 /** Persist a Pexels cover reference onto a cluster (URL + attribution, §13). */
 export async function setClusterCover(
   slug: string,

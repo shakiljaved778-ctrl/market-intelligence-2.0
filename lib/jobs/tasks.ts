@@ -283,7 +283,17 @@ export async function clusterTask(): Promise<JobSummary> {
       setClusterBrief,
       existingClusterCovers,
       setClusterCover,
+      dedupeRecentCovers,
     } = await import("@/lib/db/queries/articles");
+    // No photo twice across recent stories: clear repeats first (they are
+    // re-covered below), and never pick a photo another story already has.
+    const covers = isPexelsConfigured()
+      ? await dedupeRecentCovers()
+      : { inUse: new Set<string>(), cleared: 0 };
+    const usedCovers = covers.inUse;
+    if (covers.cleared > 0) {
+      console.log(`[cluster] cleared ${covers.cleared} repeated cover photos`);
+    }
     const top = ranked.slice(0, 48);
     const slugs = top.map((c) => c.slug);
     const [haveBrief, haveCover] = await Promise.all([
@@ -376,9 +386,14 @@ export async function clusterTask(): Promise<JobSummary> {
           c.tickers[0] ??
           c.topics[0]?.replace(/_/g, " ") ??
           "";
-        const cover = await searchPexels(coverQuery(section, extra), c.slug);
+        const cover = await searchPexels(
+          coverQuery(section, extra),
+          c.slug,
+          usedCovers,
+        );
         if (cover) {
           await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
+          usedCovers.add(cover.url);
           coversWritten += 1;
         }
       }
@@ -415,9 +430,11 @@ export async function clusterTask(): Promise<JobSummary> {
         const cover = await searchPexels(
           coverQuery(section, gccPlace(regionOfCluster(c, dek))),
           c.slug,
+          usedCovers,
         );
         if (cover) {
           await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
+          usedCovers.add(cover.url);
           coversWritten += 1;
         }
       }

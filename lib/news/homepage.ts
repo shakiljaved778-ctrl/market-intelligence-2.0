@@ -203,3 +203,39 @@ export function buildHomepage(
     latest,
   };
 }
+
+/**
+ * No photo twice on the homepage (owner feedback, 2026-11-19). Walks the slots
+ * in the order the page renders them and, for a story whose cover photo has
+ * already appeared higher up, drops the photo — the card then shows its drawn
+ * section cover. The cluster job also clears repeated photos at the source
+ * (dedupeRecentCovers); this guarantees it on the page in the meantime.
+ */
+export function withUniqueCovers(layout: HomepageLayout): HomepageLayout {
+  const seen = new Set<string>();
+  const unique = (c: WireCluster): WireCluster => {
+    if (!c.imageUrl) return c;
+    if (seen.has(c.imageUrl)) return { ...c, imageUrl: null, imageCredit: null };
+    seen.add(c.imageUrl);
+    return c;
+  };
+  const gcc = layout.gcc.map(unique);
+  const lead = layout.lead ? unique(layout.lead) : null;
+  const heroSide = layout.heroSide.map(unique);
+  const threeUp = layout.threeUp.map(unique);
+  const deals = layout.deals.map(unique);
+  const globalMarkets = layout.globalMarkets.map(unique);
+  const blocks = layout.blocks.map((b) => ({ ...b, stories: b.stories.map(unique) }));
+  const latest = layout.latest.map(unique);
+  return {
+    ...layout,
+    gcc,
+    lead,
+    heroSide,
+    threeUp,
+    deals,
+    globalMarkets,
+    blocks,
+    latest,
+  };
+}
