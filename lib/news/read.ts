@@ -330,6 +330,40 @@ async function rerankNow(list: LoadedCluster[]): Promise<LoadedCluster[]> {
 }
 
 /**
+ * The last wire this server instance read successfully. When the database
+ * cannot be reached even after dbRead's retry (lib/db/client.ts), the pages
+ * serve this — re-ranked against the current clock — instead of an empty
+ * "No new stories" homepage. It is only used while it is younger than
+ * LAST_GOOD_MAX_AGE_MS; past that, an honest empty state is better than old
+ * news presented as current.
+ */
+export const LAST_GOOD_MAX_AGE_MS = 6 * 3_600_000;
+let lastGood: { at: number; rows: DbWireRow[] } | null = null;
+
+/** Test seam. */
+export function __resetLastGoodWire(): void {
+  lastGood = null;
+}
+
+async function readWireRows(): Promise<DbWireRow[] | null> {
+  try {
+    const rows = await dbReadWire();
+    if (rows.length > 0) lastGood = { at: Date.now(), rows };
+    return rows;
+  } catch (err) {
+    if (lastGood && Date.now() - lastGood.at <= LAST_GOOD_MAX_AGE_MS) {
+      console.error(
+        `[wire] DB read failed; serving the last good wire from ${new Date(lastGood.at).toISOString()}:`,
+        err,
+      );
+      return lastGood.rows;
+    }
+    console.error("[wire] DB read failed and no recent wire is held:", err);
+    return null;
+  }
+}
+
+/**
  * Load the whole ranked wire once per request (React `cache` dedupes the calls
  * from readWire / readCluster / readSectionSummaries in a single render).
  *
@@ -347,14 +381,20 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
 
   let live: LoadedCluster[] = [];
   if (isDbConfigured()) {
-    try {
+    const rows = await readWireRows();
+    if (rows) {
       // Re-rank against the CURRENT clock, then collapse near-duplicate clusters
       // (same section, title Jaccard ≥ threshold) so a paraphrase never shows
-      // twice — the stronger of the pair is the one kept.
-      const loaded = await rerankNow((await dbReadWire()).map(dbLoaded));
+      // twice — the stronger of the pair is the one kept. If the live quotes
+      // used for ranking cannot be read, the stored scores stand: a ranking
+      // input must never empty the wire.
+      let loaded = rows.map(dbLoaded);
+      try {
+        loaded = await rerankNow(loaded);
+      } catch (err) {
+        console.error("[wire] re-rank failed; using stored scores:", err);
+      }
       live = collapseNearDuplicates(loaded.sort(byImportance));
-    } catch (err) {
-      console.error("[wire] DB read failed:", err);
     }
   }
 
