@@ -1,0 +1,87 @@
+name: quotes-session
+
+# US market-hours price refresh (owner request, 2026-11-19): call
+# /api/cron/quotes every 15 minutes while the US market is open.
+#
+# GitHub delays scheduled starts (often by hours), so a */15 cron would not
+# give a 15-minute refresh. Instead this workflow starts a few times a day and,
+# once running, LOOPS every 15 minutes until the US close. Whichever start runs
+# first covers the rest of the session; a later start queues behind it (shared
+# concurrency group) and exits at once if the market is closed by then.
+# The repository is public, so runner minutes are free; each call is one
+# Vercel function invocation (~27 a trading day).
+on:
+  schedule:
+    # 13:20 UTC is before the 09:30 New York open in both EST and EDT.
+    - cron: "20 13 * * 1-5"
+    - cron: "20 15 * * 1-5"
+    - cron: "20 17 * * 1-5"
+    - cron: "20 19 * * 1-5"
+  workflow_dispatch:
+
+concurrency:
+  group: quotes-session
+  cancel-in-progress: false
+
+jobs:
+  session:
+    runs-on: ubuntu-latest
+    # A GitHub-hosted job may run at most 6 hours; the US session is 6.75 h.
+    # A later scheduled start (queued behind this one) covers the remainder.
+    timeout-minutes: 355
+    steps:
+      - name: Refresh US quotes every 15 minutes during market hours
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -u
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::APP_URL and CRON_SECRET secrets must be set (see DEPLOY.md §2c)."
+            exit 1
+          fi
+
+          # Open from 09:25 to 16:15 New York time, Monday to Friday (the last
+          # call after 16:00 captures the close). TZ handles EST/EDT. Exchange
+          # holidays are not modelled: a call then simply returns the last close.
+          in_session() {
+            local dow hm
+            dow=$(TZ=America/New_York date +%u)
+            hm=$(TZ=America/New_York date +%H%M)
+            [ "$dow" -le 5 ] && [ "$((10#$hm))" -ge 925 ] && [ "$((10#$hm))" -le 1615 ]
+          }
+
+          started=$(date +%s)
+          if ! in_session; then
+            echo "US market is closed ($(TZ=America/New_York date '+%a %H:%M %Z')); nothing to do."
+            exit 0
+          fi
+
+          failures=0
+          while in_session; do
+            # Leave room under the 6-hour job limit for the last call.
+            if [ $(( $(date +%s) - started )) -gt $(( 345 * 60 )) ]; then
+              echo "Approaching the 6-hour job limit; the next scheduled start continues."
+              exit 0
+            fi
+            code=$(curl --show-error --silent --retry 2 --retry-delay 5 --max-time 90 \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              -o response.txt -w '%{http_code}' \
+              "${APP_URL%/}/api/cron/quotes") || true
+            echo "$(date -u '+%H:%M UTC') HTTP ${code} $(head -c 200 response.txt 2>/dev/null | tr -d '\n')"
+            if [ "${code}" = "402" ]; then
+              echo "::error::HTTP 402 — the Vercel deployment is disabled (billing/usage). Stopping instead of retrying."
+              exit 1
+            fi
+            if [ "${code}" = "200" ]; then
+              failures=0
+            else
+              failures=$((failures + 1))
+              if [ "${failures}" -ge 3 ]; then
+                echo "::error::Three refreshes in a row failed (last HTTP ${code}). 401 = CRON_SECRET mismatch; 404 = wrong APP_URL."
+                exit 1
+              fi
+            fi
+            sleep 900
+          done
+          echo "US market closed ($(TZ=America/New_York date '+%H:%M %Z')); session finished."
