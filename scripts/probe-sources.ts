@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import Parser from "rss-parser";
 import { parse } from "yaml";
+import { checkExclusion } from "@/lib/curation/exclusions";
 import { normalizeFeedXml } from "@/lib/curation/ingest";
 import { parseRobots, pathAllowed } from "@/lib/curation/robots";
 
@@ -93,6 +94,22 @@ async function probe(c: Candidate): Promise<string[]> {
       );
       for (const i of feed.items.slice(0, 3))
         lines.push(`  - ${i.title ?? "(untitled)"}`);
+      // For Gulf feeds, show how the editorial exclusions (content/exclusions.yaml)
+      // treat every item, so the rules can be tuned on real headlines.
+      if (c.region === "QA" || c.region === "GCC") {
+        let dropped = 0;
+        for (const i of feed.items) {
+          const v = checkExclusion({
+            texts: [i.title, i.contentSnippet ?? i.summary ?? null],
+            sourceRegion: c.region === "QA" ? "QA" : null,
+          });
+          if (v.excluded) dropped += 1;
+          lines.push(
+            `  ${v.excluded ? "EXCLUDED" : "kept    "} ${v.reason ? `(${v.reason}) ` : ""}${i.title ?? ""}`,
+          );
+        }
+        lines.push(`exclusions: ${dropped} of ${feed.items.length} excluded`);
+      }
     } catch (err) {
       lines.push(
         `feed: unparseable (${err instanceof Error ? err.message : String(err)})`,
