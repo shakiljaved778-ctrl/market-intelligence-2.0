@@ -1,5 +1,7 @@
-import { loadEntities } from "./config";
+import { loadEntities, loadSources } from "./config";
+import { classifyRegion, isGccRegion, type Region } from "./region";
 import { cosine, type Embedder } from "./embed";
+import { stripDateline } from "./normalize";
 
 /**
  * Clustering (§9 Stage 3). Greedy online clustering within a rolling 48h window.
@@ -17,6 +19,12 @@ import { cosine, type Embedder } from "./embed";
  */
 export const CLUSTER_WINDOW_MS = 48 * 60 * 60 * 1000;
 export const SIM_THRESHOLD = 0.5;
+/**
+ * Two reports from the SAME feed must clear a higher bar: a single agency rarely
+ * files the same event twice, and at 0.5 one agency's unrelated stories from a
+ * day (a product week, a chamber forum, a festival) chained into one cluster.
+ */
+export const SAME_SOURCE_THRESHOLD = 0.7;
 export const BOOST_TICKER = 0.3;
 export const BOOST_ENTITY = 0.3;
 export const BOOST_TOPIC = 0.1;
@@ -72,6 +80,36 @@ function isBroadEntity(name: string): boolean {
   return broadEntities.has(name);
 }
 
+/**
+ * Region of a report (lib/curation/region.ts): its own text first, then its
+ * source's registered region. Two reports about different places are not one
+ * event — in particular a Gulf market report must not be swallowed by a global
+ * one ("QSE Index Opens Lower" chaining into "European Stocks Close Lower").
+ */
+let sourceRegions: Map<string, string> | null = null;
+const regionCache = new Map<number, Region>();
+function regionOf(a: ClusterInput): Region {
+  const hit = regionCache.get(a.id);
+  if (hit) return hit;
+  sourceRegions ??= new Map(
+    loadSources().flatMap((s) => (s.region ? [[s.id, s.region] as const] : [])),
+  );
+  const r = classifyRegion({
+    title: a.headline,
+    dek: a.dek,
+    sourceRegion: sourceRegions.get(a.sourceId) ?? null,
+  });
+  regionCache.set(a.id, r);
+  return r;
+}
+
+/** Reports in different regions, at least one of them in the Gulf. */
+function differentGulfRegion(a: ClusterInput, b: ClusterInput): boolean {
+  const ra = regionOf(a);
+  const rb = regionOf(b);
+  return ra !== rb && (isGccRegion(ra) || isGccRegion(rb));
+}
+
 function boost(a: ClusterInput, b: ClusterInput): number {
   let s = 0;
   if (overlap(a.tickers, b.tickers) > 0) s += BOOST_TICKER;
@@ -89,11 +127,14 @@ export async function clusterArticles(
   articles: ClusterInput[],
   embedder: Embedder,
 ): Promise<ClusterResult[]> {
+  regionCache.clear();
   const sorted = [...articles].sort(
     (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
   );
   const embeddings = await Promise.all(
-    sorted.map((a) => embedder.embed(`${a.headline} ${a.dek ?? ""}`)),
+    // The agency dateline is dropped: it is shared by every story an agency
+    // files from one city, so it made unrelated reports look alike.
+    sorted.map((a) => embedder.embed(`${a.headline} ${stripDateline(a.dek ?? "")}`)),
   );
 
   const clusters: WorkingCluster[] = [];
@@ -108,7 +149,11 @@ export async function clusterArticles(
       // Compare to the most similar member (single-link) plus overlap boost.
       let sim = 0;
       cluster.embeddings.forEach((ce, j) => {
-        const c = cosine(emb, ce) + boost(article, cluster.members[j] as ClusterInput);
+        const member = cluster.members[j] as ClusterInput;
+        if (differentGulfRegion(article, member)) return;
+        const c = cosine(emb, ce) + boost(article, member);
+        // Same feed: count the pair only if it clears the higher bar.
+        if (member.sourceId === article.sourceId && c < SAME_SOURCE_THRESHOLD) return;
         if (c > sim) sim = c;
       });
       if (!best || sim > best.score) best = { cluster, score: sim };

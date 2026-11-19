@@ -108,3 +108,76 @@ describe("runPipeline ranking + slugs", () => {
     expect((fed?.importanceScore ?? 0) > (apple?.importanceScore ?? 0)).toBe(true);
   });
 });
+
+// Real QNA economy headlines (probe of 2026-11-19), each with the agency's
+// dateline, as ingest stores them.
+describe("clustering — one agency's unrelated Gulf stories stay separate", () => {
+  const base = Date.parse("2026-11-18T06:00:00Z");
+  const qna = (id: number, sourceId: string, headline: string, body: string) => ({
+    id,
+    sourceId,
+    trustScore: 90,
+    headline,
+    dek: `Doha, November 18 (QNA) - ${body}`,
+    publishedAt: new Date(base + id * 1_800_000).toISOString(),
+  });
+  const items = [
+    qna(
+      1,
+      "qna-economy-local",
+      "Qatar Concludes National Product Week to Promote Local Industries",
+      "The ministry concluded National Product Week to promote local industries.",
+    ),
+    qna(
+      2,
+      "qna-economy-local",
+      "Qatar Chamber: Promising Opportunities to Strengthen Qatar-Malaysia Trade Partnerships",
+      "Qatar Chamber said there were promising opportunities to strengthen trade with Malaysia.",
+    ),
+    qna(
+      3,
+      "qna-economy-local",
+      "Qatar Launches Third Winter Aswaq Festival to Promote Local Produce",
+      "The third Winter Aswaq festival opened to promote local produce.",
+    ),
+    qna(
+      4,
+      "qna-economy-local",
+      "Ooredoo Secures Authorization to Build International Fiber Optic Transit Network Across Iraq",
+      "Ooredoo Group secured authorization to build a fibre transit network across Iraq.",
+    ),
+    qna(
+      5,
+      "qna-economy-local",
+      "Digital Ecosystem Conference Concludes, Drafting Doha Principles to Advance Trusted Digital Economies",
+      "Ooredoo Group wrapped up the Digital Ecosystem Conference and Exhibition 2026.",
+    ),
+    qna(
+      6,
+      "qna-economy-local",
+      "QSE Index Opens Lower",
+      "The Qatar Stock Exchange (QSE) index went down by 0.86% in early trading.",
+    ),
+    qna(
+      7,
+      "qna-economy-international",
+      "European Stocks Close Lower",
+      "European stocks closed lower on Tuesday as investors weighed rate expectations.",
+    ),
+  ];
+  const ctx = {
+    tiers: { "qna-economy-local": "wire", "qna-economy-international": "wire" },
+    tickerMovePct: {},
+    now: new Date(base + 24 * 3_600_000),
+  };
+
+  it("gives every unrelated story its own cluster", async () => {
+    const ranked = await runPipeline(items, ctx, new HashEmbedder());
+    expect(ranked).toHaveLength(items.length);
+  });
+
+  it("does not let a Gulf market report join a global one", async () => {
+    const ranked = await runPipeline([items[5]!, items[6]!], ctx, new HashEmbedder());
+    expect(ranked).toHaveLength(2);
+  });
+});

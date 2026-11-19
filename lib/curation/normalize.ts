@@ -53,3 +53,17 @@ export function canonicalizeUrl(url: string): string {
 export function headlineHash(headline: string): string {
   return createHash("sha1").update(normalizeText(headline).toLowerCase()).digest("hex");
 }
+
+/** A wire-agency dateline: "Doha, November 18 (QNA) - ", "Riyadh, Nov 3 (SPA) –". */
+export const AGENCY_DATELINE =
+  /(?<![\p{L}\p{N}])[\p{Lu}][\p{L} .'-]{1,40},\s+[\p{Lu}][\p{L}.]+\s+\d{1,2}\s*\((?:QNA|WAM|SPA|KUNA|BNA|ONA)\)\s*[-–—]?\s*/gu;
+
+/**
+ * Remove wire-agency datelines. A dateline says where the agency filed from,
+ * not what the story is about — every QNA summary starts "Doha, <date> (QNA) -",
+ * so leaving it in made unrelated stories look alike to the clusterer and made
+ * every one "name Qatar" for the editorial exclusions.
+ */
+export function stripDateline(text: string): string {
+  return text.replace(AGENCY_DATELINE, " ").trim();
+}
