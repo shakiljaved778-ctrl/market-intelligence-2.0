@@ -65,6 +65,9 @@ export async function quotesTask(): Promise<JobSummary> {
  */
 export const MACRO_SERIES_BUDGET_MS = 35_000;
 
+/** Extra cover photos per cluster run for Gulf stories outside the top slice. */
+export const GCC_COVERS_PER_RUN = 12;
+
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
   const started = Date.now();
@@ -272,7 +275,8 @@ export async function clusterTask(): Promise<JobSummary> {
     // they get no article and no cover — the free-tier budget goes to stories
     // readers can see.
     const shown = (section: string) => !sectionMeta(section).hidden;
-    const { coverQuery } = await import("@/lib/news/cover-query");
+    const { coverQuery, gccPlace } = await import("@/lib/news/cover-query");
+    const { classifyRegion } = await import("@/lib/curation/region");
     const {
       existingClusterBriefs,
       clustersNeedingBrief,
@@ -302,6 +306,14 @@ export async function clusterTask(): Promise<JobSummary> {
     const sourceName = new Map(loadSources().map((s) => [s.id, s.name]));
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
     const sourceById = new Map(recent.map((a) => [a.id, a.sourceId]));
+    // A story's Gulf country or "GCC" (lib/curation/region.ts): its text, then
+    // its primary source's registered region.
+    const regionOfCluster = (c: (typeof ranked)[number], dek: string | null) =>
+      classifyRegion({
+        title: c.title,
+        dek,
+        sourceRegion: regionOf.get(sourceById.get(c.primaryId) ?? "") ?? null,
+      });
     let briefsWritten = 0;
     let coversWritten = 0;
     for (const c of top) {
@@ -359,8 +371,50 @@ export async function clusterTask(): Promise<JobSummary> {
 
       if (isPexelsConfigured() && !haveCover.has(c.slug)) {
         const extra =
-          c.entities[0] ?? c.tickers[0] ?? c.topics[0]?.replace(/_/g, " ") ?? "";
+          gccPlace(regionOfCluster(c, dek)) ??
+          c.entities[0] ??
+          c.tickers[0] ??
+          c.topics[0]?.replace(/_/g, " ") ??
+          "";
         const cover = await searchPexels(coverQuery(section, extra));
+        if (cover) {
+          await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
+          coversWritten += 1;
+        }
+      }
+    }
+    // Gulf stories ranked below the top slice still lead the homepage's GCC
+    // band, so they get a cover photo too — a few per run (owner request,
+    // 2026-11-19: image-led homepage). Hidden-section stories are skipped.
+    if (isPexelsConfigured()) {
+      const gulf = ranked.slice(top.length).filter((c) => {
+        const dek = dekById.get(c.primaryId) ?? null;
+        const section = classifySection({
+          title: c.title,
+          dek,
+          topics: c.topics,
+          tickers: c.tickers,
+          sourceId: sourceById.get(c.primaryId) ?? null,
+        });
+        return shown(section) && gccPlace(regionOfCluster(c, dek)) !== null;
+      });
+      const haveGulfCover = await existingClusterCovers(gulf.map((c) => c.slug));
+      let gulfCoversLeft = GCC_COVERS_PER_RUN;
+      for (const c of gulf) {
+        if (gulfCoversLeft <= 0) break;
+        if (haveGulfCover.has(c.slug)) continue;
+        gulfCoversLeft -= 1;
+        const dek = dekById.get(c.primaryId) ?? null;
+        const section = classifySection({
+          title: c.title,
+          dek,
+          topics: c.topics,
+          tickers: c.tickers,
+          sourceId: sourceById.get(c.primaryId) ?? null,
+        });
+        const cover = await searchPexels(
+          coverQuery(section, gccPlace(regionOfCluster(c, dek))),
+        );
         if (cover) {
           await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
           coversWritten += 1;

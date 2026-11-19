@@ -235,9 +235,15 @@ export default async function BoardPage() {
               <StatTile value={distinctSources} label="sources cited on the wire" />
               <StatTile value={sectionsWithStories} label="sections with coverage" />
             </div>
-            <div className="border-hairline divide-hairline mt-5 divide-y border-t">
+            {/* Thumbnailed rows (owner request, 2026-11-19: image-led home). */}
+            <div className="border-hairline mt-5 border-t">
               {heroSide.map((c) => (
-                <LatestRow key={c.slug} c={c} />
+                <div
+                  key={c.slug}
+                  className="[&:not(:last-child)]:border-hairline [&:not(:last-child)]:border-b"
+                >
+                  <StoryCard cluster={c} variant="compact" />
+                </div>
               ))}
             </div>
           </div>
@@ -445,8 +451,14 @@ export default async function BoardPage() {
   );
 }
 
-/** A row of up to four compact story cards under a heading (the homepage
- * finance bands). Renders nothing when there are no stories. */
+/**
+ * A homepage news band (GCC news, Deals & IPOs, Global markets). Image-led, like
+ * the section blocks: the first story as an image card, the rest as compact rows
+ * with a thumbnail (owner request, 2026-11-19 — the opening screen leads with
+ * pictures, not a stack of text-only cards). On phones only `mobileRows` compact
+ * rows show, so the band does not push the main story far down the page.
+ * Renders nothing when there are no stories.
+ */
 function NewsBand({
   id,
   title,
@@ -454,6 +466,7 @@ function NewsBand({
   linkLabel,
   stories,
   className,
+  mobileRows = 4,
 }: {
   id: string;
   title: string;
@@ -461,8 +474,10 @@ function NewsBand({
   linkLabel: string;
   stories: WireCluster[];
   className: string;
+  mobileRows?: number;
 }) {
-  if (stories.length === 0) return null;
+  const [first, ...rest] = stories;
+  if (!first) return null;
   return (
     <section className={className} aria-labelledby={id}>
       <div className="mb-3 flex items-baseline justify-between">
@@ -473,28 +488,33 @@ function NewsBand({
           {linkLabel} <span aria-hidden>→</span>
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {stories.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/news/${c.slug}`}
-            className="group border-hairline bg-surface hover:bg-surface-2 block min-w-0 rounded-[8px] border p-4 transition-colors"
-          >
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
-              <SectionTag section={c.section} region={c.region} />
+      {rest.length === 0 ? (
+        // A single story: an image card at a reading width, not a lone card
+        // beside an empty column.
+        <div className="max-w-[640px]">
+          <StoryCard cluster={first} variant="card" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <StoryCard cluster={first} variant="card" />
+          </div>
+          {rest.length > 0 ? (
+            <div className="border-hairline bg-surface rounded-[8px] border px-4 lg:col-span-7">
+              {rest.map((c, i) => (
+                <div
+                  key={c.slug}
+                  className={`[&:not(:last-child)]:border-hairline [&:not(:last-child)]:border-b ${
+                    i >= mobileRows ? "hidden sm:block" : ""
+                  }`}
+                >
+                  <StoryCard cluster={c} variant="compact" />
+                </div>
+              ))}
             </div>
-            <h3 className="font-editorial text-ink mt-2 text-[15px] leading-snug underline-offset-2 group-hover:underline">
-              {c.title}
-            </h3>
-            {c.dek ? (
-              <p className="text-ink-3 mt-2 line-clamp-2 text-[13px] leading-relaxed">
-                {c.dek}
-              </p>
-            ) : null}
-          </Link>
-        ))}
-      </div>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
