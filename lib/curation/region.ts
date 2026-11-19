@@ -1,3 +1,4 @@
+import { stripDateline } from "./normalize";
 /**
  * Region tagging (Phase 2): which GCC country a story concerns, or "GCC" when it
  * concerns the Gulf as a whole, or "GLOBAL". Deterministic, like sections:
@@ -109,7 +110,10 @@ export interface RegionInput {
 }
 
 export function classifyRegion(input: RegionInput): Region {
-  const text = `${input.title} ${input.dek ?? ""}`;
+  // A wire dateline ("Doha, November 18 (QNA) - ") says where the agency
+  // filed from, not where the story is; a local item still gets its source's
+  // region below.
+  const text = `${input.title} ${stripDateline(input.dek ?? "")}`;
   const countries = GCC_COUNTRIES.filter((c) =>
     COUNTRY_TERMS[c].some((t) => has(text, t)),
   );

@@ -165,7 +165,11 @@ this merges one Fed decision across four sources into **one** cluster and one
 OPEC+ story across three, while keeping the SEC enforcement and Apple items as
 singletons (`lib/curation/pipeline.test.ts`). Country entities (e.g. Qatar) do not count towards the entity
 boost: a national news agency names its country in nearly every story, so a shared
-country is not a shared event (same test file). With `EMBEDDER=minilm`, lower boosts
+country is not a shared event (same test file). Three more guards (2026-11-19, from 84 real
+QNA headlines: 29 clusters before, 63 after): the wire-agency dateline ("Doha,
+<date> (QNA) -") is stripped before embedding; a Gulf-region report never
+merges with a report about a different region; and two reports from the SAME
+feed must clear `SAME_SOURCE_THRESHOLD=0.70`. With `EMBEDDER=minilm`, lower boosts
 to ≈0.12 and raise `SIM_THRESHOLD` toward ~0.68 pure cosine.
 
 **Ranking** (`lib/curation/rank.ts`), weights sum to 1, one place, tunable:

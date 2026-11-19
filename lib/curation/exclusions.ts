@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import { z } from "zod";
+import { stripDateline } from "./normalize";
 
 /**
  * Editorial exclusions (owner decision, 2026-11-19): no news about the Qatar
@@ -66,10 +67,6 @@ function rules(): Compiled {
   return compiled;
 }
 
-/** A wire-agency dateline: "Doha, November 18 (QNA) - ", "Riyadh, Nov 3 (SPA) –". */
-const DATELINE =
-  /(?<![\p{L}\p{N}])[\p{Lu}][\p{L} .'-]{1,40},\s+[\p{Lu}][\p{L}.]+\s+\d{1,2}\s*\((?:QNA|WAM|SPA|KUNA|BNA|ONA)\)\s*[-–—]?\s*/gu;
-
 export interface ExclusionInput {
   /** Headline, dek and any other text describing the story. */
   texts: (string | null | undefined)[];
@@ -101,7 +98,7 @@ export function checkExclusion(
   // A news-agency dateline ("Doha, November 18 (QNA) - ") says where the
   // agency filed from, not what the story is about: it does not count as the
   // text naming Qatar.
-  const namesQatar = r.qatar.test(text.replace(DATELINE, " "));
+  const namesQatar = r.qatar.test(stripDateline(text));
   const qatarRelated = namesQatar || input.sourceRegion === "QA";
   if (!qatarRelated) return { excluded: false };
 
