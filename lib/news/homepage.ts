@@ -25,14 +25,25 @@ import type { WireCluster } from "@/lib/news/read";
  *  6. GCC market news opens the page (owner request, 2026-11-14): a band of up
  *     to GCC_BAND_SIZE fresh GCC stories from the financial sections, newest
  *     first, above the lead. It is omitted when there are none.
+ *  7. Two more finance bands follow the hero (owner request, 2026-11-19), each
+ *     omitted when empty:
+ *     - "Deals & IPOs": stories tagged with a DEAL_TOPICS topic (IPOs,
+ *       private equity, mergers) from the last DEALS_MAX_AGE_H hours, newest
+ *       first — deal news is rarer, so its window is a week;
+ *     - "Global markets": fresh Markets stories outside the Gulf, newest first.
  */
 export const TOP_SLOT_MAX_AGE_H = 72;
 export const HERO_SIDE_SIZE = 3;
 export const THREE_UP_SIZE = 3;
-export const FINANCIAL_BLOCK_SIZE = 5;
+export const FINANCIAL_BLOCK_SIZE = 7;
 export const NON_FINANCIAL_ROW_SIZE = 3;
 export const LATEST_SIZE = 8;
 export const GCC_BAND_SIZE = 4;
+export const DEALS_BAND_SIZE = 4;
+export const GLOBAL_MARKETS_BAND_SIZE = 4;
+export const DEALS_MAX_AGE_H = 168;
+/** Topics (content/topics.yaml) that put a story in the Deals & IPOs band. */
+export const DEAL_TOPICS: readonly string[] = ["ipo", "private_equity", "mergers"];
 
 export interface HomepageBlock {
   section: SectionConfig;
@@ -49,6 +60,10 @@ export interface HomepageLayout {
   leadLabel: string | null;
   heroSide: WireCluster[];
   threeUp: WireCluster[];
+  /** IPO, private-equity and M&A stories, newest first. */
+  deals: WireCluster[];
+  /** Markets stories outside the Gulf, newest first. */
+  globalMarkets: WireCluster[];
   blocks: HomepageBlock[];
   latest: WireCluster[];
 }
@@ -121,6 +136,27 @@ export function buildHomepage(
     .slice(0, THREE_UP_SIZE)
     .map(take);
 
+  const newestFirst = (a: WireCluster, b: WireCluster) =>
+    Date.parse(b.eventTime) - Date.parse(a.eventTime);
+  const deals = shown
+    .filter(
+      (c) =>
+        !used.has(c.slug) &&
+        isFinancialSection(c.section) &&
+        c.topics.some((t) => DEAL_TOPICS.includes(t)) &&
+        ageHours(c, now) <= DEALS_MAX_AGE_H,
+    )
+    .sort(newestFirst)
+    .slice(0, DEALS_BAND_SIZE)
+    .map(take);
+  const globalMarkets = topPool
+    .filter(
+      (c) => !used.has(c.slug) && c.section === "markets" && !isGccRegion(c.region),
+    )
+    .sort(newestFirst)
+    .slice(0, GLOBAL_MARKETS_BAND_SIZE)
+    .map(take);
+
   const blocks: HomepageBlock[] = [];
   const sections = visibleSections();
   const ordered = [
@@ -159,6 +195,8 @@ export function buildHomepage(
     leadLabel: pick?.label ?? null,
     heroSide,
     threeUp,
+    deals,
+    globalMarkets,
     blocks,
     latest,
   };
