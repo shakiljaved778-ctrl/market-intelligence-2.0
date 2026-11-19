@@ -37,6 +37,16 @@
 #   nih-news                           items carry no dates (ingest rejects them).
 #   bis-cbspeeches                     newest item 7 days old: outside the 48h
 #                                      clustering window, so it would never show.
+# Probe round 4, 2026-11-19 (run 44467343815) — markets, deals, global finance:
+#   conversation-*-business (4),       ADDED — robots allow, HTTP 200, fresh,
+#   ecb-publications, boe-speeches,    all items dated.
+#   sec-statements
+#   fsb-feed, prnewswire-financial     feed OK; listed in sources.yaml but OFF
+#                                      until their reuse terms are confirmed.
+#   fca-news                           items undated (ingest rejects them).
+#   rba-media, ecb-blog                stale (1 item / a week old).
+#   hm-treasury, boe-publications      mostly administrative documents.
+#   esma-news-page                     no feed; iosco, wfe, globenewswire 403.
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
