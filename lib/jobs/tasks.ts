@@ -285,7 +285,12 @@ export async function clusterTask(): Promise<JobSummary> {
     const [haveBrief, haveCover] = await Promise.all([
       isGroqConfigured()
         ? existingClusterBriefs(slugs)
-        : Promise.resolve(new Map<string, { words: number; model: string | null }>()),
+        : Promise.resolve(
+            new Map<
+              string,
+              { words: number; model: string | null; mentionsExcluded: boolean }
+            >(),
+          ),
       isPexelsConfigured()
         ? existingClusterCovers(slugs)
         : Promise.resolve(new Set<string>()),
@@ -313,9 +318,13 @@ export async function clusterTask(): Promise<JobSummary> {
       const stored = haveBrief.get(c.slug);
       const needsBrief = stored === undefined;
       // Rewrite articles that are short or were written under older rules.
+      // An article naming an editorially excluded term (written before the
+      // rule existed) is hidden at read time, so it is rewritten too.
       const outdated =
         stored !== undefined &&
-        (stored.words < BRIEF_MIN_WORDS || !stored.model?.endsWith(`#${BRIEF_FORMAT}`));
+        (stored.words < BRIEF_MIN_WORDS ||
+          !stored.model?.endsWith(`#${BRIEF_FORMAT}`) ||
+          stored.mentionsExcluded);
       const needsRewrite = outdated && rewritesLeft > 0;
       if (isGroqConfigured() && (needsBrief || needsRewrite) && callsLeft > 0) {
         callsLeft -= 1;

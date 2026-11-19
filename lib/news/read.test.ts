@@ -246,7 +246,9 @@ describe("wire read — editorial exclusions (content/exclusions.yaml)", () => {
     expect(slugs).toContain("qatar-gold-price");
     expect(slugs).not.toContain("qcb-fee-guide");
     expect(slugs).not.toContain("minister-meets-georgia");
-    expect(slugs).not.toContain("brief-mentions-qcb");
+    // A story whose only problem is its AI article keeps its place, without it.
+    expect(slugs).toContain("brief-mentions-qcb");
+    expect((await readCluster("brief-mentions-qcb"))?.body).toBeNull();
     expect(await readCluster("qcb-fee-guide")).toBeNull();
     expect(await readCluster("minister-meets-georgia")).toBeNull();
     expect(await readCluster("qatar-gold-price")).not.toBeNull();
