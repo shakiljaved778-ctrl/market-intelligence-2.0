@@ -172,7 +172,7 @@ sources:
     trust_score: 90
     license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
     active: true
-    max_items_per_run: 20
+    max_items_per_run: 50 # the whole feed (~2 days); runs are hours apart
     default_section: economy
     allowed_sections: [economy, markets, realestate]
 
@@ -187,7 +187,7 @@ sources:
     trust_score: 90
     license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
     active: true
-    max_items_per_run: 15
+    max_items_per_run: 30
     default_section: markets
     allowed_sections: [economy, markets]
 

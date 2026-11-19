@@ -165,6 +165,13 @@ describe("buildHomepage", () => {
     expect(l.gcc.map((c) => c.slug)).not.toContain(staleGulf.slug);
   });
 
+  it("fills the GCC band with other Gulf stories after the financial ones", () => {
+    const gulfMarkets = { ...story("markets", 5, 40), region: "SA" as const };
+    const gulfScience = { ...story("science", 2, 50), region: "AE" as const };
+    const l = buildHomepage([gulfScience, gulfMarkets], { now: NOW });
+    expect(l.gcc.map((c) => c.slug)).toEqual([gulfMarkets.slug, gulfScience.slug]);
+  });
+
   it("has an empty GCC band when there is no GCC news", () => {
     expect(buildHomepage(wire, { now: NOW }).gcc).toEqual([]);
   });

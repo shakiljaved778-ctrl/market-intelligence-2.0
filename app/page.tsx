@@ -166,7 +166,7 @@ export default async function BoardPage() {
         {/* GCC market news opens the page (owner request, 2026-11-14). */}
         <NewsBand
           id="gcc-markets-heading"
-          title="GCC markets"
+          title="GCC news"
           href="/news/section/markets"
           linkLabel="Markets news"
           stories={gccNews}
