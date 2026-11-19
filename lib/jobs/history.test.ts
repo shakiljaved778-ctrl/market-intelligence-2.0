@@ -5,14 +5,15 @@ import { historySymbols } from "./tracked";
 const NOW = new Date("2026-11-19T22:00:00Z");
 
 describe("price history refresh plan", () => {
-  it("fetches a month for current symbols and five years for missing or stale ones", () => {
-    const latest = new Map([
-      ["AAPL", "2026-11-18"],
-      ["MSFT", "2026-10-01"],
+  it("fetches a month for complete, current symbols and five years otherwise", () => {
+    const spans = new Map([
+      ["AAPL", { first: "2021-11-19", last: "2026-11-18" }],
+      ["MSFT", { first: "2021-11-19", last: "2026-10-01" }], // stale
+      ["META", { first: "2026-10-20", last: "2026-11-18" }], // too shallow
     ]);
-    const plan = planHistoryRefresh(["AAPL", "MSFT", "NVDA"], latest, NOW);
+    const plan = planHistoryRefresh(["AAPL", "MSFT", "META", "NVDA"], spans, NOW);
     expect(plan.recent).toEqual(["AAPL"]);
-    expect(plan.full).toEqual(["MSFT", "NVDA"]);
+    expect(plan.full).toEqual(["MSFT", "META", "NVDA"]);
   });
 
   it("caps full fills per run; the rest wait for the next run", () => {

@@ -13,7 +13,7 @@ import { SERIES } from "@/lib/economy/series";
 import { refreshCandles } from "@/lib/market/candles";
 import { FX_QUOTE_CURRENCIES } from "@/lib/market/levels";
 import { buildSessionClose, nyDate, type SessionRow } from "@/lib/narrative/session";
-import { latestCandleDates } from "@/lib/db/queries/candles";
+import { candleDateSpans } from "@/lib/db/queries/candles";
 import { BACKFILL_SYMBOLS, TRACKED_SYMBOLS, historySymbols } from "./tracked";
 import type { JobSummary } from "./job-runs";
 
@@ -36,22 +36,33 @@ import type { JobSummary } from "./job-runs";
 export const FULL_HISTORY_PER_RUN = 12;
 /** Stored bars newer than this many days count as current (weekends, holidays). */
 export const HISTORY_FRESH_DAYS = 10;
+/** Stored history reaching back at least this far counts as complete. */
+export const HISTORY_DEPTH_DAYS = 4 * 365;
 
-/** Which symbols fetch five years and which only the last month, this run. */
+/**
+ * Which symbols fetch five years and which only the last month, this run. A
+ * symbol is refreshed in full when it has no stored bars, when its latest bar
+ * is stale, or when its history does not reach back HISTORY_DEPTH_DAYS (a
+ * recent listing such as ANT is then simply re-fetched whole — one small call).
+ */
 export function planHistoryRefresh(
   symbols: readonly string[],
-  latest: ReadonlyMap<string, string>,
+  spans: ReadonlyMap<string, { first: string; last: string }>,
   now: Date = new Date(),
   fullPerRun: number = FULL_HISTORY_PER_RUN,
 ): { full: string[]; recent: string[] } {
   const full: string[] = [];
   const recent: string[] = [];
   const freshSince = now.getTime() - HISTORY_FRESH_DAYS * 86_400_000;
+  const deepUntil = now.getTime() - HISTORY_DEPTH_DAYS * 86_400_000;
   for (const raw of symbols) {
     const sym = raw.toUpperCase();
-    const last = latest.get(sym);
-    const lastMs = last ? Date.parse(`${last}T00:00:00Z`) : NaN;
-    if (Number.isFinite(lastMs) && lastMs >= freshSince) recent.push(sym);
+    const span = spans.get(sym);
+    const lastMs = span ? Date.parse(`${span.last}T00:00:00Z`) : NaN;
+    const firstMs = span ? Date.parse(`${span.first}T00:00:00Z`) : NaN;
+    const current = Number.isFinite(lastMs) && lastMs >= freshSince;
+    const deep = Number.isFinite(firstMs) && firstMs <= deepUntil;
+    if (current && deep) recent.push(sym);
     else if (full.length < fullPerRun) full.push(sym);
   }
   return { full, recent };
@@ -204,7 +215,7 @@ export async function eodTask(): Promise<JobSummary> {
   let historyPlan = { full: 0, recent: 0 };
   try {
     const symbols = historySymbols();
-    const plan = planHistoryRefresh(symbols, await latestCandleDates(symbols));
+    const plan = planHistoryRefresh(symbols, await candleDateSpans(symbols));
     historyPlan = { full: plan.full.length, recent: plan.recent.length };
     for (const symbol of plan.full) {
       if ((await refreshCandles(symbol, "5Y")).length > 0) backfilled += 1;
