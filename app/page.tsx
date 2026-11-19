@@ -12,7 +12,7 @@ import { PriceStamp } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/read";
 import { pickFeatured } from "@/lib/news/featured";
-import { buildHomepage } from "@/lib/news/homepage";
+import { buildHomepage, withUniqueCovers } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
 import { readGccIndices, type IndexLevel } from "@/lib/market/indices";
@@ -130,10 +130,12 @@ export default async function BoardPage() {
     globalMarkets,
     blocks,
     latest,
-  } = buildHomepage(clusters, {
-    now: now.getTime(),
-    featured,
-  });
+  } = withUniqueCovers(
+    buildHomepage(clusters, {
+      now: now.getTime(),
+      featured,
+    }),
+  );
   // The latest session recap — shown only while it is recent (a week-old recap
   // is not "the session recap"). Built from real stored closes, or absent.
   const latestRecap = (await listRecaps(currency)).find(

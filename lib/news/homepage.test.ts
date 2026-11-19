@@ -8,6 +8,7 @@ import {
   GCC_BAND_SIZE,
   NON_FINANCIAL_ROW_SIZE,
   TOP_SLOT_MAX_AGE_H,
+  withUniqueCovers,
 } from "./homepage";
 
 const NOW = Date.parse("2026-11-13T12:00:00.000Z");
@@ -227,5 +228,30 @@ describe("buildHomepage", () => {
     const l = buildHomepage([story("science", 2, 50)], { now: NOW });
     expect(l.deals).toEqual([]);
     expect(l.globalMarkets).toEqual([]);
+  });
+});
+
+describe("withUniqueCovers", () => {
+  it("shows each cover photo once, keeping it on the first story", () => {
+    const photo = "https://images.pexels.com/photos/1/p.jpeg";
+    const a = { ...story("markets", 1, 90), region: "QA" as const, imageUrl: photo };
+    const b = { ...story("markets", 2, 80), region: "QA" as const, imageUrl: photo };
+    const c = {
+      ...story("economy", 3, 70),
+      region: "QA" as const,
+      imageUrl: "https://images.pexels.com/photos/2/p.jpeg",
+    };
+    const l = withUniqueCovers(buildHomepage([a, b, c], { now: NOW }));
+    const shown = [
+      ...l.gcc,
+      ...(l.lead ? [l.lead] : []),
+      ...l.heroSide,
+      ...l.threeUp,
+      ...l.blocks.flatMap((x) => x.stories),
+    ];
+    const urls = shown.map((s) => s.imageUrl).filter(Boolean);
+    expect(new Set(urls).size).toBe(urls.length);
+    expect(shown.find((s) => s.slug === a.slug)?.imageUrl).toBe(photo);
+    expect(shown.find((s) => s.slug === b.slug)?.imageUrl).toBeNull();
   });
 });

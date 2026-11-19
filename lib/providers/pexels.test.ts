@@ -81,6 +81,28 @@ describe("pexels cover provider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("skips photos already used by another story, and gives null when all are taken", async () => {
+    process.env.PEXELS_API_KEY = "test-key";
+    const two = {
+      photos: [0, 1].map((i) => ({
+        alt: `p${i}`,
+        photographer: "P",
+        photographer_url: "https://www.pexels.com/@p",
+        src: { landscape: `https://images.pexels.com/${i}.jpg` },
+      })),
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(two))),
+    );
+    const first = await searchPexels("stock market trading", "a");
+    const used = new Set([first!.url]);
+    const second = await searchPexels("stock market trading", "a", used);
+    expect(second?.url).not.toBe(first?.url);
+    used.add(second!.url);
+    expect(await searchPexels("stock market trading", "a", used)).toBeNull();
+  });
+
   it("returns null (not a throw) when the vendor errors", async () => {
     process.env.PEXELS_API_KEY = "test-key";
     vi.stubGlobal(
