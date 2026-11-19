@@ -131,3 +131,89 @@ candidates:
     name: CDC — newsroom page
     url: https://www.cdc.gov/media/index.html
     region: US
+  # --- Round 3 (2026-11-19): more free, primary sources — energy, global
+  # institutions, health/science, and other Gulf state news agencies. ---
+  - id: eia-today-in-energy
+    name: U.S. EIA — Today in Energy
+    url: https://www.eia.gov/rss/todayinenergy.xml
+    region: US
+  - id: eia-press
+    name: U.S. EIA — Press releases
+    url: https://www.eia.gov/rss/press_rss.xml
+    region: US
+  - id: iea-news
+    name: International Energy Agency — News
+    url: https://www.iea.org/news
+    region: GLOBAL
+  - id: opec-press
+    name: OPEC — Press releases
+    url: https://www.opec.org/opec_web/en/press_room/28.htm
+    region: GLOBAL
+  - id: imf-news
+    name: IMF — News
+    url: https://www.imf.org/en/News/RSS?Language=ENG
+    region: GLOBAL
+  - id: imf-news-page
+    name: IMF — RSS index
+    url: https://www.imf.org/en/News/RSS
+    region: GLOBAL
+  - id: bis-press
+    name: BIS — Press releases
+    url: https://www.bis.org/doclist/all_pressrels.rss
+    region: GLOBAL
+  - id: bis-cbspeeches
+    name: BIS — Central bankers' speeches
+    url: https://www.bis.org/doclist/cbspeeches.rss
+    region: GLOBAL
+  - id: oecd-news
+    name: OECD — Newsroom
+    url: https://www.oecd.org/en/about/newsroom.html
+    region: GLOBAL
+  - id: cftc-press
+    name: U.S. CFTC — General press releases
+    url: https://www.cftc.gov/RSS/RSSGP/rssgp.xml
+    region: US
+  - id: bea-news
+    name: U.S. BEA — News releases
+    url: https://apps.bea.gov/rss/rss.xml
+    region: US
+  - id: census-indicators
+    name: U.S. Census — Economic indicators
+    url: https://www.census.gov/economic-indicators/indicator.xml
+    region: US
+  - id: fed-speeches
+    name: U.S. Federal Reserve — Speeches
+    url: https://www.federalreserve.gov/feeds/speeches.xml
+    region: US
+  - id: nih-news
+    name: U.S. NIH — News releases
+    url: https://www.nih.gov/news-releases/feed.xml
+    region: US
+  - id: fda-press
+    name: U.S. FDA — Press releases
+    url: https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml
+    region: US
+  - id: kuna-rss
+    name: Kuwait News Agency (KUNA) — RSS
+    url: https://www.kuna.net.kw/Rss.aspx?Language=en
+    region: KW
+  - id: kuna-home
+    name: Kuwait News Agency (KUNA)
+    url: https://www.kuna.net.kw/Default.aspx?language=en
+    region: KW
+  - id: bna-home
+    name: Bahrain News Agency (BNA)
+    url: https://www.bna.bh/en/
+    region: BH
+  - id: ona-home
+    name: Oman News Agency (ONA)
+    url: https://omannews.gov.om/
+    region: OM
+  - id: wam-rss
+    name: Emirates News Agency (WAM) — RSS
+    url: https://www.wam.ae/en/rss
+    region: AE
+  - id: spa-rss
+    name: Saudi Press Agency (SPA) — RSS
+    url: https://www.spa.gov.sa/en/rss
+    region: SA
