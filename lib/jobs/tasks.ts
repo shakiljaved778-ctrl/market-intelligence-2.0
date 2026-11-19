@@ -13,7 +13,8 @@ import { SERIES } from "@/lib/economy/series";
 import { refreshCandles } from "@/lib/market/candles";
 import { FX_QUOTE_CURRENCIES } from "@/lib/market/levels";
 import { buildSessionClose, nyDate, type SessionRow } from "@/lib/narrative/session";
-import { BACKFILL_SYMBOLS, TRACKED_SYMBOLS } from "./tracked";
+import { latestCandleDates } from "@/lib/db/queries/candles";
+import { BACKFILL_SYMBOLS, TRACKED_SYMBOLS, historySymbols } from "./tracked";
 import type { JobSummary } from "./job-runs";
 
 /**
@@ -23,8 +24,38 @@ import type { JobSummary } from "./job-runs";
  * their engines land in Phase 4.
  */
 
-// Daily ranges backfilled by the EOD job (intraday stays cache-only).
-const BACKFILL_RANGES = ["1M", "6M", "1Y", "5Y"] as const;
+/**
+ * Daily price history (owner request, 2026-11-19: "include stock prices
+ * historical figures"). The EOD job keeps `candles_daily` current for every
+ * tracked US equity: a symbol with recent stored bars fetches only the last
+ * month (one small call), and a symbol with none — or a gap — fetches five
+ * years, at most `FULL_HISTORY_PER_RUN` a run so the job stays inside the
+ * route's 60 s limit and FMP's free ~250 calls a day. Every range on the quote
+ * page (1M … 5Y) is then read from the stored bars.
+ */
+export const FULL_HISTORY_PER_RUN = 12;
+/** Stored bars newer than this many days count as current (weekends, holidays). */
+export const HISTORY_FRESH_DAYS = 10;
+
+/** Which symbols fetch five years and which only the last month, this run. */
+export function planHistoryRefresh(
+  symbols: readonly string[],
+  latest: ReadonlyMap<string, string>,
+  now: Date = new Date(),
+  fullPerRun: number = FULL_HISTORY_PER_RUN,
+): { full: string[]; recent: string[] } {
+  const full: string[] = [];
+  const recent: string[] = [];
+  const freshSince = now.getTime() - HISTORY_FRESH_DAYS * 86_400_000;
+  for (const raw of symbols) {
+    const sym = raw.toUpperCase();
+    const last = latest.get(sym);
+    const lastMs = last ? Date.parse(`${last}T00:00:00Z`) : NaN;
+    if (Number.isFinite(lastMs) && lastMs >= freshSince) recent.push(sym);
+    else if (full.length < fullPerRun) full.push(sym);
+  }
+  return { full, recent };
+}
 
 /** Short, older-format briefs rewritten per cluster run (Groq free tier). */
 export const BRIEF_REWRITES_PER_RUN = 8;
@@ -67,6 +98,10 @@ export const MACRO_SERIES_BUDGET_MS = 35_000;
 
 /** Extra cover photos per cluster run for Gulf stories outside the top slice. */
 export const GCC_COVERS_PER_RUN = 12;
+/** Extra illustrative photos on a story page, beside its cover (owner request, 2026-11-19). */
+export const GALLERY_SIZE = 2;
+/** Stories that already have a cover get their gallery a few per run. */
+export const GALLERY_BACKFILL_PER_RUN = 12;
 
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
@@ -163,15 +198,23 @@ export async function eodTask(): Promise<JobSummary> {
     console.error("[eod] session recap failed:", err);
   }
 
-  // EOD candle backfill for the core symbols across the daily ranges (§13).
-  // Scoped to BACKFILL_SYMBOLS, not the full live-quote list, to stay within the
-  // tight free candle budgets (Polygon ~5/min, EODHD ~100/day).
+  // Daily price history for every tracked equity (see planHistoryRefresh).
+  // Core symbols go first so they are never the ones waiting for a full fill.
   let backfilled = 0;
-  for (const symbol of BACKFILL_SYMBOLS) {
-    for (const range of BACKFILL_RANGES) {
-      const candles = await refreshCandles(symbol, range);
-      if (candles.length > 0) backfilled += 1;
+  try {
+    const symbols = historySymbols();
+    const plan = planHistoryRefresh(symbols, await latestCandleDates(symbols));
+    for (const symbol of plan.full) {
+      if ((await refreshCandles(symbol, "5Y")).length > 0) backfilled += 1;
     }
+    for (const symbol of plan.recent) {
+      if ((await refreshCandles(symbol, "1M")).length > 0) backfilled += 1;
+    }
+    console.log(
+      `[eod] history: ${plan.full.length} full, ${plan.recent.length} recent, ${backfilled} stored`,
+    );
+  } catch (err) {
+    console.error("[eod] price history refresh failed:", err);
   }
   // Refresh fundamentals for the core symbols (§6): low-frequency (daily) and
   // FMP-only, so it stays well within FMP's ~250/day free budget. Cached +
@@ -268,7 +311,9 @@ export async function clusterTask(): Promise<JobSummary> {
   // row (URL/attribution + synthesised prose only — never source text, §10).
   const { generateBrief, isGroqConfigured, BRIEF_MIN_WORDS, BRIEF_FORMAT } =
     await import("@/lib/providers/groq");
-  const { searchPexels, isPexelsConfigured } = await import("@/lib/providers/pexels");
+  const { searchPexelsPhotos, isPexelsConfigured } = await import(
+    "@/lib/providers/pexels"
+  );
   if (isGroqConfigured() || isPexelsConfigured()) {
     const { classifySection, sectionMeta } = await import("@/lib/curation/section");
     // Stories in a hidden section (the "general" bucket) are never shown, so
@@ -283,6 +328,8 @@ export async function clusterTask(): Promise<JobSummary> {
       setClusterBrief,
       existingClusterCovers,
       setClusterCover,
+      setClusterGallery,
+      clustersNeedingGallery,
       dedupeRecentCovers,
     } = await import("@/lib/db/queries/articles");
     // No photo twice across recent stories: clear repeats first (they are
@@ -294,6 +341,21 @@ export async function clusterTask(): Promise<JobSummary> {
     if (covers.cleared > 0) {
       console.log(`[cluster] cleared ${covers.cleared} repeated cover photos`);
     }
+    // A cover plus GALLERY_SIZE more photos from the same (cached) search, none
+    // already on another recent story. Returns whether a cover was written.
+    const writeCover = async (slug: string, query: string): Promise<boolean> => {
+      const photos = await searchPexelsPhotos(
+        query,
+        slug,
+        usedCovers,
+        1 + GALLERY_SIZE,
+      );
+      const [cover, ...gallery] = photos;
+      if (!cover) return false;
+      await setClusterCover(slug, cover.url, cover.credit, cover.creditUrl, gallery);
+      for (const p of photos) usedCovers.add(p.url);
+      return true;
+    };
     const top = ranked.slice(0, 48);
     const slugs = top.map((c) => c.slug);
     const [haveBrief, haveCover] = await Promise.all([
@@ -386,16 +448,7 @@ export async function clusterTask(): Promise<JobSummary> {
           c.tickers[0] ??
           c.topics[0]?.replace(/_/g, " ") ??
           "";
-        const cover = await searchPexels(
-          coverQuery(section, extra),
-          c.slug,
-          usedCovers,
-        );
-        if (cover) {
-          await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
-          usedCovers.add(cover.url);
-          coversWritten += 1;
-        }
+        if (await writeCover(c.slug, coverQuery(section, extra))) coversWritten += 1;
       }
     }
     // Gulf stories ranked below the top slice still lead the homepage's GCC
@@ -427,15 +480,50 @@ export async function clusterTask(): Promise<JobSummary> {
           tickers: c.tickers,
           sourceId: sourceById.get(c.primaryId) ?? null,
         });
-        const cover = await searchPexels(
-          coverQuery(section, gccPlace(regionOfCluster(c, dek))),
+        if (
+          await writeCover(
+            c.slug,
+            coverQuery(section, gccPlace(regionOfCluster(c, dek))),
+          )
+        )
+          coversWritten += 1;
+      }
+    }
+    // Stories that already had a cover before galleries existed get their extra
+    // photos a few per run, from the same search their cover came from.
+    let galleriesWritten = 0;
+    if (isPexelsConfigured()) {
+      const needGallery = await clustersNeedingGallery(slugs);
+      let left = GALLERY_BACKFILL_PER_RUN;
+      for (const c of top) {
+        if (left <= 0) break;
+        if (!needGallery.has(c.slug)) continue;
+        const dek = dekById.get(c.primaryId) ?? null;
+        const section = classifySection({
+          title: c.title,
+          dek,
+          topics: c.topics,
+          tickers: c.tickers,
+          sourceId: sourceById.get(c.primaryId) ?? null,
+        });
+        if (!shown(section)) continue;
+        left -= 1;
+        const extra =
+          gccPlace(regionOfCluster(c, dek)) ??
+          c.entities[0] ??
+          c.tickers[0] ??
+          c.topics[0]?.replace(/_/g, " ") ??
+          "";
+        const gallery = await searchPexelsPhotos(
+          coverQuery(section, extra),
           c.slug,
           usedCovers,
+          GALLERY_SIZE,
         );
-        if (cover) {
-          await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
-          usedCovers.add(cover.url);
-          coversWritten += 1;
+        if (gallery.length > 0) {
+          await setClusterGallery(c.slug, gallery);
+          for (const p of gallery) usedCovers.add(p.url);
+          galleriesWritten += 1;
         }
       }
     }
@@ -478,7 +566,7 @@ export async function clusterTask(): Promise<JobSummary> {
       }
     }
     console.log(
-      `[cluster] enrich: ${briefsWritten} briefs, ${backfilled} backfilled, ${coversWritten} covers written`,
+      `[cluster] enrich: ${briefsWritten} briefs, ${backfilled} backfilled, ${coversWritten} covers, ${galleriesWritten} galleries written`,
     );
   }
 

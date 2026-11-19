@@ -12,6 +12,9 @@ import { PriceStamp } from "@/components/market/Provenance";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/read";
 import { pickFeatured } from "@/lib/news/featured";
+import { liveTicker } from "@/lib/news/live";
+import { LiveTicker } from "@/components/news/LiveTicker";
+import { liveEditorialIds } from "@/content/editorial";
 import { buildHomepage, withUniqueCovers } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
@@ -120,6 +123,8 @@ export default async function BoardPage() {
   // story, nothing older than 72 hours in a top slot, finance leads, and
   // non-finance sections get one row each.
   const featured = pickFeatured(clusters);
+  // Live news ticker: the editor-flagged live story, then the newest headlines.
+  const live = liveTicker(clusters, liveEditorialIds(now.getTime()), now.getTime());
   const {
     gcc: gccNews,
     lead,
@@ -164,6 +169,8 @@ export default async function BoardPage() {
             The wire <span aria-hidden>→</span>
           </Link>
         </div>
+
+        <LiveTicker items={live} now={now} />
 
         {/* GCC market news opens the page (owner request, 2026-11-14). */}
         <NewsBand

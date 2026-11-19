@@ -68,7 +68,22 @@ export async function searchPexels(
   seed = "",
   exclude: ReadonlySet<string> = new Set(),
 ): Promise<CoverImage | null> {
-  if (!isPexelsConfigured()) return null;
+  return (await searchPexelsPhotos(query, seed, exclude, 1))[0] ?? null;
+}
+
+/**
+ * Up to `count` distinct photos for one query, in the same deterministic order
+ * `searchPexels` uses — the first is the cover, the rest the story page's
+ * gallery. One cached search serves them all (no extra request). Photos in
+ * `exclude` are skipped; returns [] when unconfigured or on any failure.
+ */
+export async function searchPexelsPhotos(
+  query: string,
+  seed = "",
+  exclude: ReadonlySet<string> = new Set(),
+  count = 1,
+): Promise<CoverImage[]> {
+  if (!isPexelsConfigured()) return [];
   const key = process.env.PEXELS_API_KEY as string;
   const normalized = query.trim().toLowerCase();
 
@@ -91,16 +106,15 @@ export async function searchPexels(
         }));
       },
     );
-    if (!value || value.length === 0) return null;
-    // Start at the story's own pick, then take the next photo not already used
-    // by another recent story; null when every result is taken.
+    if (!value || value.length === 0) return [];
     const start = pickIndex(seed ? `${normalized}#${seed}` : normalized, value.length);
-    for (let k = 0; k < value.length; k += 1) {
+    const out: CoverImage[] = [];
+    for (let k = 0; k < value.length && out.length < count; k += 1) {
       const photo = value[(start + k) % value.length]!;
-      if (!exclude.has(photo.url)) return photo;
+      if (!exclude.has(photo.url)) out.push(photo);
     }
-    return null;
+    return out;
   } catch {
-    return null;
+    return [];
   }
 }

@@ -7,7 +7,9 @@ import { NoData, PriceStamp } from "@/components/market/Provenance";
 import { FundamentalsPanel } from "@/components/market/Fundamentals";
 import { getDisplayCurrency } from "@/lib/currency/server";
 import { readCandles, readFundamentals } from "@/lib/market/read";
-import { getQuote } from "@/lib/market/service";
+import { getQuote, getSeries } from "@/lib/market/service";
+import { priceHistory } from "@/lib/market/history";
+import { PriceHistory } from "@/components/market/PriceHistory";
 import { instrumentBySymbol } from "@/content/instruments";
 import { readWire } from "@/lib/news/read";
 import { sectionMeta } from "@/lib/curation/section";
@@ -179,6 +181,10 @@ export default async function QuotePage({ params }: Params) {
   // (§9). With fewer than five stored closes there is nothing to derive, so the
   // block is omitted rather than written from a generated series.
   const candles = await readCandles(sym, "6M");
+  // Historical figures (period returns, 52-week range, latest sessions) from
+  // the stored five-year daily series.
+  const series5y = await getSeries(sym, "5Y");
+  const history = priceHistory(series5y.value ?? []);
   const recap =
     candles.length >= 5
       ? instrumentRecap(
@@ -289,6 +295,13 @@ export default async function QuotePage({ params }: Params) {
               </div>
             ))}
           </dl>
+
+          <PriceHistory
+            name={meta?.name ?? sym}
+            history={history}
+            source={series5y.source}
+            currency={currency}
+          />
 
           {fundamentals ? <FundamentalsPanel data={fundamentals} /> : null}
         </div>

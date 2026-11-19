@@ -61,6 +61,16 @@ interface LoadedCluster {
   body: ArticleBody | null;
   /** Registered region of the primary report's source (content/sources.yaml). */
   sourceRegion: string | null;
+  /** Extra illustrative photos for the story page (Pexels references). */
+  gallery?: GalleryPhoto[];
+}
+
+/** An illustrative photo reference shown on the story page (URL + credit). */
+export interface GalleryPhoto {
+  url: string;
+  alt: string;
+  credit: string;
+  creditUrl: string;
 }
 
 function context(clock: Date, articles: RawArticle[]): RankContext {
@@ -193,6 +203,7 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
         ? { md: row.brief.md, model: row.brief.model }
         : null,
     sourceRegion: sourceRegion(row.primarySourceId),
+    gallery: row.gallery ?? [],
   };
 }
 
@@ -451,6 +462,8 @@ export interface ClusterDetail {
   members: ClusterMember[];
   /** Original, AI-written body synthesised from the story's facts (never source text). */
   body: ArticleBody | null;
+  /** Extra illustrative photos (empty when the story has none). */
+  gallery: GalleryPhoto[];
 }
 
 export async function readCluster(slug: string): Promise<ClusterDetail | null> {
@@ -469,7 +482,12 @@ export async function readCluster(slug: string): Promise<ClusterDetail | null> {
   if (!loaded || !isAllowedStory(loaded)) return null;
   // Fixtures carry authored demo bodies; live stories carry the Groq brief the
   // cluster job persisted. No brief → the UI falls back to the dek + source list.
-  return { cluster: loaded.cluster, members: loaded.members, body: loaded.body };
+  return {
+    cluster: loaded.cluster,
+    members: loaded.members,
+    body: loaded.body,
+    gallery: loaded.gallery ?? [],
+  };
 }
 
 export function allTopics(): string[] {

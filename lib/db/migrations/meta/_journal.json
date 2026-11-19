@@ -43,6 +43,13 @@
       "when": 1794497029753,
       "tag": "0005_price_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795119003510,
+      "tag": "0006_cover_gallery",
+      "breakpoints": true
     }
   ]
 }

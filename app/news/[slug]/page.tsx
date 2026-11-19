@@ -14,6 +14,7 @@ import { formatMoney } from "@/lib/format/currency";
 import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
+import { StoryGallery } from "@/components/news/StoryGallery";
 import { ReadingProgress } from "@/components/news/ReadingProgress";
 import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 import { ShareButtons } from "@/components/ui/ShareButtons";
@@ -67,7 +68,7 @@ export default async function ClusterPage({ params }: Params) {
     if (next) permanentRedirect(`/news/${next}`);
     notFound();
   }
-  const { cluster, members, body } = detail;
+  const { cluster, members, body, gallery } = detail;
 
   // Right-rail context (real data only): the instruments this story concerns with
   // their latest cached move, and more stories in the same section.
@@ -221,6 +222,8 @@ export default async function ClusterPage({ params }: Params) {
               </p>
             </article>
           ) : null}
+
+          <StoryGallery photos={gallery} />
 
           <h2 className="t-micro text-ink-3 mb-3">
             Sources · {members.length} {members.length === 1 ? "report" : "reports"}

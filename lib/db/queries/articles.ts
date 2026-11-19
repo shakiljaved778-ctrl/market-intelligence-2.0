@@ -438,7 +438,11 @@ export async function dedupeRecentCovers(
   if (!db) return { inUse, cleared: 0 };
   const since = new Date(Date.now() - windowDays * 86_400_000);
   const rows = await db
-    .select({ id: clusters.id, coverUrl: clusters.coverUrl })
+    .select({
+      id: clusters.id,
+      coverUrl: clusters.coverUrl,
+      coverGallery: clusters.coverGallery,
+    })
     .from(clusters)
     .where(and(eq(clusters.status, "published"), gte(clusters.eventTime, since)))
     .orderBy(clusters.id);
@@ -448,26 +452,87 @@ export async function dedupeRecentCovers(
     if (inUse.has(r.coverUrl)) repeats.push(r.id);
     else inUse.add(r.coverUrl);
   }
+  // Gallery photos count as in use too, so a new cover never repeats a photo
+  // shown inside another story.
+  for (const r of rows) for (const g of r.coverGallery ?? []) inUse.add(g.url);
   if (repeats.length > 0) {
     await db
       .update(clusters)
-      .set({ coverUrl: null, coverCredit: null, coverCreditUrl: null })
+      .set({
+        coverUrl: null,
+        coverCredit: null,
+        coverCreditUrl: null,
+        coverGallery: null,
+      })
       .where(inArray(clusters.id, repeats));
   }
   return { inUse, cleared: repeats.length };
 }
 
-/** Persist a Pexels cover reference onto a cluster (URL + attribution, §13). */
+/** A story-page photo reference (URL + alt + attribution; never body text). */
+export interface GalleryPhoto {
+  url: string;
+  alt: string;
+  credit: string;
+  creditUrl: string;
+}
+
+/**
+ * Persist a Pexels cover reference onto a cluster (URL + attribution, §13),
+ * and — when given — the story page's extra photos.
+ */
 export async function setClusterCover(
   slug: string,
   coverUrl: string,
   coverCredit: string,
   coverCreditUrl: string,
+  gallery?: GalleryPhoto[],
 ): Promise<void> {
   const db = getDb();
   if (!db) return;
   await db
     .update(clusters)
-    .set({ coverUrl, coverCredit, coverCreditUrl })
+    .set({
+      coverUrl,
+      coverCredit,
+      coverCreditUrl,
+      ...(gallery ? { coverGallery: gallery } : {}),
+    })
     .where(eq(clusters.slug, slug));
+}
+
+/** Persist only the extra story-page photos (for stories that already have a cover). */
+export async function setClusterGallery(
+  slug: string,
+  gallery: GalleryPhoto[],
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await db
+    .update(clusters)
+    .set({ coverGallery: gallery })
+    .where(eq(clusters.slug, slug));
+}
+
+/** Of `slugs`, the stories that have a cover photo but no gallery yet, with their cover. */
+export async function clustersNeedingGallery(
+  slugs: string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const db = getDb();
+  if (!db || slugs.length === 0) return out;
+  const rows = await db
+    .select({
+      slug: clusters.slug,
+      coverUrl: clusters.coverUrl,
+      coverGallery: clusters.coverGallery,
+    })
+    .from(clusters)
+    .where(inArray(clusters.slug, slugs));
+  for (const r of rows) {
+    if (r.coverUrl && (r.coverGallery == null || r.coverGallery.length === 0)) {
+      out.set(r.slug, r.coverUrl);
+    }
+  }
+  return out;
 }

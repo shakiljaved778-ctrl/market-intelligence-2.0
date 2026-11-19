@@ -24,7 +24,7 @@ interface TapeItem {
   stamp: StampInput;
 }
 
-const TAPE_EQUITIES = ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA"];
+const TAPE_EQUITIES = ["ANT", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA"];
 
 function num(v: number, dp: number): string {
   return v.toLocaleString("en-US", {

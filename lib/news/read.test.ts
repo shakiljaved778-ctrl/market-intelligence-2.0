@@ -1,3 +1,4 @@
+import { EDITORIAL_ARTICLES } from "@/content/editorial";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -13,6 +14,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  * Without a database the wire is the authored Eureka content only — invented
  * demo news appears ONLY under DEMO_MODE=1.
  */
+const EDITORIAL_IDS = new Set(EDITORIAL_ARTICLES.map((a) => a.id));
+/** A story built only from owner-curated, cited editorial entries. */
+const isEditorial = (c: { articleIds: number[] }) =>
+  c.articleIds.length > 0 && c.articleIds.every((id) => EDITORIAL_IDS.has(id));
+
 describe("wire read — live mode: real news leads, demo fixtures dropped, Eureka kept", () => {
   afterEach(() => {
     vi.resetModules();
@@ -95,9 +101,10 @@ describe("wire read — production with no stored news", () => {
     vi.resetModules();
     const { readWire } = await import("./read");
     const all = await readWire();
-    // Only Mizaan's own authored, cited Eureka explainers remain.
+    // Only Mizaan's own authored, cited content remains: the Eureka explainers
+    // and any current owner-curated editorial entry (content/editorial.ts).
     expect(all.length).toBeGreaterThan(0);
-    expect(all.every((c) => c.section === "eureka")).toBe(true);
+    expect(all.every((c) => c.section === "eureka" || isEditorial(c))).toBe(true);
     expect(all.some((c) => /opec|federal reserve|fomc/i.test(c.title))).toBe(false);
   });
 
@@ -334,6 +341,6 @@ describe("wire read — database unreachable", () => {
     vi.stubEnv("DEMO_MODE", "");
     const { readWire } = await setup([down]);
     const all = await readWire();
-    expect(all.every((c) => c.section === "eureka")).toBe(true);
+    expect(all.every((c) => c.section === "eureka" || isEditorial(c))).toBe(true);
   });
 });

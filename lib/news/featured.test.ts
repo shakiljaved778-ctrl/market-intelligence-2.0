@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import { applyPicks, pickFeatured } from "./featured";
 import type { WireCluster } from "./read";
@@ -57,7 +60,18 @@ describe("editor's pick", () => {
     expect(applyPicks([{ label: "x", slug: "missing" }], wire, NOW)).toBeNull();
   });
 
-  it("ships with no picks configured (content/featured.yaml)", () => {
+  it("a configured pick never applies to a story that is not on the wire", () => {
+    // content/featured.yaml names real live slugs; none is in this test wire.
     expect(pickFeatured(wire)).toBeNull();
+  });
+
+  it("every configured pick names a slug and a hard stop (content/featured.yaml)", () => {
+    const raw = parse(
+      readFileSync(join(process.cwd(), "content", "featured.yaml"), "utf8"),
+    ) as { picks?: { slug?: string; until?: string }[] };
+    for (const p of raw.picks ?? []) {
+      expect(p.slug).toMatch(/^[a-z0-9-]+$/);
+      expect(Number.isFinite(Date.parse(p.until ?? ""))).toBe(true);
+    }
   });
 });

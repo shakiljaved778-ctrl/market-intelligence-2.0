@@ -246,6 +246,17 @@ export const INSTRUMENTS: Instrument[] = [
     country: "US",
   },
   {
+    // Listed on Nasdaq 19 Nov 2026 (ticker ANT). Price history starts at the
+    // listing; the quote page shows only the sessions that exist.
+    symbol: "ANT",
+    name: "Anthropic",
+    exchange: "NASDAQ",
+    assetClass: "equity",
+    nativeCurrency: "USD",
+    sector: "Technology",
+    country: "US",
+  },
+  {
     symbol: "PLTR",
     name: "Palantir Technologies",
     exchange: "NYSE",

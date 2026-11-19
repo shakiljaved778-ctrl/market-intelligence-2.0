@@ -28,6 +28,7 @@ tickers:
   IBM: [IBM]
   MU: [Micron, Micron Technology]
   PLTR: [Palantir]
+  ANT: [Anthropic] # Nasdaq listing, 19 Nov 2026
   NOW: [ServiceNow]
   NFLX: [Netflix]
   UBER: [Uber, Uber Technologies]

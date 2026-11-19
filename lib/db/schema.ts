@@ -114,6 +114,13 @@ export const clusters = pgTable(
     coverUrl: text("cover_url"),
     coverCredit: text("cover_credit"),
     coverCreditUrl: text("cover_credit_url"),
+    // More photos for the story page (owner request, 2026-11-19): up to
+    // GALLERY_SIZE further Pexels references (URL + alt + attribution), picked
+    // from the same search as the cover and never repeating it.
+    coverGallery:
+      jsonb("cover_gallery").$type<
+        { url: string; alt: string; credit: string; creditUrl: string }[]
+      >(),
   },
   (t) => [
     uniqueIndex("clusters_slug_uq").on(t.slug),
