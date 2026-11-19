@@ -389,7 +389,9 @@ export async function clusterTask(): Promise<JobSummary> {
     // they get no article and no cover — the free-tier budget goes to stories
     // readers can see.
     const shown = (section: string) => !sectionMeta(section).hidden;
-    const { coverQuery, gccPlace } = await import("@/lib/news/cover-query");
+    const { coverQuery, coverQueries, gccPlace } = await import(
+      "@/lib/news/cover-query"
+    );
     const { classifyRegion } = await import("@/lib/curation/region");
     const {
       existingClusterBriefs,
@@ -412,13 +414,22 @@ export async function clusterTask(): Promise<JobSummary> {
     }
     // A cover plus GALLERY_SIZE more photos from the same (cached) search, none
     // already on another recent story. Returns whether a cover was written.
-    const writeCover = async (slug: string, query: string): Promise<boolean> => {
-      const photos = await searchPexelsPhotos(
-        query,
-        slug,
-        usedCovers,
-        1 + GALLERY_SIZE,
-      );
+    // Searches are tried in order (coverQueries) until enough unused photos
+    // are found; the first search's results come first.
+    const writeCover = async (slug: string, queries: string[]): Promise<boolean> => {
+      const photos: Awaited<ReturnType<typeof searchPexelsPhotos>> = [];
+      for (const q of queries) {
+        if (photos.length >= 1 + GALLERY_SIZE) break;
+        const exclude = new Set([...usedCovers, ...photos.map((p) => p.url)]);
+        photos.push(
+          ...(await searchPexelsPhotos(
+            q,
+            slug,
+            exclude,
+            1 + GALLERY_SIZE - photos.length,
+          )),
+        );
+      }
       const [cover, ...gallery] = photos;
       if (!cover) return false;
       await setClusterCover(slug, cover.url, cover.credit, cover.creditUrl, gallery);
@@ -517,7 +528,7 @@ export async function clusterTask(): Promise<JobSummary> {
           c.tickers[0] ??
           c.topics[0]?.replace(/_/g, " ") ??
           "";
-        if (await writeCover(c.slug, coverQuery(section, extra))) coversWritten += 1;
+        if (await writeCover(c.slug, coverQueries(section, extra))) coversWritten += 1;
       }
     }
     // Gulf stories ranked below the top slice still lead the homepage's GCC
@@ -552,7 +563,7 @@ export async function clusterTask(): Promise<JobSummary> {
         if (
           await writeCover(
             c.slug,
-            coverQuery(section, gccPlace(regionOfCluster(c, dek))),
+            coverQueries(section, gccPlace(regionOfCluster(c, dek))),
           )
         )
           coversWritten += 1;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { canonical } from "@/lib/seo";
+import { isGccRegion, regionLabel } from "@/lib/curation/region";
 import { CoverArt } from "@/components/news/CoverArt";
 import { SectionTag } from "@/components/news/SectionTag";
 import { StoryCard } from "@/components/news/StoryCard";
@@ -17,7 +18,7 @@ import { LiveTicker } from "@/components/news/LiveTicker";
 import { VideoGrid } from "@/components/video/VideoGrid";
 import { pickVideoStrip, readVideos } from "@/lib/videos/read";
 import { liveEditorialIds } from "@/content/editorial";
-import { buildHomepage, withUniqueCovers } from "@/lib/news/homepage";
+import { buildHomepage, photoFirst, withUniqueCovers } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
 import { readGccIndices, type IndexLevel } from "@/lib/market/indices";
@@ -198,6 +199,11 @@ export default async function BoardPage() {
                       section={lead.section}
                       seed={lead.slug}
                       imageUrl={lead.imageUrl}
+                      feature={{
+                        place: isGccRegion(lead.region)
+                          ? regionLabel(lead.region)
+                          : null,
+                      }}
                       className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
                     />
                   </div>
@@ -506,7 +512,8 @@ function NewsBand({
   className: string;
   mobileRows?: number;
 }) {
-  const [first, ...rest] = stories;
+  // The band's big card shows a photo whenever any of its stories has one.
+  const [first, ...rest] = photoFirst(stories);
   if (!first) return null;
   return (
     <section className={className} aria-labelledby={id}>

@@ -2,6 +2,12 @@ import Link from "next/link";
 import type { WireCluster } from "@/lib/news/read";
 import { relativeTime } from "@/lib/format/relative-time";
 import { CoverArt } from "./CoverArt";
+import { isGccRegion, regionLabel, type Region } from "@/lib/curation/region";
+
+/** The Gulf country (or "GCC") a story concerns, for its drawn cover. */
+function placeOf(region: Region | undefined): string | null {
+  return region && isGccRegion(region) ? regionLabel(region) : null;
+}
 import { SectionTag } from "./SectionTag";
 import { SignalScore } from "@/components/ui/SignalScore";
 import { InstrumentChip } from "@/components/ui/InstrumentChip";
@@ -83,6 +89,7 @@ export function StoryCard({
           seed={cluster.slug}
           imageUrl={cluster.imageUrl}
           label={!cluster.imageUrl}
+          feature={{ place: placeOf(cluster.region) }}
           className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
         />
       </div>
