@@ -53,16 +53,17 @@ export async function persistDailyCandles(
   return rows.length;
 }
 
-/** The latest stored daily bar per symbol (YYYY-MM-DD), for incremental backfill. */
-export async function latestCandleDates(
+/** The first and latest stored daily bar per symbol (YYYY-MM-DD), for incremental backfill. */
+export async function candleDateSpans(
   symbols: string[],
-): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
+): Promise<Map<string, { first: string; last: string }>> {
+  const out = new Map<string, { first: string; last: string }>();
   const db = getDb();
   if (!db || symbols.length === 0) return out;
   const rows = await db
     .select({
       symbol: candlesDaily.symbol,
+      first: sql<string>`min(${candlesDaily.date})`,
       last: sql<string>`max(${candlesDaily.date})`,
     })
     .from(candlesDaily)
@@ -73,6 +74,13 @@ export async function latestCandleDates(
       ),
     )
     .groupBy(candlesDaily.symbol);
-  for (const r of rows) if (r.last) out.set(r.symbol, String(r.last).slice(0, 10));
+  for (const r of rows) {
+    if (r.first && r.last) {
+      out.set(r.symbol, {
+        first: String(r.first).slice(0, 10),
+        last: String(r.last).slice(0, 10),
+      });
+    }
+  }
   return out;
 }
