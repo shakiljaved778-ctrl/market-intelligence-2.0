@@ -201,9 +201,11 @@ export async function eodTask(): Promise<JobSummary> {
   // Daily price history for every tracked equity (see planHistoryRefresh).
   // Core symbols go first so they are never the ones waiting for a full fill.
   let backfilled = 0;
+  let historyPlan = { full: 0, recent: 0 };
   try {
     const symbols = historySymbols();
     const plan = planHistoryRefresh(symbols, await latestCandleDates(symbols));
+    historyPlan = { full: plan.full.length, recent: plan.recent.length };
     for (const symbol of plan.full) {
       if ((await refreshCandles(symbol, "5Y")).length > 0) backfilled += 1;
     }
@@ -240,6 +242,12 @@ export async function eodTask(): Promise<JobSummary> {
       pruned.articlesDeleted +
       pruned.intradayCandlesDeleted,
     outcome: pruned.skipped ? "partial" : "ok",
+    detail: {
+      historyFull: historyPlan.full,
+      historyRecent: historyPlan.recent,
+      historyStored: backfilled,
+      historyHttp: (await import("@/lib/providers/fmp")).fmpHistoryStatus,
+    },
   };
 }
 

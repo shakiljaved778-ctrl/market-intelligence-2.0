@@ -17,6 +17,8 @@ export interface JobSummary {
   itemsIn?: number;
   itemsOut?: number;
   outcome?: JobOutcome;
+  /** Small, non-secret counters echoed in the route's JSON for the Actions log. */
+  detail?: Record<string, number | string | null>;
 }
 
 export interface JobRunResult extends JobSummary {
