@@ -308,6 +308,25 @@ export const calendarEvents = pgTable("calendar_events", {
   importance: integer("importance").notNull().default(0),
 });
 
+/**
+ * Short videos from official institutions' YouTube channels (owner choice,
+ * 2026-11-19). References only — id, title, time, thumbnail URL — never a
+ * description or transcript. Filled by the macro job from content/videos.yaml.
+ */
+export const videos = pgTable(
+  "videos",
+  {
+    videoId: text("video_id").primaryKey(),
+    /** Channel id from content/videos.yaml (e.g. "federal-reserve"). */
+    channel: text("channel").notNull(),
+    title: text("title").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    thumbnailUrl: text("thumbnail_url").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("videos_published_idx").on(t.publishedAt.desc())],
+);
+
 export const jobRuns = pgTable("job_runs", {
   id: serial("id").primaryKey(),
   job: text("job").notNull(),

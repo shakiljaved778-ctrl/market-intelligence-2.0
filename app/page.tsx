@@ -14,6 +14,8 @@ import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/rea
 import { pickFeatured } from "@/lib/news/featured";
 import { liveTicker } from "@/lib/news/live";
 import { LiveTicker } from "@/components/news/LiveTicker";
+import { VideoGrid } from "@/components/video/VideoGrid";
+import { pickVideoStrip, readVideos } from "@/lib/videos/read";
 import { liveEditorialIds } from "@/content/editorial";
 import { buildHomepage, withUniqueCovers } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
@@ -106,11 +108,14 @@ const DAY_MS = 86_400_000;
 export const metadata = { alternates: { canonical: canonical("/") } };
 
 export default async function BoardPage() {
-  const [currency, clusters, summary] = await Promise.all([
+  const [currency, clusters, summary, allVideos] = await Promise.all([
     getDisplayCurrency(),
     readWire(),
     readSectionSummaries(),
+    readVideos(24),
   ]);
+  // Official-institution videos: each channel's newest first, four in all.
+  const videos = pickVideoStrip(allVideos, 4);
   // Homepage counters — each is a plain count of what is on the wire now.
   const now = new Date();
   const ageMs = (c: WireCluster) => now.getTime() - new Date(c.eventTime).getTime();
@@ -285,6 +290,22 @@ export default async function BoardPage() {
           stories={globalMarkets}
           className="mt-10"
         />
+
+        {/* Short videos from official institutions (owner choice, 2026-11-19).
+            Omitted when none are stored. */}
+        {videos.length > 0 ? (
+          <section className="mt-10" aria-labelledby="watch-heading">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 id="watch-heading" className="t-h3 font-editorial text-ink">
+                Watch
+              </h2>
+              <Link href="/videos" className="text-ink-3 hover:text-brand text-[12px]">
+                All videos <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <VideoGrid videos={videos} />
+          </section>
+        ) : null}
       </section>
 
       {/* ============ Movers + Session recap (side by side) ============ */}

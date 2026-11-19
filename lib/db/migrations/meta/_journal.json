@@ -50,6 +50,13 @@
       "when": 1795119003510,
       "tag": "0006_cover_gallery",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795124138194,
+      "tag": "0007_videos",
+      "breakpoints": true
     }
   ]
 }

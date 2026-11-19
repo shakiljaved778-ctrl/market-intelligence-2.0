@@ -1,0 +1,11 @@
+# Official-institution YouTube channels (owner choice, 2026-11-19: "Option 1").
+#
+# A channel is read only when listed here with a licence note and active: true.
+# The macro job (every 6 hours) reads each channel's public RSS feed — no key —
+# robots.txt checked inside the fetcher, and stores references only (video id,
+# title, time, thumbnail URL). Videos play from youtube-nocookie.com, embedded
+# with YouTube's own player as its terms allow, only when a reader presses play.
+#
+# Channel ids are filled in from the probe of the channel pages
+# (scripts/probe-sources.ts, content/source-candidates.yaml).
+channels: []

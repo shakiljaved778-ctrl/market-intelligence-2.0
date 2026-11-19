@@ -154,10 +154,47 @@ export async function macroTask(): Promise<JobSummary> {
   const fx = await referenceRates("USD", FX_QUOTE_CURRENCIES, 14);
   const fxStored = await persistFxRates(fx.map((r) => ({ ...r, source: "ecb" })));
 
+  let videosStored = 0;
+  try {
+    videosStored = await refreshVideos();
+  } catch (err) {
+    console.error("[macro] video refresh failed:", err);
+  }
+
   return {
     itemsIn: SERIES.length + FX_QUOTE_CURRENCIES.length,
-    itemsOut: out + (fxStored > 0 ? FX_QUOTE_CURRENCIES.length : 0),
+    itemsOut: out + (fxStored > 0 ? FX_QUOTE_CURRENCIES.length : 0) + videosStored,
+    detail: { videosStored },
   };
+}
+
+/**
+ * Official-institution videos (owner choice, 2026-11-19): read each active
+ * channel's feed (content/videos.yaml) in parallel, keep titles that pass the
+ * editorial exclusions, store the references and drop ones older than 90 days.
+ */
+async function refreshVideos(): Promise<number> {
+  const { loadVideoChannels } = await import("@/lib/videos/channels");
+  const { channelVideos } = await import("@/lib/providers/youtube");
+  const { persistVideos, pruneVideos } = await import("@/lib/db/queries/videos");
+  const { checkExclusion } = await import("@/lib/curation/exclusions");
+  const channels = loadVideoChannels().filter((c) => c.active);
+  const lists = await Promise.all(
+    channels.map(async (c) =>
+      (await channelVideos(c.channelId))
+        .filter((v) => !checkExclusion({ texts: [v.title] }).excluded)
+        .map((v) => ({
+          videoId: v.videoId,
+          channel: c.id,
+          title: v.title,
+          publishedAt: v.publishedAt,
+          thumbnailUrl: v.thumbnailUrl,
+        })),
+    ),
+  );
+  const stored = await persistVideos(lists.flat());
+  await pruneVideos(90);
+  return stored;
 }
 
 /**
