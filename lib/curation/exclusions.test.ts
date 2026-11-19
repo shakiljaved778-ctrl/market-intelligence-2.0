@@ -143,3 +143,60 @@ describe("exclusions — Gulf business news is kept, government and diplomacy is
     expect(isExcluded({ texts: ["Qatar's political calendar for 2027"] })).toBe(true);
   });
 });
+
+describe("exclusions — a news-agency dateline does not make a story about Qatar", () => {
+  const dek = (body: string) => `Doha, November 18 (QNA) - ${body}`;
+  it("keeps business copy whose only Qatar mention is the dateline", () => {
+    expect(
+      isExcluded({
+        texts: [
+          "Italy Regains Investor Confidence as Economic Fundamentals Improve, QNB Says",
+          dek("QNB said Italy's political stability had improved investor confidence."),
+        ],
+        sourceRegion: "QA",
+      }),
+    ).toBe(false);
+    expect(
+      isExcluded({
+        texts: [
+          "Downtown Tech 2026 Brings Entrepreneurs and Investors Together",
+          dek("The summit gathered founders and investors from 40 countries."),
+        ],
+        sourceRegion: "QA",
+      }),
+    ).toBe(false);
+  });
+
+  it("still excludes when the story itself names Qatar", () => {
+    expect(
+      isExcluded({
+        texts: [
+          "Qatar Participates in 20th Francophonie Summit",
+          dek("The delegation attended."),
+        ],
+        sourceRegion: "QA",
+      }),
+    ).toBe(true);
+    expect(
+      isExcluded({
+        texts: [
+          "Qatar Armed Forces Conclude 5-Kilometer Cross-Country Championship",
+          dek("The race took place on Tuesday."),
+        ],
+        sourceRegion: "QA",
+      }),
+    ).toBe(true);
+  });
+
+  it("government and diplomacy terms still apply to QNA copy", () => {
+    expect(
+      isExcluded({
+        texts: [
+          "HH the Amir Receives Phone Call",
+          dek("HH the Amir received a phone call."),
+        ],
+        sourceRegion: "QA",
+      }),
+    ).toBe(true);
+  });
+});
