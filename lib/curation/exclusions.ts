@@ -66,6 +66,10 @@ function rules(): Compiled {
   return compiled;
 }
 
+/** A wire-agency dateline: "Doha, November 18 (QNA) - ", "Riyadh, Nov 3 (SPA) –". */
+const DATELINE =
+  /(?<![\p{L}\p{N}])[\p{Lu}][\p{L} .'-]{1,40},\s+[\p{Lu}][\p{L}.]+\s+\d{1,2}\s*\((?:QNA|WAM|SPA|KUNA|BNA|ONA)\)\s*[-–—]?\s*/gu;
+
 export interface ExclusionInput {
   /** Headline, dek and any other text describing the story. */
   texts: (string | null | undefined)[];
@@ -94,7 +98,10 @@ export function checkExclusion(
   const qcb = text.match(r.always);
   if (qcb) return { excluded: true, reason: `qcb: ${qcb[0]}` };
 
-  const namesQatar = r.qatar.test(text);
+  // A news-agency dateline ("Doha, November 18 (QNA) - ") says where the
+  // agency filed from, not what the story is about: it does not count as the
+  // text naming Qatar.
+  const namesQatar = r.qatar.test(text.replace(DATELINE, " "));
   const qatarRelated = namesQatar || input.sourceRegion === "QA";
   if (!qatarRelated) return { excluded: false };
 
