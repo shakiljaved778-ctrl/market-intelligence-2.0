@@ -14,6 +14,7 @@ const ExclusionSchema = z.object({
   always: z.array(z.string().min(1)),
   qatar_markers: z.array(z.string().min(1)),
   qatar_politics: z.array(z.string().min(1)),
+  qatar_politics_text: z.array(z.string().min(1)),
   minister_meeting_verbs: z.array(z.string().min(1)),
 });
 export type ExclusionRules = z.infer<typeof ExclusionSchema>;
@@ -43,6 +44,7 @@ interface Compiled {
   always: RegExp;
   qatar: RegExp;
   politics: RegExp;
+  politicsText: RegExp;
   minister: RegExp;
   meetingVerb: RegExp;
 }
@@ -52,6 +54,7 @@ function compile(rules: ExclusionRules): Compiled {
     always: anyOf(rules.always),
     qatar: anyOf(rules.qatar_markers),
     politics: anyOf(rules.qatar_politics),
+    politicsText: anyOf(rules.qatar_politics_text),
     minister: /(?<![\p{L}\p{N}])minist(?:er|ers|ry|ries)(?![\p{L}\p{N}])/iu,
     meetingVerb: anyOf(rules.minister_meeting_verbs),
   };
@@ -78,8 +81,10 @@ export interface ExclusionVerdict {
 
 /**
  * Whether a story falls under the exclusions. `always` terms exclude it
- * outright; political terms (and a minister meeting someone) exclude it when it
- * is Qatar-related — the text names Qatar, or the source is a Qatar feed.
+ * outright; government and diplomacy terms (and a minister meeting someone)
+ * exclude it when it is Qatar-related — the text names Qatar, or the source is
+ * a Qatar feed; general political words exclude it only when the text itself
+ * names Qatar.
  */
 export function checkExclusion(
   input: ExclusionInput,
@@ -89,11 +94,16 @@ export function checkExclusion(
   const qcb = text.match(r.always);
   if (qcb) return { excluded: true, reason: `qcb: ${qcb[0]}` };
 
-  const qatarRelated = input.sourceRegion === "QA" || r.qatar.test(text);
+  const namesQatar = r.qatar.test(text);
+  const qatarRelated = namesQatar || input.sourceRegion === "QA";
   if (!qatarRelated) return { excluded: false };
 
   const political = text.match(r.politics);
   if (political) return { excluded: true, reason: `qatar-politics: ${political[0]}` };
+  if (namesQatar) {
+    const word = text.match(r.politicsText);
+    if (word) return { excluded: true, reason: `qatar-politics: ${word[0]}` };
+  }
   if (r.minister.test(text)) {
     const verb = text.match(r.meetingVerb);
     if (verb) return { excluded: true, reason: `qatar-politics: minister ${verb[0]}` };

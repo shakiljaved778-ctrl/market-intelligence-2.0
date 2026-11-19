@@ -46,8 +46,11 @@ qatar_markers:
   - Doha
   - قطر
 
+# Tier 1 — government and diplomacy. Excludes a story when it is Qatar-related:
+# the text names Qatar, or the source is a Qatar feed (QNA's agency copy often
+# omits the country name: "HH the Amir Receives …").
 qatar_politics:
-  # Head of state, ruling family, government
+  # Head of state and government
   - Amir
   - Emir
   - Deputy Amir
@@ -57,25 +60,26 @@ qatar_politics:
   - HH
   - Prime Minister
   - Deputy Prime Minister
-  - Minister of State
   - Foreign Minister
-  - Minister of Foreign Affairs
+  - Foreign Affairs
   - Ministry of Foreign Affairs
   - Foreign Ministry
   - MoFA
   - Minister of Interior
   - Ministry of Interior
+  - Interior Ministry
   - Minister of Defence
   - Minister of Defense
   - Ministry of Defence
   - Ministry of Defense
+  - Defence Ministry
+  - Defense Ministry
   - Cabinet
   - Council of Ministers
   - Shura Council
   - Shura
   - Amiri Decree
   - Emiri Decree
-  - royal decree
   - government spokesperson
   - official spokesperson
   # Diplomacy and international relations
@@ -90,11 +94,12 @@ qatar_politics:
   - diplomacy
   - bilateral relations
   - bilateral ties
-  - bilateral cooperation
+  - ties with
   - strategic dialogue
-  - strategic committee
-  - joint committee
-  - summit
+  - official delegation
+  - government delegation
+  - ministerial delegation
+  - parliamentary delegation
   - credentials
   - condolences
   - congratulates
@@ -102,58 +107,47 @@ qatar_politics:
   - phone call
   - official visit
   - state visit
-  - working visit
-  - delegation
   - mediation
   - mediator
   - ceasefire
   - truce
   - hostages
   - peace talks
-  - sanctions
-  - United Nations
   - UN Security Council
   - Arab League
   - GCC Ministerial Council
   - GCC Supreme Council
-  # Politics proper
+
+# Tier 2 — general political words. These also appear in market copy about
+# other countries ("Italy's political stability", "geopolitical risk" in an oil
+# report), so they exclude a story only when its TEXT names Qatar.
+qatar_politics_text:
   - politics
   - political
+  - geopolitical
   - election
   - elections
   - parliament
   - parliamentary
   - legislative
   - opposition
-  - geopolitical
   - military
   - armed forces
   - security forces
+  - sanctions
+  - summit
+  - summits
 
 # Diplomatic meetings by any minister ("Minister of Commerce Meets Georgia's
-# Deputy Prime Minister"): a minister/ministry together with one of these verbs,
-# in a Qatar-related story.
+# Deputy Prime Minister"): a minister or ministry together with one of these
+# meeting verbs, in a Qatar-related story. Ministers opening, attending or
+# signing at business events are economy news and are not matched (2026-11-19
+# tuning, from the probe of QNA's economy feed).
 minister_meeting_verbs:
   - meets
-  - met
+  - met with
   - meeting with
   - receives
   - received
   - holds talks
   - held talks
-  - discusses
-  - discussed
-  - signs
-  - signed
-  - visits
-  - visited
-  - arrives
-  - arrived
-  - participates
-  - participated
-  - attends
-  - attended
-  - heads
-  - headed
-  - leads
-  - led

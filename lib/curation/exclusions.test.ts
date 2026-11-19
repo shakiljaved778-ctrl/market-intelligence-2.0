@@ -107,3 +107,39 @@ describe("exclusions — rule file", () => {
     expect(r.qatar_politics.length).toBeGreaterThan(20);
   });
 });
+
+// Real QNA economy-feed headlines from the probe of 2026-11-19 (run 44474647669).
+describe("exclusions — Gulf business news is kept, government and diplomacy is not", () => {
+  it.each([
+    "Downtown Tech 2026 Brings Entrepreneurs and Investors Together to Discuss Building Global Companies",
+    "Qatar Chamber Discusses Partnership, Investment Opportunities With Romania",
+    "QICCA, Beijing Financial Court Discuss Boosting Cooperation",
+    "Gulf Helicopters Company Unveils New Corporate Identity",
+    "Italy Regains Investor Confidence as Economic Fundamentals Improve, QNB Says",
+    "MEEZA Signs More than QR100 Million Sovereign Cloud Deal",
+    "Qatar Stock Exchange: Dandy’s Listing Opens New Investment Opportunities in Consumer Goods and Services Sector",
+    "State Budget Posts QAR 22.8 Billion Deficit in Q3 2026",
+  ])("keeps %s", (headline) => {
+    expect(isExcluded({ texts: [headline], sourceRegion: "QA" })).toBe(false);
+  });
+
+  it.each([
+    "Minister of Commerce and Industry Meets Georgia's Deputy Prime Minister, Foreign Minister",
+    "Romania Seeks to Expand Investment and Ties with Qatar, Says Minister",
+    "Qatar Participates in 20th Francophonie Summit",
+    "Interior Ministry: New Traffic Law Enhances Road Safety",
+    "Minister of Finance Receives Visiting Official Delegation",
+  ])("excludes %s", (headline) => {
+    expect(isExcluded({ texts: [headline], sourceRegion: "QA" })).toBe(true);
+  });
+
+  it("needs the text to name Qatar before a general political word excludes", () => {
+    expect(
+      isExcluded({
+        texts: ["Oil heads for weekly loss as geopolitical risk eases"],
+        sourceRegion: "QA",
+      }),
+    ).toBe(false);
+    expect(isExcluded({ texts: ["Qatar's political calendar for 2027"] })).toBe(true);
+  });
+});

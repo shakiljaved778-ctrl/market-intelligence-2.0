@@ -172,7 +172,7 @@ sources:
     trust_score: 90
     license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
     active: true
-    max_items_per_run: 20
+    max_items_per_run: 50 # the whole feed (~2 days); runs are hours apart
     default_section: economy
     allowed_sections: [economy, markets, realestate]
 
@@ -187,9 +187,25 @@ sources:
     trust_score: 90
     license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
     active: true
-    max_items_per_run: 15
+    max_items_per_run: 30
     default_section: markets
     allowed_sections: [economy, markets]
+
+  # Local sport (probe round 5, 2026-11-19: robots allow, HTTP 200, 50 dated
+  # items; 4 of 50 matched the editorial exclusions). Same agency and terms.
+  - id: qna-sport-local
+    name: Qatar News Agency — Sport
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-Local
+    kind: rss
+    region: QA
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true
+    max_items_per_run: 12
+    default_section: sports
+    allowed_sections: [sports]
 
   # The QNA "Qatar", "General" and "Analysis and Reports" feeds were probed
   # (2026-11-14) and are NOT used: they are mostly Qatar politics and
@@ -327,6 +343,22 @@ sources:
     max_items_per_run: 4
     default_section: markets
     allowed_sections: [markets, economy, crypto]
+
+  # Gulf newspaper with a working business feed (probe round 5). Commercial
+  # publisher: OFF until the owner approves its terms (§6, §10).
+  - id: saudi-gazette-business
+    name: Saudi Gazette — Business
+    homepage: https://saudigazette.com.sa
+    feed_url: https://saudigazette.com.sa/rss/business
+    kind: rss
+    region: SA
+    tier: outlet
+    trust_score: 60
+    license_note: Commercial publisher; headline + dek + link only. Terms must be confirmed by the owner before enabling; the feed also carries paid promotions.
+    active: false # probe round 5: feed OK, 50 dated items; terms unverified
+    max_items_per_run: 10
+    default_section: economy
+    allowed_sections: [economy, markets, realestate]
 
   # Feeds that work but whose reuse terms are not yet confirmed — OFF until
   # the owner approves them (§6, §10).

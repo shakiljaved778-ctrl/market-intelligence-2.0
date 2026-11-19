@@ -1,3 +1,4 @@
+import { excludedTermsIn } from "@/lib/curation/exclusions";
 import { and, desc, eq, gte, inArray, isNull, notInArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { articles, clusterArticles, clusters, sources } from "@/lib/db/schema";
@@ -359,14 +360,22 @@ export async function clustersNeedingBrief(
   });
 }
 
+/** What the cluster job needs to know about a stored brief. */
+export interface StoredBriefInfo {
+  words: number;
+  model: string | null;
+  /** The brief names an editorially excluded term (content/exclusions.yaml). */
+  mentionsExcluded: boolean;
+}
+
 /**
  * The stored briefs for these clusters: word count and the model tag they were
  * written with (slug -> info). A cluster with no brief is absent from the map.
  */
 export async function existingClusterBriefs(
   slugs: string[],
-): Promise<Map<string, { words: number; model: string | null }>> {
-  const have = new Map<string, { words: number; model: string | null }>();
+): Promise<Map<string, StoredBriefInfo>> {
+  const have = new Map<string, StoredBriefInfo>();
   const db = getDb();
   if (!db || slugs.length === 0) return have;
   const rows = await db
@@ -382,6 +391,7 @@ export async function existingClusterBriefs(
       have.set(r.slug, {
         words: r.briefMd.split(/\s+/).filter(Boolean).length,
         model: r.briefModel,
+        mentionsExcluded: excludedTermsIn(r.briefMd).length > 0,
       });
     }
   }

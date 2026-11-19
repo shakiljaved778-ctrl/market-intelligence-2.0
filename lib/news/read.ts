@@ -185,7 +185,13 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
     cluster,
     members: row.members,
     primaryId: row.primaryId,
-    body: row.brief ? { md: row.brief.md, model: row.brief.model } : null,
+    // An AI article that names an excluded term (content/exclusions.yaml — e.g.
+    // a Qatar bank story whose background mentions the central bank) is not
+    // shown; the story keeps its summary and the cluster job rewrites it.
+    body:
+      row.brief && excludedTermsIn(row.brief.md).length === 0
+        ? { md: row.brief.md, model: row.brief.model }
+        : null,
     sourceRegion: sourceRegion(row.primarySourceId),
   };
 }
@@ -194,12 +200,12 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
  * Editorial exclusions (content/exclusions.yaml, owner decision 2026-11-19): no
  * Qatar Central Bank news and no Qatar politics. Ingest already drops these;
  * this hides any story stored before the rule existed, from every list, feed,
- * sitemap and story page. Checks the headline, dek, every clustered report and
- * the AI article.
+ * sitemap and story page. Checks the headline, dek and every clustered report.
+ * (An AI article that names an excluded term is dropped in dbLoaded instead,
+ * so a permitted story is not lost because of its generated background.)
  */
 function isAllowedStory(l: LoadedCluster): boolean {
   const c = l.cluster;
-  if (l.body && excludedTermsIn(l.body.md).length > 0) return false;
   return !isExcluded({
     texts: [c.title, c.dek, ...l.members.flatMap((m) => [m.headline, m.dek])],
     sourceRegion: l.sourceRegion,

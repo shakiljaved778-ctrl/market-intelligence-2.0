@@ -22,9 +22,10 @@ import type { WireCluster } from "@/lib/news/read";
  *     up to FINANCIAL_BLOCK_SIZE stories; every other section ONE row of at most
  *     NON_FINANCIAL_ROW_SIZE.
  *  5. The "Latest" rail lists only fresh stories not already shown.
- *  6. GCC market news opens the page (owner request, 2026-11-14): a band of up
- *     to GCC_BAND_SIZE fresh GCC stories from the financial sections, newest
- *     first, above the lead. It is omitted when there are none.
+ *  6. GCC news opens the page (owner requests, 2026-11-14 and 2026-11-19): a
+ *     band of up to GCC_BAND_SIZE fresh GCC stories above the lead — the
+ *     financial sections first, then other sections, each newest first. It is
+ *     omitted when there are none.
  *  7. Two more finance bands follow the hero (owner request, 2026-11-19), each
  *     omitted when empty:
  *     - "Deals & IPOs": stories tagged with a DEAL_TOPICS topic (IPOs,
@@ -38,7 +39,7 @@ export const THREE_UP_SIZE = 3;
 export const FINANCIAL_BLOCK_SIZE = 7;
 export const NON_FINANCIAL_ROW_SIZE = 3;
 export const LATEST_SIZE = 8;
-export const GCC_BAND_SIZE = 4;
+export const GCC_BAND_SIZE = 8;
 export const DEALS_BAND_SIZE = 4;
 export const GLOBAL_MARKETS_BAND_SIZE = 4;
 export const DEALS_MAX_AGE_H = 168;
@@ -113,12 +114,13 @@ export function buildHomepage(
       : null;
   if (pick) used.add(pick.cluster.slug);
 
-  // GCC market band: the newest fresh GCC stories from the financial sections.
-  const gcc = fin
-    .filter((c) => isGccRegion(c.region) && !used.has(c.slug))
-    .sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime))
-    .slice(0, GCC_BAND_SIZE)
-    .map(take);
+  // GCC band: fresh GCC stories, the financial sections first, then the rest,
+  // each newest first.
+  const newest = (a: WireCluster, b: WireCluster) =>
+    Date.parse(b.eventTime) - Date.parse(a.eventTime);
+  const gccFresh = (list: WireCluster[]) =>
+    list.filter((c) => isGccRegion(c.region) && !used.has(c.slug)).sort(newest);
+  const gcc = [...gccFresh(fin), ...gccFresh(nonFin)].slice(0, GCC_BAND_SIZE).map(take);
 
   // Lead: a current editor's pick, else the strongest fresh financial story not
   // already in the band.

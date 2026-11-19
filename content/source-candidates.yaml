@@ -47,6 +47,16 @@
 #   rba-media, ecb-blog                stale (1 item / a week old).
 #   hm-treasury, boe-publications      mostly administrative documents.
 #   esma-news-page                     no feed; iosco, wfe, globenewswire 403.
+# Probe round 5, 2026-11-19 (run 44474776678) — more Gulf news:
+#   qna-sport-local                    ADDED — same agency/terms, 50 dated items.
+#   saudi-gazette-business             feed OK; commercial, listed OFF pending
+#                                      the owner's terms approval.
+#   gulf-times-business                robots.txt DISALLOWS the RSS path.
+#   dubai/abu-dhabi media offices,     no feed (pages only).
+#   adgm, qfc, peninsula, khaleej
+#   dfsa, arab-news                    HTTP 403; difc 429.
+#   invest-qatar, gulf-news, zawya,    HTTP 404 for the feed URL.
+#   times-of-oman, kuwait-times, gdn
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
@@ -322,3 +332,82 @@ candidates:
     name: World Federation of Exchanges — News
     url: https://www.world-exchanges.org/news
     region: GLOBAL
+  # --- Round 5 (2026-11-19): more Gulf news (owner request). Government media
+  # offices and financial-centre regulators first (primary sources); the
+  # newspapers are commercial and need the owner's terms approval first. ---
+  - id: dubai-media-office
+    name: Government of Dubai Media Office
+    url: https://www.mediaoffice.ae/en/rss
+    region: AE
+  - id: dubai-media-office-page
+    name: Government of Dubai Media Office — news page
+    url: https://www.mediaoffice.ae/en/news
+    region: AE
+  - id: abudhabi-media-office
+    name: Abu Dhabi Media Office — news page
+    url: https://www.mediaoffice.abudhabi/en/
+    region: AE
+  - id: dfsa-news
+    name: Dubai Financial Services Authority — news
+    url: https://www.dfsa.ae/news
+    region: AE
+  - id: adgm-news
+    name: Abu Dhabi Global Market — media centre
+    url: https://www.adgm.com/media/announcements
+    region: AE
+  - id: difc-news
+    name: DIFC — newsroom
+    url: https://www.difc.ae/newsroom/news
+    region: AE
+  - id: qfc-news
+    name: Qatar Financial Centre — news
+    url: https://www.qfc.qa/en/media-centre/news
+    region: QA
+  - id: invest-qatar-news
+    name: Invest Qatar — news
+    url: https://www.invest.qa/en/media-and-resources/news
+    region: QA
+  - id: gulf-times-business
+    name: Gulf Times — Business (commercial)
+    url: https://www.gulf-times.com/rss/business
+    region: QA
+  - id: peninsula-business
+    name: The Peninsula Qatar — Business (commercial)
+    url: https://thepeninsulaqatar.com/rss/business
+    region: QA
+  - id: arab-news-business
+    name: Arab News — Business (commercial)
+    url: https://www.arabnews.com/cat/3/rss.xml
+    region: SA
+  - id: saudi-gazette-business
+    name: Saudi Gazette — Business (commercial)
+    url: https://saudigazette.com.sa/rss/business
+    region: SA
+  - id: gulf-news-business
+    name: Gulf News — Business (commercial)
+    url: https://gulfnews.com/rss/business
+    region: AE
+  - id: khaleej-times-business
+    name: Khaleej Times — Business (commercial)
+    url: https://www.khaleejtimes.com/rss/business
+    region: AE
+  - id: zawya-rss-page
+    name: Zawya — RSS (commercial)
+    url: https://www.zawya.com/en/rss
+    region: GCC
+  - id: times-of-oman-business
+    name: Times of Oman — Business (commercial)
+    url: https://timesofoman.com/rss/business
+    region: OM
+  - id: kuwait-times-business
+    name: Kuwait Times — Business (commercial)
+    url: https://www.kuwaittimes.com/category/business/feed/
+    region: KW
+  - id: gdn-bahrain-business
+    name: Gulf Daily News (Bahrain) — Business (commercial)
+    url: https://www.gdnonline.com/rss/business
+    region: BH
+  - id: qna-sport-local
+    name: Qatar News Agency — Sport (local)
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-Local
+    region: QA
