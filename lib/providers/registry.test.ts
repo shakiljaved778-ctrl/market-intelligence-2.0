@@ -115,4 +115,16 @@ describe("ProviderRegistry", () => {
     expect(registry.breakerState("flaky").openUntil).toBe(0);
     expect(registry.breakerState("flaky").consecutiveFailures).toBe(0);
   });
+
+  it("a failing quote endpoint does not switch off the same provider's candles", async () => {
+    const bar = { t: "2026-11-19T00:00:00.000Z", o: 1, h: 2, l: 0.5, c: 1.5, v: 10 };
+    const p = new FakeProvider("mixed", "throw", ["quote", "candles"]);
+    (p as unknown as { candles: () => Promise<Candle[]> }).candles = async () => [bar];
+    const registry = new ProviderRegistry([p], () => 0);
+    for (let i = 0; i < 3; i += 1) await registry.quote("AAPL");
+    expect(registry.breakerState("mixed", "quote").openUntil).toBe(COOLDOWN_MS);
+    const res = await registry.candlesWithSource("AAPL", "5Y");
+    expect(res?.provider).toBe("mixed");
+    expect(registry.breakerState("mixed", "candles").openUntil).toBe(0);
+  });
 });
