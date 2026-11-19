@@ -20,6 +20,15 @@ import type {
  */
 
 export const FAILURE_THRESHOLD = 3;
+
+/**
+ * Breakers are kept per provider AND capability: one failing endpoint (e.g. a
+ * provider's legacy quote URL refusing a new key) must not switch off that
+ * provider's other, working endpoints (its daily history) for the cooldown.
+ */
+function breakerKey(id: string, cap: Capability): string {
+  return `${id}:${cap}`;
+}
 export const COOLDOWN_MS = 5 * 60 * 1000;
 
 interface BreakerState {
@@ -78,7 +87,10 @@ export class ProviderRegistry {
   /** Ordered providers that declare `cap`, are configured, and are not tripped. */
   private candidates(cap: Capability): MarketDataProvider[] {
     return this.providers.filter(
-      (p) => p.capabilities.includes(cap) && p.isConfigured() && this.available(p.id),
+      (p) =>
+        p.capabilities.includes(cap) &&
+        p.isConfigured() &&
+        this.available(breakerKey(p.id, cap)),
     );
   }
 
@@ -90,11 +102,11 @@ export class ProviderRegistry {
     for (const provider of this.candidates(cap)) {
       try {
         const value = await op(provider);
-        this.recordSuccess(provider.id);
+        this.recordSuccess(breakerKey(provider.id, cap));
         if (isAnswer(value)) return value;
         // null/empty: provider can't answer — try the next without penalty.
       } catch {
-        this.recordFailure(provider.id);
+        this.recordFailure(breakerKey(provider.id, cap));
       }
     }
     return null;
@@ -135,12 +147,12 @@ export class ProviderRegistry {
     for (const provider of this.candidates("candles")) {
       try {
         const candles = await provider.candles(symbol, range);
-        this.recordSuccess(provider.id);
+        this.recordSuccess(breakerKey(provider.id, "candles"));
         if (Array.isArray(candles) && candles.length > 0) {
           return { candles, provider: provider.id };
         }
       } catch {
-        this.recordFailure(provider.id);
+        this.recordFailure(breakerKey(provider.id, "candles"));
       }
     }
     return null;
@@ -161,7 +173,7 @@ export class ProviderRegistry {
     for (const provider of this.candidates("search")) {
       try {
         const matches = await provider.search(q);
-        this.recordSuccess(provider.id);
+        this.recordSuccess(breakerKey(provider.id, "search"));
         for (const m of matches) {
           if (!seen.has(m.symbol)) {
             seen.add(m.symbol);
@@ -169,14 +181,14 @@ export class ProviderRegistry {
           }
         }
       } catch {
-        this.recordFailure(provider.id);
+        this.recordFailure(breakerKey(provider.id, "search"));
       }
     }
     return merged;
   }
 
   /** Introspection for tests / diagnostics. */
-  breakerState(id: string): Readonly<BreakerState> {
-    return { ...this.breaker(id) };
+  breakerState(id: string, cap: Capability = "quote"): Readonly<BreakerState> {
+    return { ...this.breaker(breakerKey(id, cap)) };
   }
 }
