@@ -411,3 +411,30 @@ candidates:
     name: Qatar News Agency — Sport (local)
     url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-Local
     region: QA
+  # Official-institution YouTube channels for the video strip (owner choice,
+  # 2026-11-19: "Option 1"). The probe resolves each handle page to its channel
+  # RSS feed (the page advertises it) and checks robots.txt for both paths.
+  - id: yt-federal-reserve
+    name: Federal Reserve (YouTube)
+    url: https://www.youtube.com/@federalreserve
+    region: US
+  - id: yt-imf
+    name: International Monetary Fund (YouTube)
+    url: https://www.youtube.com/@imf
+    region: GLOBAL
+  - id: yt-ecb
+    name: European Central Bank (YouTube)
+    url: https://www.youtube.com/@europeancentralbank
+    region: EU
+  - id: yt-world-bank
+    name: World Bank (YouTube)
+    url: https://www.youtube.com/@worldbank
+    region: GLOBAL
+  - id: yt-bank-of-england
+    name: Bank of England (YouTube)
+    url: https://www.youtube.com/@bankofengland
+    region: UK
+  - id: yt-feed-path-check
+    name: YouTube channel feed path (robots check)
+    url: https://www.youtube.com/feeds/videos.xml?channel_id=UCAzhpt9DmG6PnHXjmJTvRGQ
+    region: US
