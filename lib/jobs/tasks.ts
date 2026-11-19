@@ -376,7 +376,7 @@ export async function clusterTask(): Promise<JobSummary> {
           c.tickers[0] ??
           c.topics[0]?.replace(/_/g, " ") ??
           "";
-        const cover = await searchPexels(coverQuery(section, extra));
+        const cover = await searchPexels(coverQuery(section, extra), c.slug);
         if (cover) {
           await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);
           coversWritten += 1;
@@ -414,6 +414,7 @@ export async function clusterTask(): Promise<JobSummary> {
         });
         const cover = await searchPexels(
           coverQuery(section, gccPlace(regionOfCluster(c, dek))),
+          c.slug,
         );
         if (cover) {
           await setClusterCover(c.slug, cover.url, cover.credit, cover.creditUrl);

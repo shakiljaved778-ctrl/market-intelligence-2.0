@@ -55,17 +55,24 @@ function pickIndex(query: string, length: number): number {
 }
 
 /**
- * Resolve a landscape cover image for a free-text query. Cached; returns null
- * when unconfigured or on any failure so callers degrade gracefully.
+ * Resolve a landscape cover image for a free-text query. The search results are
+ * cached per query; the photo is then picked from them by the query plus an
+ * optional `seed` (the story's slug), so two stories that search the same
+ * phrase ("economy finance city Doha") get different photos without another
+ * request. Returns null when unconfigured or on any failure, so callers degrade
+ * gracefully.
  */
-export async function searchPexels(query: string): Promise<CoverImage | null> {
+export async function searchPexels(
+  query: string,
+  seed = "",
+): Promise<CoverImage | null> {
   if (!isPexelsConfigured()) return null;
   const key = process.env.PEXELS_API_KEY as string;
   const normalized = query.trim().toLowerCase();
 
   try {
-    const { value } = await swr<CoverImage | null>(
-      `pexels:cover:${normalized}`,
+    const { value } = await swr<CoverImage[]>(
+      `pexels:covers:${normalized}`,
       TTL.coverImage,
       async () => {
         const res = await fetch(
@@ -74,17 +81,16 @@ export async function searchPexels(query: string): Promise<CoverImage | null> {
         );
         if (!res.ok) throw new Error(`Pexels search ${res.status}`);
         const parsed = SearchSchema.parse(await res.json());
-        if (parsed.photos.length === 0) return null;
-        const photo = parsed.photos[pickIndex(normalized, parsed.photos.length)]!;
-        return {
+        return parsed.photos.map((photo) => ({
           url: photo.src.landscape,
           alt: photo.alt?.trim() || query,
           credit: photo.photographer ?? "Pexels",
           creditUrl: photo.photographer_url ?? "https://www.pexels.com",
-        };
+        }));
       },
     );
-    return value;
+    if (!value || value.length === 0) return null;
+    return value[pickIndex(seed ? `${normalized}#${seed}` : normalized, value.length)]!;
   } catch {
     return null;
   }
