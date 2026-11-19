@@ -154,10 +154,60 @@ export async function macroTask(): Promise<JobSummary> {
   const fx = await referenceRates("USD", FX_QUOTE_CURRENCIES, 14);
   const fxStored = await persistFxRates(fx.map((r) => ({ ...r, source: "ecb" })));
 
+  let videos = { stored: 0, perChannel: "" };
+  try {
+    videos = await refreshVideos();
+  } catch (err) {
+    console.error("[macro] video refresh failed:", err);
+  }
+
   return {
     itemsIn: SERIES.length + FX_QUOTE_CURRENCIES.length,
-    itemsOut: out + (fxStored > 0 ? FX_QUOTE_CURRENCIES.length : 0),
+    itemsOut: out + (fxStored > 0 ? FX_QUOTE_CURRENCIES.length : 0) + videos.stored,
+    detail: { videosStored: videos.stored, videosPerChannel: videos.perChannel },
   };
+}
+
+/**
+ * Official-institution videos (owner choice, 2026-11-19): read each active
+ * channel's feed (content/videos.yaml) in parallel, keep titles that pass the
+ * editorial exclusions, store the references, and delete any not refreshed in
+ * 30 days (YouTube API Services policy).
+ */
+async function refreshVideos(): Promise<{ stored: number; perChannel: string }> {
+  const { loadVideoChannels } = await import("@/lib/videos/channels");
+  const { channelVideos } = await import("@/lib/providers/youtube");
+  const { persistVideos, pruneVideos } = await import("@/lib/db/queries/videos");
+  const { checkExclusion } = await import("@/lib/curation/exclusions");
+  const channels = loadVideoChannels().filter((c) => c.active);
+  const lists = await Promise.all(
+    channels.map(async (c) =>
+      (
+        await channelVideos({
+          channelId: c.channelId,
+          handle: c.handle,
+          username: c.username,
+          expectTitles: c.expect_titles,
+        })
+      )
+        .filter((v) => !checkExclusion({ texts: [v.title] }).excluded)
+        .map((v) => ({
+          videoId: v.videoId,
+          channel: c.id,
+          title: v.title,
+          publishedAt: v.publishedAt,
+          thumbnailUrl: v.thumbnailUrl,
+        })),
+    ),
+  );
+  const stored = await persistVideos(lists.flat());
+  // YouTube API policy: stored API data is refreshed or deleted within 30 days.
+  await pruneVideos(30);
+  // "federal-reserve:10,imf:10,…" — a 0 means the channel did not resolve.
+  const perChannel = channels
+    .map((c, i) => `${c.id}:${lists[i]?.length ?? 0}`)
+    .join(",");
+  return { stored, perChannel };
 }
 
 /**

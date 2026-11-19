@@ -25,6 +25,12 @@
 #   cdc-newsroom                       feed times out (no feed on its page); the
 #                                      World Bank URL now returns HTML; the CDC
 #                                      feed is an old COVID-19 feed, 0 items.
+# YouTube probe, 2026-11-19 (run 44620192311) — official channels for videos:
+#   @federalreserve, @imf, @bankofengland  pages resolve to channel ids (now in
+#                                       content/videos.yaml); @europeancentralbank
+#                                       and @worldbank do not exist (404).
+#   /feeds/videos.xml                   robots.txt DISALLOWS it, so videos use the
+#                                       YouTube Data API instead (free key).
 # Probe round 3, 2026-11-19 (run 44427670166):
 #   fed-speeches, cftc-press,          ADDED — robots allow, HTTP 200, fresh, all
 #   census-indicators, bis-press,      items dated.

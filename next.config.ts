@@ -13,6 +13,8 @@ const CSP_REPORT_ONLY = [
   "img-src 'self' data: https:", // Pexels/og:image references are remote
   "font-src 'self'",
   "connect-src 'self'",
+  // Official videos play from YouTube's privacy-enhanced domain, on click only.
+  "frame-src https://www.youtube-nocookie.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -42,7 +44,10 @@ const nextConfig: NextConfig = {
   // (Pexels cover photos). Covers are mostly on-brand SVG, so this is future-proofing.
   images: {
     formats: ["image/avif", "image/webp"],
-    remotePatterns: [{ protocol: "https", hostname: "images.pexels.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "https", hostname: "i.ytimg.com" },
+    ],
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
