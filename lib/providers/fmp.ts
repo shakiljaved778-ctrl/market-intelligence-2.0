@@ -277,6 +277,7 @@ export class FmpProvider implements MarketDataProvider {
       `${STABLE_URL}/historical-price-eod/full?symbol=${encodeURIComponent(sym)}` +
       `&from=${ymd(w.from)}&to=${ymd(w.to)}&apikey=${this.key()}`;
     const res = await fetch(url, { cache: "no-store" });
+    fmpHistoryStatus = res.status;
     if (res.status === 402 || res.status === 403 || res.status === 404) return [];
     if (!res.ok) throw new Error(`FMP historical-price-eod ${res.status}`);
     return parseEodBars(await res.json());
@@ -307,6 +308,9 @@ export class FmpProvider implements MarketDataProvider {
     return value;
   }
 }
+
+/** HTTP status of the last history request (for the EOD job's log line; no secrets). */
+export let fmpHistoryStatus: number | null = null;
 
 const EodBar = z
   .object({
