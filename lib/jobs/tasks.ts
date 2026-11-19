@@ -217,7 +217,17 @@ export async function clusterTask(): Promise<JobSummary> {
   const { getEmbedder } = await import("@/lib/curation/embed");
   const { loadSources } = await import("@/lib/curation/config");
 
-  const recent = await dbRecentArticles(48);
+  // Stored articles that fall under the editorial exclusions (stored before the
+  // rule existed) are never clustered, ranked or written up.
+  const { isExcluded } = await import("@/lib/curation/exclusions");
+  const regionOf = new Map(loadSources().map((s) => [s.id, s.region ?? null]));
+  const recent = (await dbRecentArticles(48)).filter(
+    (a) =>
+      !isExcluded({
+        texts: [a.headline, a.dek],
+        sourceRegion: regionOf.get(a.sourceId) ?? null,
+      }),
+  );
   if (recent.length === 0) return { itemsIn: 0, itemsOut: 0, outcome: "ok" };
 
   // Rank context: source tiers from the registry.
@@ -359,6 +369,13 @@ export async function clusterTask(): Promise<JobSummary> {
           sourceId: b.sourceSlugs[0] ?? null,
         });
         if (!shown(section)) continue;
+        if (
+          isExcluded({
+            texts: [b.title, b.primaryDek, ...b.deks],
+            sourceRegion: regionOf.get(b.sourceSlugs[0] ?? "") ?? null,
+          })
+        )
+          continue;
         callsLeft -= 1;
         const brief = await generateBrief(String(b.primaryArticleId), {
           title: b.title,

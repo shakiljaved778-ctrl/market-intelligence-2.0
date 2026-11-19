@@ -17,6 +17,7 @@ import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedup
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import { computeImportance, type RankContext } from "@/lib/curation/rank";
 import { loadSources } from "@/lib/curation/config";
+import { excludedTermsIn, isExcluded } from "@/lib/curation/exclusions";
 import { classifyRegion, type Region } from "@/lib/curation/region";
 import { getQuotes } from "@/lib/market/service";
 import {
@@ -58,6 +59,8 @@ interface LoadedCluster {
   primaryId: number;
   /** AI-written brief: fixtures carry demo bodies; live stories carry the Groq brief. */
   body: ArticleBody | null;
+  /** Registered region of the primary report's source (content/sources.yaml). */
+  sourceRegion: string | null;
 }
 
 function context(clock: Date, articles: RawArticle[]): RankContext {
@@ -126,6 +129,7 @@ function fixtureLoaded(
     // Eureka explainers carry their authored body in every mode; demo news
     // bodies exist only under DEMO_MODE.
     body: eurekaBody(cluster.primaryId) ?? demo.articleBody(cluster.primaryId),
+    sourceRegion: sourceRegion(primary?.sourceId),
   };
 }
 
@@ -182,7 +186,24 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
     members: row.members,
     primaryId: row.primaryId,
     body: row.brief ? { md: row.brief.md, model: row.brief.model } : null,
+    sourceRegion: sourceRegion(row.primarySourceId),
   };
+}
+
+/**
+ * Editorial exclusions (content/exclusions.yaml, owner decision 2026-11-19): no
+ * Qatar Central Bank news and no Qatar politics. Ingest already drops these;
+ * this hides any story stored before the rule existed, from every list, feed,
+ * sitemap and story page. Checks the headline, dek, every clustered report and
+ * the AI article.
+ */
+function isAllowedStory(l: LoadedCluster): boolean {
+  const c = l.cluster;
+  if (l.body && excludedTermsIn(l.body.md).length > 0) return false;
+  return !isExcluded({
+    texts: [c.title, c.dek, ...l.members.flatMap((m) => [m.headline, m.dek])],
+    sourceRegion: l.sourceRegion,
+  });
 }
 
 /**
@@ -337,7 +358,8 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
     }
   }
 
-  if (live.length === 0 && isDemoMode()) return computeDemoWire();
+  if (live.length === 0 && isDemoMode())
+    return (await computeDemoWire()).filter(isAllowedStory);
 
   const liveSlugs = new Set(live.map((l) => l.cluster.slug));
   const [eureka, editorial] = await Promise.all([
@@ -353,6 +375,7 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
     ...eureka.filter((l) => !liveSlugs.has(l.cluster.slug)),
   ]
     .filter(isSubstantive)
+    .filter(isAllowedStory)
     .sort(byImportance);
 });
 
@@ -396,7 +419,8 @@ export async function readCluster(slug: string): Promise<ClusterDetail | null> {
       console.error("[wire] story read failed:", err);
     }
   }
-  if (!loaded) return null;
+  // An excluded story has no page (content/exclusions.yaml): 404, not a redirect.
+  if (!loaded || !isAllowedStory(loaded)) return null;
   // Fixtures carry authored demo bodies; live stories carry the Groq brief the
   // cluster job persisted. No brief → the UI falls back to the dek + source list.
   return { cluster: loaded.cluster, members: loaded.members, body: loaded.body };

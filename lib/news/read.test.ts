@@ -166,3 +166,89 @@ describe("wire read — stored tickers are re-derived", () => {
     expect(story?.section).toBe("science");
   });
 });
+
+describe("wire read — editorial exclusions (content/exclusions.yaml)", () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.doUnmock("@/lib/db/client");
+    vi.doUnmock("@/lib/db/queries/wire");
+  });
+
+  const row = (
+    slug: string,
+    title: string,
+    dek: string,
+    brief: string | null = null,
+  ) => ({
+    slug,
+    title,
+    tickers: [],
+    topics: [],
+    entities: [],
+    sourceIds: ["qna-economy-local"],
+    sourceCount: 1,
+    eventTime: new Date(Date.now() - 3_600_000).toISOString(),
+    importanceScore: 1,
+    articleIds: [1],
+    primaryId: 1,
+    primarySourceId: "qna-economy-local",
+    primaryDek: dek,
+    brief: brief ? { md: brief, model: "m#v4" } : null,
+    imageUrl: null,
+    imageCredit: null,
+    members: [
+      {
+        headline: title,
+        sourceName: "Qatar News Agency — Economy",
+        url: `https://example.com/${slug}`,
+        publishedAt: new Date(Date.now() - 3_600_000).toISOString(),
+        dek,
+      },
+    ],
+  });
+
+  it("hides stored QCB and Qatar-politics stories from lists and pages", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/db/client", () => ({
+      isDbConfigured: () => true,
+      getDb: () => null,
+    }));
+    const rows = [
+      row(
+        "qcb-fee-guide",
+        "QCB Issues the Guide on Bank Commission and Fee Ceilings",
+        "Doha, November 18 (QNA) - The Qatar Central Bank issued a guide on bank fees.",
+      ),
+      row(
+        "minister-meets-georgia",
+        "Minister of Commerce and Industry Meets Georgia's Deputy Prime Minister",
+        "Doha, November 18 (QNA) - The minister met the visiting delegation to discuss ties.",
+      ),
+      row(
+        "qatar-gold-price",
+        "Gold Price in Qatari Market Falls by 2.05% This Week",
+        "Doha, November 18 (QNA) - The price of gold in the Qatari market fell this week.",
+      ),
+      row(
+        "brief-mentions-qcb",
+        "Qatar's real GDP improves in the third quarter",
+        "Doha, November 18 (QNA) - Qatar's real gross domestic product rose in the quarter.",
+        "## The details\nThe QCB is expected to follow.",
+      ),
+    ];
+    vi.doMock("@/lib/db/queries/wire", () => ({
+      dbReadWire: async () => rows,
+      dbReadWireBySlug: async (slug: string) =>
+        rows.find((r) => r.slug === slug) ?? null,
+    }));
+    const { readWire, readCluster } = await import("./read");
+    const slugs = (await readWire()).map((c) => c.slug);
+    expect(slugs).toContain("qatar-gold-price");
+    expect(slugs).not.toContain("qcb-fee-guide");
+    expect(slugs).not.toContain("minister-meets-georgia");
+    expect(slugs).not.toContain("brief-mentions-qcb");
+    expect(await readCluster("qcb-fee-guide")).toBeNull();
+    expect(await readCluster("minister-meets-georgia")).toBeNull();
+    expect(await readCluster("qatar-gold-price")).not.toBeNull();
+  });
+});

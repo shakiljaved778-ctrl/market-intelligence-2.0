@@ -81,7 +81,7 @@ sources:
     tier: regulator
     trust_score: 96
     license_note: Official Qatari regulator publication; headline + link only.
-    active: false # 2026-11-07: skipped by owner; feed also returned 0 items (URL/robots unverified)
+    active: false # PERMANENTLY OFF — owner decision 2026-11-19: no Qatar Central Bank news (content/exclusions.yaml)
     default_section: economy
     allowed_sections: [economy, markets]
 
@@ -133,45 +133,10 @@ sources:
     default_section: markets
     allowed_sections: [economy, markets]
 
-  # More QNA feeds (probe run 5, 2026-11-14: robots allow, HTTP 200, fresh,
-  # every item dated). Same agency and terms as the economy feeds above.
-  # Local Qatar news: placed by the classifier; unplaceable items go to the
-  # hidden General bucket rather than to a financial section.
-  - id: qna-qatar
-    name: Qatar News Agency — Qatar
-    homepage: https://www.qna.org.qa
-    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Qatar
-    kind: rss
-    region: QA
-    tier: wire
-    trust_score: 90
-    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
-    active: true
-    max_items_per_run: 15
-
-  # Regional and world news; tagged by each story's own text.
-  - id: qna-general
-    name: Qatar News Agency — General
-    homepage: https://www.qna.org.qa
-    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/General
-    kind: rss
-    tier: wire
-    trust_score: 90
-    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
-    active: true
-    max_items_per_run: 15
-    default_section: world
-
-  - id: qna-analysis
-    name: Qatar News Agency — Analysis and Reports
-    homepage: https://www.qna.org.qa
-    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Analysis-and-Reports
-    kind: rss
-    tier: wire
-    trust_score: 90
-    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
-    active: true
-    max_items_per_run: 10
+  # The QNA "Qatar", "General" and "Analysis and Reports" feeds were probed
+  # (2026-11-14) and are NOT used: they are mostly Qatar politics and
+  # diplomacy, which Mizaan does not publish (owner decision, 2026-11-19;
+  # content/exclusions.yaml).
 
   # The Conversation — expert-authored news & analysis across markets, world,
   # tech, science, health. CC-BY-ND explicitly permits commercial republication

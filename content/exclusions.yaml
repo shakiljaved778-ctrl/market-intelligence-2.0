@@ -1,0 +1,159 @@
+# Editorial exclusions (owner decision, 2026-11-19 — "a strict no").
+#
+# Mizaan does not publish:
+#   1. news about the Qatar Central Bank (QCB), from any source; or
+#   2. anything about Qatar politics, government or diplomacy.
+#
+# Applied DETERMINISTICALLY (lib/curation/exclusions.ts), no model:
+#   - at ingest: a matching item is never stored;
+#   - in the cluster job: a matching stored item is never clustered or written up;
+#   - at read time: a matching story already stored is hidden from every list
+#     and its page returns 404;
+#   - on AI articles: a draft that mentions a banned term is rewritten once,
+#     then discarded.
+#
+# Matching is case-insensitive on whole words/phrases, over the headline, dek
+# and (for read-time checks) every clustered report.
+#
+# `always` terms exclude a story wherever it comes from (QCB, and names that
+# only ever mean Qatar's head of state or government).
+# `qatar_politics` terms exclude a story only when it is Qatar-related: the text
+# names Qatar/Doha/a Qatari, or the source is a Qatar-registered feed (region QA
+# in content/sources.yaml). A Fed or ECB story that says "prime minister" about
+# another country is unaffected.
+
+always:
+  - Qatar Central Bank
+  - Qatar's Central Bank
+  - Central Bank of Qatar
+  - QCB
+  - QCB's
+  - مصرف قطر المركزي
+  # Names and offices that only ever mean Qatar's head of state or government.
+  - Sheikh Tamim
+  - Tamim bin Hamad
+  - Father Amir
+  - Amiri Diwan
+  - Sheikh Hamad bin Khalifa
+  - Sheikh Abdullah bin Hamad
+  - Sheikh Mohammed bin Abdulrahman
+  - Al Khulaifi
+
+qatar_markers:
+  - Qatar
+  - Qatari
+  - Qataris
+  - Doha
+  - قطر
+
+qatar_politics:
+  # Head of state, ruling family, government
+  - Amir
+  - Emir
+  - Deputy Amir
+  - Amiri
+  - Emiri
+  - His Highness
+  - HH
+  - Prime Minister
+  - Deputy Prime Minister
+  - Minister of State
+  - Foreign Minister
+  - Minister of Foreign Affairs
+  - Ministry of Foreign Affairs
+  - Foreign Ministry
+  - MoFA
+  - Minister of Interior
+  - Ministry of Interior
+  - Minister of Defence
+  - Minister of Defense
+  - Ministry of Defence
+  - Ministry of Defense
+  - Cabinet
+  - Council of Ministers
+  - Shura Council
+  - Shura
+  - Amiri Decree
+  - Emiri Decree
+  - royal decree
+  - government spokesperson
+  - official spokesperson
+  # Diplomacy and international relations
+  - ambassador
+  - ambassadors
+  - embassy
+  - consul
+  - consulate
+  - envoy
+  - diplomat
+  - diplomatic
+  - diplomacy
+  - bilateral relations
+  - bilateral ties
+  - bilateral cooperation
+  - strategic dialogue
+  - strategic committee
+  - joint committee
+  - summit
+  - credentials
+  - condolences
+  - congratulates
+  - congratulatory
+  - phone call
+  - official visit
+  - state visit
+  - working visit
+  - delegation
+  - mediation
+  - mediator
+  - ceasefire
+  - truce
+  - hostages
+  - peace talks
+  - sanctions
+  - United Nations
+  - UN Security Council
+  - Arab League
+  - GCC Ministerial Council
+  - GCC Supreme Council
+  # Politics proper
+  - politics
+  - political
+  - election
+  - elections
+  - parliament
+  - parliamentary
+  - legislative
+  - opposition
+  - geopolitical
+  - military
+  - armed forces
+  - security forces
+
+# Diplomatic meetings by any minister ("Minister of Commerce Meets Georgia's
+# Deputy Prime Minister"): a minister/ministry together with one of these verbs,
+# in a Qatar-related story.
+minister_meeting_verbs:
+  - meets
+  - met
+  - meeting with
+  - receives
+  - received
+  - holds talks
+  - held talks
+  - discusses
+  - discussed
+  - signs
+  - signed
+  - visits
+  - visited
+  - arrives
+  - arrived
+  - participates
+  - participated
+  - attends
+  - attended
+  - heads
+  - headed
+  - leads
+  - led

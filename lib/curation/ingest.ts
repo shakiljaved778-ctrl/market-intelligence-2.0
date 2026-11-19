@@ -1,5 +1,6 @@
 import Parser from "rss-parser";
 import { loadSources, type SourceConfig } from "./config";
+import { checkExclusion } from "./exclusions";
 import { evaluateQuality } from "./quality";
 import { isAllowed } from "./robots";
 import {
@@ -21,6 +22,8 @@ export interface IngestResult {
   articles: NormalizedArticle[];
   perSource: Record<string, number>;
   skippedByRobots: number;
+  /** Items dropped by the editorial exclusions (content/exclusions.yaml). */
+  excluded: number;
 }
 
 async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
@@ -121,7 +124,20 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
   // Quality gate (Phase 2 §3/§4): drop seed-style headlines that name nothing
   // specific, but KEEP raw institutional titles — the summariser rewrites those
   // downstream into factual headlines. Every drop is logged.
+  // Editorial exclusions (content/exclusions.yaml): no Qatar Central Bank
+  // news and no Qatar politics — never stored. Every drop is logged.
+  const regionOf = new Map(sources.map((s) => [s.id, s.region ?? null]));
+  let excluded = 0;
   const articles = dedupe(collected).filter((a) => {
+    const ex = checkExclusion({
+      texts: [a.headline, a.dek],
+      sourceRegion: regionOf.get(a.sourceId) ?? null,
+    });
+    if (ex.excluded) {
+      excluded += 1;
+      console.log(`[ingest] excluded (${ex.reason}): "${a.headline}"`);
+      return false;
+    }
     const q = evaluateQuality({ headline: a.headline });
     if (!q.ok && !q.needsRewrite) {
       console.warn(
@@ -132,5 +148,6 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
     return true;
   });
 
-  return { articles, perSource, skippedByRobots };
+  console.log(`[ingest] excluded by editorial rules: ${excluded}`);
+  return { articles, perSource, skippedByRobots, excluded };
 }
