@@ -37,6 +37,16 @@
 #   nih-news                           items carry no dates (ingest rejects them).
 #   bis-cbspeeches                     newest item 7 days old: outside the 48h
 #                                      clustering window, so it would never show.
+# Probe round 4, 2026-11-19 (run 44467343815) — markets, deals, global finance:
+#   conversation-*-business (4),       ADDED — robots allow, HTTP 200, fresh,
+#   ecb-publications, boe-speeches,    all items dated.
+#   sec-statements
+#   fsb-feed, prnewswire-financial     feed OK; listed in sources.yaml but OFF
+#                                      until their reuse terms are confirmed.
+#   fca-news                           items undated (ingest rejects them).
+#   rba-media, ecb-blog                stale (1 item / a week old).
+#   hm-treasury, boe-publications      mostly administrative documents.
+#   esma-news-page                     no feed; iosco, wfe, globenewswire 403.
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
@@ -229,3 +239,86 @@ candidates:
     name: Saudi Press Agency (SPA) — RSS
     url: https://www.spa.gov.sa/en/rss
     region: SA
+  # --- Round 4 (2026-11-19): financial markets, IPOs, private equity and
+  # global markets (owner request). Open-licence publishers first; the
+  # press-release wires need a terms check before any is enabled. ---
+  - id: conversation-us-business
+    name: The Conversation — US Business + Economy
+    url: https://theconversation.com/us/business/articles.atom
+    region: GLOBAL
+  - id: conversation-uk-business
+    name: The Conversation — UK Business + Economy
+    url: https://theconversation.com/uk/business/articles.atom
+    region: GLOBAL
+  - id: conversation-au-business
+    name: The Conversation — Australia Business + Economy
+    url: https://theconversation.com/au/business/articles.atom
+    region: GLOBAL
+  - id: conversation-global-business
+    name: The Conversation — Global Business + Economy
+    url: https://theconversation.com/global/business/articles.atom
+    region: GLOBAL
+  - id: fca-news
+    name: UK Financial Conduct Authority — News
+    url: https://www.fca.org.uk/news/rss.xml
+    region: UK
+  - id: hm-treasury
+    name: HM Treasury (GOV.UK) — Announcements
+    url: https://www.gov.uk/government/organisations/hm-treasury.atom
+    region: UK
+  - id: rba-media
+    name: Reserve Bank of Australia — Media releases
+    url: https://www.rba.gov.au/rss/rss-cb-media-releases.xml
+    region: GLOBAL
+  - id: ecb-publications
+    name: ECB — Publications
+    url: https://www.ecb.europa.eu/rss/pub.html
+    region: EU
+  - id: ecb-blog
+    name: ECB — Blog
+    url: https://www.ecb.europa.eu/rss/blog.html
+    region: EU
+  - id: boe-speeches
+    name: Bank of England — Speeches
+    url: https://www.bankofengland.co.uk/rss/speeches
+    region: UK
+  - id: boe-publications
+    name: Bank of England — Publications
+    url: https://www.bankofengland.co.uk/rss/publications
+    region: UK
+  - id: fsb-feed
+    name: Financial Stability Board — Feed
+    url: https://www.fsb.org/feed/
+    region: GLOBAL
+  - id: esma-news-page
+    name: ESMA — News page
+    url: https://www.esma.europa.eu/press-news/esma-news
+    region: EU
+  - id: iosco-news-page
+    name: IOSCO — Media releases page
+    url: https://www.iosco.org/news/
+    region: GLOBAL
+  - id: sec-rss-index
+    name: U.S. SEC — RSS index
+    url: https://www.sec.gov/about/rss-feeds
+    region: US
+  - id: sec-statements
+    name: U.S. SEC — Speeches and statements
+    url: https://www.sec.gov/news/speeches-statements.rss
+    region: US
+  - id: globenewswire-rss-index
+    name: GlobeNewswire — RSS index (company press releases)
+    url: https://www.globenewswire.com/rss/list
+    region: GLOBAL
+  - id: prnewswire-financial
+    name: PR Newswire — Financial services releases
+    url: https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss
+    region: GLOBAL
+  - id: prnewswire-rss-index
+    name: PR Newswire — RSS index
+    url: https://www.prnewswire.com/rss/
+    region: GLOBAL
+  - id: wfe-news-page
+    name: World Federation of Exchanges — News
+    url: https://www.world-exchanges.org/news
+    region: GLOBAL

@@ -233,6 +233,130 @@ sources:
     license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
     active: true # owner-approved 2026-11-10; feed + robots verified (UK edition)
 
+  # --- Markets, deals and global finance (owner request 2026-11-19; probe
+  # round 4, GitHub Actions run 44467343815: robots allow, HTTP 200, fresh,
+  # every item dated). Headline + dek + link only. ---
+  - id: conversation-us-business
+    name: The Conversation — US Economy
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/us/business/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 4, 2026-11-19
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate, crypto, technology]
+  - id: conversation-uk-business
+    name: The Conversation — UK Business + Economy
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/uk/business/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 4, 2026-11-19
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate, crypto, technology]
+  - id: conversation-au-business
+    name: The Conversation — Australia Business + Economy
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/au/business/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 4, 2026-11-19
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate, crypto, technology]
+  - id: conversation-global-business
+    name: The Conversation — Business
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/topics/business-34339/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 4, 2026-11-19 (the /global/business URL redirects here)
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate, crypto, technology]
+  - id: ecb-publications
+    name: European Central Bank — Publications
+    homepage: https://www.ecb.europa.eu
+    feed_url: https://www.ecb.europa.eu/rss/pub.html
+    kind: rss
+    region: EU
+    tier: primary
+    trust_score: 98
+    license_note: ECB content reproducible with acknowledgement of source.
+    active: true
+    max_items_per_run: 4
+    default_section: economy
+    allowed_sections: [economy, markets, crypto]
+  - id: boe-speeches
+    name: Bank of England — Speeches
+    homepage: https://www.bankofengland.co.uk
+    feed_url: https://www.bankofengland.co.uk/rss/speeches
+    kind: rss
+    region: UK
+    tier: primary
+    trust_score: 98
+    license_note: Open Government Licence v3.0 — attribution required.
+    active: true
+    max_items_per_run: 4
+    default_section: economy
+    allowed_sections: [economy, markets]
+  - id: sec-statements
+    name: U.S. SEC — Speeches and Statements
+    homepage: https://www.sec.gov
+    feed_url: https://www.sec.gov/news/speeches-statements.rss
+    kind: rss
+    region: US
+    tier: regulator
+    trust_score: 100
+    license_note: U.S. government work, public domain. Attribution + link retained.
+    active: true
+    max_items_per_run: 4
+    default_section: markets
+    allowed_sections: [markets, economy, crypto]
+
+  # Feeds that work but whose reuse terms are not yet confirmed — OFF until
+  # the owner approves them (§6, §10).
+  - id: fsb-feed
+    name: Financial Stability Board
+    homepage: https://www.fsb.org
+    feed_url: https://www.fsb.org/feed/
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 96
+    license_note: Headline + dek + link only; FSB reuse terms to be confirmed before enabling.
+    active: false # probe round 4: feed OK; terms unverified
+    max_items_per_run: 4
+    default_section: economy
+    allowed_sections: [economy, markets]
+  - id: prnewswire-financial
+    name: PR Newswire — Financial Services & Investing
+    homepage: https://www.prnewswire.com
+    feed_url: https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss
+    kind: rss
+    region: GLOBAL
+    tier: wire
+    trust_score: 60
+    license_note: Company press releases (primary sources); headline + dek + link only. PR Newswire RSS terms must be confirmed by the owner before enabling.
+    active: false # probe round 4: feed OK (deal/IPO/PE releases); terms unverified
+    max_items_per_run: 8
+    default_section: markets
+    allowed_sections: [markets, economy, crypto, realestate]
+
   # ============================================================
   # NON-FINANCIAL verticals (§13 editorial mix). We keep the same bias toward
   # licence-free, high-trust primary sources: government/agency feeds that are

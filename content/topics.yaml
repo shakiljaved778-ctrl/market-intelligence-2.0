@@ -33,7 +33,48 @@ topics:
     ]
   regulation:
     [sec, regulator, filing, lawsuit, settlement, enforcement, antitrust, investigation]
-  mergers: [merger, acquisition, takeover, buyout, deal, m&a]
+  # "deal" alone is not used: it tags trade deals and supply contracts as M&A.
+  mergers:
+    [
+      merger,
+      mergers,
+      acquisition,
+      acquisitions,
+      acquires,
+      takeover,
+      takeover bid,
+      buyout,
+      m&a,
+      stake sale,
+      acquires stake,
+    ]
+  ipo:
+    [
+      ipo,
+      ipos,
+      initial public offering,
+      public offering,
+      market debut,
+      trading debut,
+      stock market debut,
+      flotation,
+      direct listing,
+      spac,
+      prospectus,
+    ]
+  private_equity:
+    [
+      private equity,
+      private-equity,
+      buyout firm,
+      leveraged buyout,
+      venture capital,
+      growth equity,
+      private credit,
+      sovereign wealth fund,
+      fund raise,
+      fundraise,
+    ]
   gcc: [qatar, gcc, doha, tadawul, saudi, gulf, riyal, dfm, adx, qse]
   crypto: [bitcoin, ethereum, crypto, digital asset, stablecoin, token]
   # --- Non-financial verticals (§13 editorial mix) — same deterministic rules. ---

@@ -1,3 +1,4 @@
+import { classifySection } from "./section";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   __resetClassifyCache,
@@ -73,6 +74,46 @@ describe("classify (deterministic, dictionary-driven)", () => {
     expect(mentionsExact("An apple a day", "Apple")).toBe(false);
     expect(classify("Record apple harvest in Washington state", null).tickers).toEqual(
       [],
+    );
+  });
+});
+
+describe("classify — deal and IPO topics (2026-11-19)", () => {
+  it.each([
+    "Lulu Retail sets price range for Abu Dhabi IPO",
+    "Private equity firm agrees buyout of software maker",
+    "Bank agrees takeover of regional rival",
+    "Why private credit is worrying regulators",
+  ])("files %s under Markets", (headline) => {
+    const c = classify(headline, null);
+    expect(
+      classifySection({
+        title: headline,
+        dek: null,
+        topics: c.topics,
+        tickers: c.tickers,
+        sourceId: "the-conversation",
+      }),
+    ).toBe("markets");
+  });
+
+  it.each([
+    ["Lulu Retail sets price range for Abu Dhabi IPO", "ipo"],
+    ["Chipmaker shares jump 40% in Nasdaq trading debut", "ipo"],
+    ["Company files for initial public offering on the NYSE", "ipo"],
+    ["Private equity firm agrees buyout of software maker", "private_equity"],
+    ["Venture capital funding for AI startups hits record", "private_equity"],
+    ["Bank agrees takeover of regional rival", "mergers"],
+  ])("tags %s with %s", (headline, topic) => {
+    expect(classify(headline, null).topics).toContain(topic);
+  });
+
+  it("does not treat a trade or supply deal as M&A", () => {
+    expect(
+      classify("QatarEnergy signs 15-year LNG supply deal", null).topics,
+    ).not.toContain("mergers");
+    expect(classify("EU and India close in on trade deal", null).topics).not.toContain(
+      "mergers",
     );
   });
 });

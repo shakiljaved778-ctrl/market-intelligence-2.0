@@ -3,6 +3,8 @@ import { __resetSectionCache } from "@/lib/curation/section";
 import type { WireCluster } from "./read";
 import {
   buildHomepage,
+  DEALS_BAND_SIZE,
+  DEALS_MAX_AGE_H,
   GCC_BAND_SIZE,
   NON_FINANCIAL_ROW_SIZE,
   TOP_SLOT_MAX_AGE_H,
@@ -40,6 +42,8 @@ function allSlots(l: ReturnType<typeof buildHomepage>): WireCluster[] {
     ...(l.lead ? [l.lead] : []),
     ...l.heroSide,
     ...l.threeUp,
+    ...l.deals,
+    ...l.globalMarkets,
     ...l.blocks.flatMap((b) => b.stories),
     ...l.latest,
   ];
@@ -182,5 +186,39 @@ describe("buildHomepage", () => {
     expect(
       l.blocks.flatMap((b) => b.stories).every((c) => c.section === "eureka"),
     ).toBe(true);
+  });
+
+  it("fills the Deals & IPOs band from deal topics, up to a week old, newest first", () => {
+    // Enough strong markets stories to fill the lead, hero rail and 3-up first.
+    const top = Array.from({ length: 8 }, (_, i) => story("markets", 1 + i, 90 - i));
+    const ipo = { ...story("markets", 30, 20), topics: ["ipo"] };
+    const pe = { ...story("economy", 100, 15), topics: ["private_equity"] };
+    const tooOld = {
+      ...story("markets", DEALS_MAX_AGE_H + 5, 30),
+      topics: ["mergers"],
+    };
+    const nonFinance = { ...story("technology", 5, 30), topics: ["ipo"] };
+    const l = buildHomepage([...top, ipo, pe, tooOld, nonFinance], { now: NOW });
+    expect(l.deals.map((c) => c.slug)).toEqual([ipo.slug, pe.slug]);
+    expect(l.deals.length).toBeLessThanOrEqual(DEALS_BAND_SIZE);
+  });
+
+  it("fills the Global markets band with fresh non-Gulf markets stories", () => {
+    const top = Array.from({ length: 8 }, (_, i) => story("markets", 1 + i, 90 - i));
+    const gulf = { ...story("markets", 2, 10), region: "QA" as const };
+    const world = story("markets", 3, 10);
+    const econ = story("economy", 2, 10);
+    const l = buildHomepage([...top, gulf, world, econ], { now: NOW });
+    const slugs = l.globalMarkets.map((c) => c.slug);
+    expect(slugs).toContain(world.slug);
+    expect(slugs).not.toContain(gulf.slug);
+    expect(slugs).not.toContain(econ.slug);
+    expect(l.globalMarkets.every((c) => c.region === "GLOBAL")).toBe(true);
+  });
+
+  it("omits both bands when there is nothing for them", () => {
+    const l = buildHomepage([story("science", 2, 50)], { now: NOW });
+    expect(l.deals).toEqual([]);
+    expect(l.globalMarkets).toEqual([]);
   });
 });

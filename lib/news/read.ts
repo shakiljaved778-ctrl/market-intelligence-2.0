@@ -433,6 +433,9 @@ export function allTopics(): string[] {
     "energy",
     "earnings",
     "regulation",
+    "ipo",
+    "private_equity",
+    "mergers",
     "gcc",
     "crypto",
   ];
