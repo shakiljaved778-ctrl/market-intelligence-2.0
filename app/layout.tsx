@@ -50,6 +50,13 @@ export const metadata: Metadata = {
   alternates: { types: { "application/rss+xml": `${siteUrl}/feed.xml` } },
 };
 
+/**
+ * Page render time limit (seconds). A page read gets 3 s, plus one 6 s retry
+ * on a cold or dropped database connection (lib/db/client.ts dbRead); this
+ * leaves headroom so a slow wake-up never turns into a timeout error.
+ */
+export const maxDuration = 30;
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0a0d12" },

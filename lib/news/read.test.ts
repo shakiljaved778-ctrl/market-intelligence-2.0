@@ -252,3 +252,86 @@ describe("wire read — editorial exclusions (content/exclusions.yaml)", () => {
     expect(await readCluster("qatar-gold-price")).not.toBeNull();
   });
 });
+
+describe("wire read — database unreachable", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.useRealTimers();
+    vi.resetModules();
+    vi.doUnmock("@/lib/db/client");
+    vi.doUnmock("@/lib/db/queries/wire");
+  });
+
+  const liveRow = {
+    slug: "live-markets-story",
+    title: "Stocks rally as rate-cut bets build",
+    tickers: [],
+    topics: [],
+    entities: [],
+    sourceIds: ["sec-press"],
+    sourceCount: 1,
+    eventTime: new Date().toISOString(),
+    importanceScore: 1,
+    articleIds: [1],
+    primaryId: 1,
+    primarySourceId: "sec-press",
+    primaryDek: "Equities climbed as traders priced in easier policy ahead.",
+    brief: null,
+    imageUrl: null,
+    imageCredit: null,
+    members: [
+      {
+        headline: "Stocks rally as rate-cut bets build",
+        sourceName: "SEC",
+        url: "https://example.com/live",
+        publishedAt: new Date().toISOString(),
+        dek: "Equities climbed.",
+      },
+    ],
+  };
+
+  async function setup(reads: (() => unknown)[]) {
+    vi.resetModules();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.doMock("@/lib/db/client", () => ({
+      isDbConfigured: () => true,
+      getDb: () => null,
+    }));
+    let i = 0;
+    vi.doMock("@/lib/db/queries/wire", () => ({
+      dbReadWireBySlug: async () => null,
+      dbReadWire: async () => {
+        const r = reads[Math.min(i, reads.length - 1)]!;
+        i += 1;
+        return r();
+      },
+    }));
+    return import("./read");
+  }
+
+  const down = () => {
+    throw new Error("[db] dbReadWire timed out");
+  };
+
+  it("serves the last good wire instead of an empty homepage", async () => {
+    const { readWire } = await setup([() => [liveRow], down]);
+    expect((await readWire()).some((c) => c.slug === liveRow.slug)).toBe(true);
+    // Database now unreachable: the same story is still served.
+    expect((await readWire()).some((c) => c.slug === liveRow.slug)).toBe(true);
+  });
+
+  it("does not serve a last good wire older than the limit", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const { readWire, LAST_GOOD_MAX_AGE_MS } = await setup([() => [liveRow], down]);
+    await readWire();
+    vi.setSystemTime(Date.now() + LAST_GOOD_MAX_AGE_MS + 60_000);
+    expect((await readWire()).some((c) => c.slug === liveRow.slug)).toBe(false);
+  });
+
+  it("with no wire held, falls back to the authored content only", async () => {
+    vi.stubEnv("DEMO_MODE", "");
+    const { readWire } = await setup([down]);
+    const all = await readWire();
+    expect(all.every((c) => c.section === "eureka")).toBe(true);
+  });
+});
