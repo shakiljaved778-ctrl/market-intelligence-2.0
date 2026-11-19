@@ -47,6 +47,16 @@
 #   rba-media, ecb-blog                stale (1 item / a week old).
 #   hm-treasury, boe-publications      mostly administrative documents.
 #   esma-news-page                     no feed; iosco, wfe, globenewswire 403.
+# Probe round 5, 2026-11-19 (run 44474776678) — more Gulf news:
+#   qna-sport-local                    ADDED — same agency/terms, 50 dated items.
+#   saudi-gazette-business             feed OK; commercial, listed OFF pending
+#                                      the owner's terms approval.
+#   gulf-times-business                robots.txt DISALLOWS the RSS path.
+#   dubai/abu-dhabi media offices,     no feed (pages only).
+#   adgm, qfc, peninsula, khaleej
+#   dfsa, arab-news                    HTTP 403; difc 429.
+#   invest-qatar, gulf-news, zawya,    HTTP 404 for the feed URL.
+#   times-of-oman, kuwait-times, gdn
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
