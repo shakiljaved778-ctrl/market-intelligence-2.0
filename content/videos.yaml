@@ -1,11 +1,42 @@
 # Official-institution YouTube channels (owner choice, 2026-11-19: "Option 1").
 #
 # A channel is read only when listed here with a licence note and active: true.
-# The macro job (every 6 hours) reads each channel's public RSS feed — no key —
-# robots.txt checked inside the fetcher, and stores references only (video id,
-# title, time, thumbnail URL). Videos play from youtube-nocookie.com, embedded
-# with YouTube's own player as its terms allow, only when a reader presses play.
+# The macro job (every 6 hours) reads each channel's latest uploads through the
+# YouTube Data API v3 (free key, YOUTUBE_API_KEY) — not the RSS feeds, whose
+# path YouTube's robots.txt disallows. It stores references only (video id,
+# title, time, thumbnail URL), refreshed or deleted within 30 days per the
+# YouTube API Services policies. Videos play in YouTube's own embedded player
+# (youtube-nocookie.com) only when a reader presses play.
 #
-# Channel ids are filled in from the probe of the channel pages
-# (scripts/probe-sources.ts, content/source-candidates.yaml).
-channels: []
+# Safety: a channel is used only when YouTube's own title for it is one of
+# `expect_titles` — a wrong id or handle is skipped, never shown.
+#
+# Channel ids below were read from each institution's YouTube page by the
+# probe of 2026-11-19 (run 44620192311). World Bank and ECB are looked up by
+# their YouTube username / handle and pass only if the title matches.
+channels:
+  - id: federal-reserve
+    name: Federal Reserve
+    channelId: UCAzhpt9DmG6PnHXjmJTvRGQ
+    expect_titles: [Federal Reserve, federalreserve]
+    license_note: Official US Federal Reserve channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: imf
+    name: IMF
+    channelId: UCIYhr3JsLYfKkCM7-W5B6DA
+    expect_titles: [IMF, International Monetary Fund]
+    license_note: Official International Monetary Fund channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: bank-of-england
+    name: Bank of England
+    channelId: UCZ25rmSDSnjIWZxjd2-04Rg
+    expect_titles: [Bank of England, bankofengland]
+    license_note: Official Bank of England channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: world-bank
+    name: World Bank
+    username: WorldBank
+    expect_titles: [World Bank, World Bank Group, The World Bank]
+    license_note: Official World Bank channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: ecb
+    name: European Central Bank
+    handle: "@ecb"
+    expect_titles: [European Central Bank, ECB]
+    license_note: Official European Central Bank channel; embedded with YouTube's player under the YouTube Terms of Service. References only.

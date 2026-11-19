@@ -36,13 +36,16 @@ export async function persistVideos(rows: StoredVideo[]): Promise<number> {
   return rows.length;
 }
 
-/** Drop references older than `days` (the strip only shows recent videos). */
-export async function pruneVideos(days = 90): Promise<void> {
+/**
+ * Delete references not refreshed in `days` (YouTube API Services policy:
+ * stored API data is refreshed or deleted within 30 days).
+ */
+export async function pruneVideos(days = 30): Promise<void> {
   const db = getDb();
   if (!db) return;
   await db
     .delete(videos)
-    .where(lt(videos.publishedAt, new Date(Date.now() - days * 86_400_000)));
+    .where(lt(videos.fetchedAt, new Date(Date.now() - days * 86_400_000)));
 }
 
 /** The newest stored videos. */

@@ -25,6 +25,12 @@
 #   cdc-newsroom                       feed times out (no feed on its page); the
 #                                      World Bank URL now returns HTML; the CDC
 #                                      feed is an old COVID-19 feed, 0 items.
+# YouTube probe, 2026-11-19 (run 44620192311) — official channels for videos:
+#   @federalreserve, @imf, @bankofengland  pages resolve to channel ids (now in
+#                                       content/videos.yaml); @europeancentralbank
+#                                       and @worldbank do not exist (404).
+#   /feeds/videos.xml                   robots.txt DISALLOWS it, so videos use the
+#                                       YouTube Data API instead (free key).
 # Probe round 3, 2026-11-19 (run 44427670166):
 #   fed-speeches, cftc-press,          ADDED — robots allow, HTTP 200, fresh, all
 #   census-indicators, bis-press,      items dated.
@@ -411,30 +417,3 @@ candidates:
     name: Qatar News Agency — Sport (local)
     url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-Local
     region: QA
-  # Official-institution YouTube channels for the video strip (owner choice,
-  # 2026-11-19: "Option 1"). The probe resolves each handle page to its channel
-  # RSS feed (the page advertises it) and checks robots.txt for both paths.
-  - id: yt-federal-reserve
-    name: Federal Reserve (YouTube)
-    url: https://www.youtube.com/@federalreserve
-    region: US
-  - id: yt-imf
-    name: International Monetary Fund (YouTube)
-    url: https://www.youtube.com/@imf
-    region: GLOBAL
-  - id: yt-ecb
-    name: European Central Bank (YouTube)
-    url: https://www.youtube.com/@europeancentralbank
-    region: EU
-  - id: yt-world-bank
-    name: World Bank (YouTube)
-    url: https://www.youtube.com/@worldbank
-    region: GLOBAL
-  - id: yt-bank-of-england
-    name: Bank of England (YouTube)
-    url: https://www.youtube.com/@bankofengland
-    region: UK
-  - id: yt-feed-path-check
-    name: YouTube channel feed path (robots check)
-    url: https://www.youtube.com/feeds/videos.xml?channel_id=UCAzhpt9DmG6PnHXjmJTvRGQ
-    region: US

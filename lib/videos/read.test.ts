@@ -25,3 +25,16 @@ describe("video strip", () => {
     expect(pickVideoStrip([v("a", 1), v("b", 2), v("c", 3)], 2)).toHaveLength(2);
   });
 });
+
+describe("content/videos.yaml", () => {
+  it("parses: every channel has an identifier, expected titles and a licence note", async () => {
+    const { loadVideoChannels } = await import("./channels");
+    const channels = loadVideoChannels();
+    expect(channels.length).toBeGreaterThan(0);
+    for (const c of channels) {
+      expect(c.channelId || c.handle || c.username).toBeTruthy();
+      expect(c.expect_titles.length).toBeGreaterThan(0);
+    }
+    expect(new Set(channels.map((c) => c.id)).size).toBe(channels.length);
+  });
+});
