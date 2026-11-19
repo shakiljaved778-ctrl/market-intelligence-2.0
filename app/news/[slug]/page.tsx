@@ -15,6 +15,7 @@ import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
 import { CoverArt } from "@/components/news/CoverArt";
 import { StoryGallery } from "@/components/news/StoryGallery";
+import { isGccRegion, regionLabel } from "@/lib/curation/region";
 import { ReadingProgress } from "@/components/news/ReadingProgress";
 import { NewsletterSignup } from "@/components/news/NewsletterSignup";
 import { ShareButtons } from "@/components/ui/ShareButtons";
@@ -125,6 +126,9 @@ export default async function ClusterPage({ params }: Params) {
             section={cluster.section}
             seed={cluster.slug}
             imageUrl={cluster.imageUrl}
+            feature={{
+              place: isGccRegion(cluster.region) ? regionLabel(cluster.region) : null,
+            }}
             className="h-full w-full"
           />
         </div>

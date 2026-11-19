@@ -162,13 +162,17 @@ function GenerativeArt({
   n,
   uid,
   className,
+  rich = false,
 }: {
   meta: ReturnType<typeof sectionMeta>;
   n: number;
   uid: string;
   className?: string;
+  /** Stronger blooms: this art IS the cover (no photo) at feature size. */
+  rich?: boolean;
 }) {
   const angle = (n % 90) - 45;
+  const k = rich ? 1.9 : 1;
   return (
     <svg
       viewBox="0 0 400 250"
@@ -185,7 +189,7 @@ function GenerativeArt({
           <stop
             offset="0%"
             stopColor={meta.hue}
-            stopOpacity={meta.financial ? 0.22 : 0.34}
+            stopOpacity={(meta.financial ? 0.22 : 0.34) * k}
           />
           <stop offset="100%" stopColor={meta.hue} stopOpacity="0" />
         </radialGradient>
@@ -193,7 +197,7 @@ function GenerativeArt({
           <stop
             offset="0%"
             stopColor={meta.hue}
-            stopOpacity={meta.financial ? 0.12 : 0.18}
+            stopOpacity={(meta.financial ? 0.12 : 0.18) * k}
           />
           <stop offset="100%" stopColor={meta.hue} stopOpacity="0" />
         </radialGradient>
@@ -238,12 +242,21 @@ export function CoverArt({
   imageUrl,
   className,
   label = true,
+  feature,
 }: {
   section: string;
   seed: string;
   imageUrl?: string | null;
   className?: string;
   label?: boolean;
+  /**
+   * A large, prominent cover (a band's main card, the lead, a story page). When
+   * the story has no photo, it is drawn as a designed section cover — the
+   * place or section set large over richer art — instead of a faint motif
+   * (owner feedback, 2026-11-20: "the full rectangle box is empty").
+   * `place` is the story's Gulf country, if any.
+   */
+  feature?: { place?: string | null };
 }) {
   const meta = sectionMeta(section);
   const n = seedNum(seed);
@@ -260,6 +273,7 @@ export function CoverArt({
         meta={meta}
         n={n}
         uid={uid}
+        rich={Boolean(feature) && !photo}
         className="absolute inset-0 h-full w-full"
       />
       {/* Real photo on top; object-cover fills the frame. */}
@@ -272,15 +286,39 @@ export function CoverArt({
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : null}
+      {feature && !photo ? (
+        // Designed section cover: masthead kicker, the place (or section) set
+        // large in the display face, a hairline in the section tint.
+        <div className="absolute inset-0 flex flex-col justify-between p-[6%]">
+          <span className="text-ink-3 text-[11px] font-medium tracking-[0.2em] uppercase">
+            Mizaan · {meta.label}
+          </span>
+          <div>
+            <span
+              aria-hidden
+              className="mb-3 block h-[3px] w-14 rounded-full"
+              style={{ background: meta.hue }}
+            />
+            <span className="display text-ink block text-[clamp(2.25rem,7vw,4.5rem)] leading-none">
+              {feature.place ?? meta.label}
+            </span>
+            {feature.place ? (
+              <span className="text-ink-2 mt-2 block text-[14px] tracking-[0.12em] uppercase">
+                {meta.label}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       {/* Legibility scrim + a subtle top vignette to seat text. */}
       <div
-        className="pointer-events-none absolute inset-0"
+        className={`pointer-events-none absolute inset-0 ${feature && !photo ? "hidden" : ""}`}
         style={{
           background:
             "linear-gradient(180deg, color-mix(in srgb, var(--canvas) 22%, transparent) 0%, transparent 38%, color-mix(in srgb, var(--canvas) 82%, transparent) 100%)",
         }}
       />
-      {label ? (
+      {label && !(feature && !photo) ? (
         <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] tracking-[0.12em] text-white/90 uppercase backdrop-blur-sm">
           <span
             aria-hidden

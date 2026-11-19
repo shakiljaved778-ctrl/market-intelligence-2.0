@@ -39,3 +39,25 @@ const GCC_PLACE: Record<string, string> = {
 export function gccPlace(region: string | null | undefined): string | null {
   return (region && GCC_PLACE[region]) ?? null;
 }
+
+/**
+ * The searches to try, in order, for a story's cover. Many Gulf stories share
+ * one phrase ("economy finance city Doha") and every photo found is used once
+ * only, so a busy week can use up a search's results — the story then falls
+ * back to further phrasings of the same place, then the section's plain search.
+ */
+export function coverQueries(section: string, extra?: string | null): string[] {
+  const place = extra?.trim() || null;
+  const isPlace = place !== null && Object.values(GCC_PLACE).includes(place);
+  const list = [coverQuery(section, place)];
+  if (isPlace) {
+    const city = place === GCC_PLACE.GCC ? "Gulf city" : place;
+    list.push(
+      `${city} skyline`,
+      `${city} city architecture`,
+      `${city} business district`,
+    );
+  }
+  list.push(coverQuery(section), "business finance city");
+  return [...new Set(list)];
+}

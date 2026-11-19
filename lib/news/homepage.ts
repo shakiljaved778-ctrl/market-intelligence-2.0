@@ -239,3 +239,15 @@ export function withUniqueCovers(layout: HomepageLayout): HomepageLayout {
     latest,
   };
 }
+
+/**
+ * The order a band renders in: the first story with a photo leads (it takes
+ * the band's big card), the rest keep their order (owner feedback, 2026-11-20:
+ * an empty drawn cover in the band's main card read as a blank box). A band
+ * with no photo at all is returned unchanged.
+ */
+export function photoFirst(stories: WireCluster[]): WireCluster[] {
+  const i = stories.findIndex((c) => Boolean(c.imageUrl));
+  if (i <= 0) return stories;
+  return [stories[i]!, ...stories.slice(0, i), ...stories.slice(i + 1)];
+}
