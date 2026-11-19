@@ -95,6 +95,9 @@ export function PriceChart({ symbol }: { symbol: string }) {
         priceLineVisible: false,
       });
       series.setData(points);
+      // Spread the range's bars across the full width (the default bar spacing
+      // squeezed a month of daily closes into the right-hand fifth).
+      chart.timeScale().fitContent();
       setStamp(data.stamp ?? null);
       setLoading(false);
     }
