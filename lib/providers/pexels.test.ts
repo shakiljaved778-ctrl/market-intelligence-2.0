@@ -50,6 +50,37 @@ describe("pexels cover provider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("gives stories that search the same phrase different photos, with one call", async () => {
+    process.env.PEXELS_API_KEY = "test-key";
+    const many = {
+      photos: Array.from({ length: 15 }, (_, i) => ({
+        alt: `Doha ${i}`,
+        photographer: "P",
+        photographer_url: "https://www.pexels.com/@p",
+        src: { landscape: `https://images.pexels.com/${i}.jpg` },
+      })),
+    };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(many)));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const slugs = [
+      "qse-index-opens-lower-1a",
+      "meeza-cloud-deal-2b",
+      "state-budget-q3-3c",
+    ];
+    // The cluster job looks covers up one story at a time.
+    const urls: (string | undefined)[] = [];
+    for (const slug of slugs) {
+      urls.push((await searchPexels("economy finance city Doha", slug))?.url);
+    }
+    expect(new Set(urls).size).toBeGreaterThan(1);
+    // The same story always gets the same photo.
+    expect((await searchPexels("economy finance city Doha", slugs[0]))?.url).toBe(
+      urls[0],
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("returns null (not a throw) when the vendor errors", async () => {
     process.env.PEXELS_API_KEY = "test-key";
     vi.stubGlobal(
