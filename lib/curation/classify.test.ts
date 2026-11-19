@@ -117,3 +117,27 @@ describe("classify — deal and IPO topics (2026-11-19)", () => {
     );
   });
 });
+
+describe("section — a company name alone does not make a tech story Markets", () => {
+  const place = (h: string, d: string | null) => {
+    const c = classify(h, d);
+    return classifySection({
+      title: h,
+      dek: d,
+      topics: c.topics,
+      tickers: c.tickers,
+      sourceId: "the-conversation",
+    });
+  };
+  it("files a Big Tech / AI essay that names Google under Tech & AI", () => {
+    expect(
+      place(
+        "Google’s AI ultimatum exposes the risks of schools’ dependence on Big Tech",
+        "Google recently announced that its AI tools would be turned off by default for student accounts. Google Search, its popular search engine, would also be turned off",
+      ),
+    ).toBe("technology");
+  });
+  it("keeps a share-price story about a tech company in Markets", () => {
+    expect(place("Nvidia shares jump on AI chip demand", null)).toBe("markets");
+  });
+});
