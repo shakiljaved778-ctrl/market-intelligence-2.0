@@ -2,6 +2,7 @@ import { z } from "zod";
 import { swr } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
 import { usdPerUnit } from "./frankfurter";
+import { rangeToWindow, ymd } from "./range";
 import type {
   Candle,
   Capability,
@@ -97,6 +98,7 @@ export class FmpProvider implements MarketDataProvider {
     "profile",
     "search",
     "fundamentals",
+    "candles",
   ];
   // Free tier is ~250 req/day; scheduled batching + cache keep us well under.
   readonly budget: ProviderBudget = { perDay: 250 };
@@ -258,10 +260,26 @@ export class FmpProvider implements MarketDataProvider {
     return value;
   }
 
+  /**
+   * Daily OHLCV history from FMP's stable end-of-day endpoint (free tier, US
+   * listings). Daily ranges only: FMP's free plan has no intraday bars, so 1D /
+   * 5D return [] and the chart shows its empty state. The tracked symbols are
+   * all US listings and US-listed ADRs, so the bars are already in USD (§7). A
+   * plan-gated symbol (402/403) returns [] so the registry tries the next
+   * provider without a penalty.
+   */
   async candles(symbol: string, range: Range): Promise<Candle[]> {
-    void symbol;
-    void range;
-    return [];
+    if (!this.isConfigured()) return [];
+    const w = rangeToWindow(range);
+    if (w.intraday) return [];
+    const sym = symbol.toUpperCase();
+    const url =
+      `${STABLE_URL}/historical-price-eod/full?symbol=${encodeURIComponent(sym)}` +
+      `&from=${ymd(w.from)}&to=${ymd(w.to)}&apikey=${this.key()}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (res.status === 402 || res.status === 403 || res.status === 404) return [];
+    if (!res.ok) throw new Error(`FMP historical-price-eod ${res.status}`);
+    return parseEodBars(await res.json());
   }
 
   async search(q: string): Promise<SymbolMatch[]> {
@@ -288,4 +306,48 @@ export class FmpProvider implements MarketDataProvider {
     );
     return value;
   }
+}
+
+const EodBar = z
+  .object({
+    date: z.string(),
+    open: z.number(),
+    high: z.number(),
+    low: z.number(),
+    close: z.number(),
+    volume: z.number().nullable().optional(),
+  })
+  .passthrough();
+
+/**
+ * FMP end-of-day rows → candles, oldest first. Accepts the stable shape (a flat
+ * array) and the legacy one (`{ historical: [...] }`); anything else — e.g. an
+ * `{ "Error Message": ... }` body for a plan-gated symbol — yields [].
+ * Rows that do not parse are skipped, never invented.
+ */
+export function parseEodBars(body: unknown): Candle[] {
+  const rows: unknown[] = Array.isArray(body)
+    ? body
+    : body &&
+        typeof body === "object" &&
+        Array.isArray((body as { historical?: unknown }).historical)
+      ? (body as { historical: unknown[] }).historical
+      : [];
+  const out: Candle[] = [];
+  for (const row of rows) {
+    const r = EodBar.safeParse(row);
+    if (!r.success) continue;
+    const day = r.data.date.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    if (!(r.data.close > 0)) continue;
+    out.push({
+      t: `${day}T00:00:00.000Z`,
+      o: r.data.open,
+      h: r.data.high,
+      l: r.data.low,
+      c: r.data.close,
+      v: r.data.volume ?? null,
+    });
+  }
+  return out.sort((a, b) => a.t.localeCompare(b.t));
 }

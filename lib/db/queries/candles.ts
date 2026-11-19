@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { candlesDaily, instruments } from "@/lib/db/schema";
 import type { Candle } from "@/lib/providers/types";
@@ -51,4 +51,28 @@ export async function persistDailyCandles(
       },
     });
   return rows.length;
+}
+
+/** The latest stored daily bar per symbol (YYYY-MM-DD), for incremental backfill. */
+export async function latestCandleDates(
+  symbols: string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const db = getDb();
+  if (!db || symbols.length === 0) return out;
+  const rows = await db
+    .select({
+      symbol: candlesDaily.symbol,
+      last: sql<string>`max(${candlesDaily.date})`,
+    })
+    .from(candlesDaily)
+    .where(
+      inArray(
+        candlesDaily.symbol,
+        symbols.map((s) => s.toUpperCase()),
+      ),
+    )
+    .groupBy(candlesDaily.symbol);
+  for (const r of rows) if (r.last) out.set(r.symbol, String(r.last).slice(0, 10));
+  return out;
 }

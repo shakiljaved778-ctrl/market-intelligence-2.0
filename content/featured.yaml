@@ -8,4 +8,9 @@
 #
 # A pick applies only while the story is younger than 72 hours, and never past
 # `until`. With no current pick the hero is the top-ranked story.
-picks: []
+picks:
+  # Timely with Anthropic's record listing (19 Nov 2026): the financial-stability
+  # view on very large IPOs. Change or remove at any time.
+  - label: Editor's pick
+    slug: financial-stability-risks-from-large-ipos-equity-issuance-60f80e
+    until: 2026-11-22T12:00:00Z

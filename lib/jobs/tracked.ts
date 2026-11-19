@@ -1,3 +1,5 @@
+import { instrumentBySymbol } from "@/content/instruments";
+
 /**
  * Symbols refreshed by the scheduled jobs (§6 budget discipline): quotes are
  * fetched in batches on a schedule, written to cache + Postgres, and served from
@@ -35,6 +37,7 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "CSCO",
   "NFLX",
   "PLTR",
+  "ANT", // Anthropic — Nasdaq listing, 19 Nov 2026
   // Financials
   "JPM",
   "BAC",
@@ -134,3 +137,15 @@ export const BACKFILL_SYMBOLS: readonly string[] = [
   "XOM",
   "DIS",
 ];
+
+/**
+ * Equities whose daily price history the EOD job keeps (lib/jobs/tasks.ts):
+ * the core BACKFILL_SYMBOLS first, then every other tracked equity. Crypto is
+ * left out — no configured provider serves its daily history.
+ */
+export function historySymbols(): string[] {
+  const equities = TRACKED_SYMBOLS.filter(
+    (s) => instrumentBySymbol(s)?.assetClass === "equity",
+  );
+  return [...new Set([...BACKFILL_SYMBOLS, ...equities])];
+}

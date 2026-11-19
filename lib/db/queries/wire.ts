@@ -41,6 +41,8 @@ export interface DbWireRow {
   /** Pexels cover photo persisted by the cluster job, if resolved. */
   imageUrl: string | null;
   imageCredit: { credit: string; creditUrl: string } | null;
+  /** Extra story-page photos (never the cover itself). */
+  gallery: { url: string; alt: string; credit: string; creditUrl: string }[];
   members: DbWireMember[];
 }
 
@@ -148,6 +150,7 @@ async function readClusters(filter: {
       coverUrl: clusters.coverUrl,
       coverCredit: clusters.coverCredit,
       coverCreditUrl: clusters.coverCreditUrl,
+      coverGallery: clusters.coverGallery,
     })
     .from(clusters)
     .where(where)
@@ -223,6 +226,9 @@ async function readClusters(filter: {
             creditUrl: c.coverCreditUrl ?? "https://www.pexels.com",
           }
         : null,
+      gallery: c.coverUrl
+        ? (c.coverGallery ?? []).filter((g) => g.url !== c.coverUrl)
+        : [],
       members: members.map((m) => ({
         headline: m.headline,
         sourceName: m.sourceName,
