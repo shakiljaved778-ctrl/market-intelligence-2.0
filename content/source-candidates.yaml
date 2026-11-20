@@ -25,6 +25,11 @@
 #   cdc-newsroom                       feed times out (no feed on its page); the
 #                                      World Bank URL now returns HTML; the CDC
 #                                      feed is an old COVID-19 feed, 0 items.
+# Video pages probe, 2026-11-20 (run 44682813823): federalreserve.gov has no
+#   robots.txt and advertises its own feeds/videos.xml; the Bank of England's
+#   press-conference page embeds a YouTube playlist (videoseries); the ECB,
+#   World Bank Live and IMF pages embed no YouTube ids; YouTube oEmbed is
+#   allowed by robots.txt.
 # YouTube probe, 2026-11-19 (run 44620192311) — official channels for videos:
 #   @federalreserve, @imf, @bankofengland  pages resolve to channel ids (now in
 #                                       content/videos.yaml); @europeancentralbank
@@ -417,33 +422,8 @@ candidates:
     name: Qatar News Agency — Sport (local)
     url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-Local
     region: QA
-  # Official pages that embed institutions' YouTube videos (keyless video
-  # source, 2026-11-20): robots check + embedded video ids.
-  - id: vid-fed-videos
-    name: Federal Reserve — videos page
-    url: https://www.federalreserve.gov/videos.htm
-    region: US
-  - id: vid-fed-presconf
-    name: Federal Reserve — FOMC press conference page (Oct 2026)
-    url: https://www.federalreserve.gov/monetarypolicy/fomcpresconf20261028.htm
-    region: US
-  - id: vid-boe-press-conferences
-    name: Bank of England — press conferences
-    url: https://www.bankofengland.co.uk/press-conferences
-    region: UK
-  - id: vid-ecb-press-conference
-    name: ECB — press conferences
-    url: https://www.ecb.europa.eu/press/press_conference/html/index.en.html
-    region: EU
-  - id: vid-imf-videos
-    name: IMF — videos
-    url: https://www.imf.org/en/Videos
-    region: GLOBAL
-  - id: vid-worldbank-live
-    name: World Bank Live
-    url: https://live.worldbank.org/
-    region: GLOBAL
-  - id: vid-youtube-oembed
-    name: YouTube oEmbed (robots check)
-    url: https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2F%40federalreserve&format=json
+  # The Federal Reserve's own video feed (keyless video source, 2026-11-20).
+  - id: vid-fed-feed
+    name: Federal Reserve — videos feed
+    url: https://www.federalreserve.gov/feeds/videos.xml
     region: US
