@@ -29,11 +29,12 @@ export type { RawArticle, ArticleBody };
 
 /**
  * Eureka cover photos (owner request, 2026-11-20: no blank cards). The cluster
- * job finds one Pexels photo per explainer and stores it in KV under this key;
+ * job finds one Pexels photo per explainer and stores it in Postgres
+ * (photo_sets) under this key;
  * pages only read it (no vendor call on render). Searches follow the prize
  * field in the explainer's nobelprize.org link.
  */
-export const eurekaCoverKey = (id: number) => `cover:eureka:${id}`;
+export const eurekaCoverKey = (id: number) => `eureka:${id}`;
 
 const FIELD_QUERIES: Record<string, string[]> = {
   physics: ["physics laboratory", "science laboratory"],

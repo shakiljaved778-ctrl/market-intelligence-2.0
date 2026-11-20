@@ -1,6 +1,5 @@
 import { cache } from "react";
 import { EDITORIAL_ARTICLES, isEditorialCurrent } from "@/content/editorial";
-import { cacheGet } from "@/lib/cache/swr";
 import {
   assignFillers,
   fillerKey,
@@ -296,25 +295,29 @@ async function computeEurekaClusters(): Promise<LoadedCluster[]> {
   const loaded = (await rankAuthored(eurekaArticles(), new Date())).filter(
     (l) => l.cluster.section === "eureka",
   );
-  // The photo the cluster job stored for each explainer (KV read only; none
-  // yet, or no KV, keeps the drawn cover).
-  return Promise.all(
-    loaded.map(async (l) => {
-      if (l.cluster.imageUrl) return l;
-      const photo = await cacheGet<{ url: string; credit: string; creditUrl: string }>(
-        eurekaCoverKey(l.primaryId),
-      );
-      if (!photo) return l;
-      return {
-        ...l,
-        cluster: {
-          ...l.cluster,
-          imageUrl: photo.url,
-          imageCredit: { credit: photo.credit, creditUrl: photo.creditUrl },
-        },
-      };
-    }),
-  );
+  // The photo the cluster job stored for each explainer (database read only;
+  // none yet keeps the filler / drawn cover).
+  let stored = new Map<string, { url: string; credit: string; creditUrl: string }[]>();
+  if (isDbConfigured()) {
+    try {
+      const { dbPhotoSets } = await import("@/lib/db/queries/photos");
+      stored = await dbPhotoSets(loaded.map((l) => eurekaCoverKey(l.primaryId)));
+    } catch (err) {
+      console.error("[eureka] cover read failed:", err);
+    }
+  }
+  return loaded.map((l) => {
+    const photo = stored.get(eurekaCoverKey(l.primaryId))?.[0];
+    if (l.cluster.imageUrl || !photo) return l;
+    return {
+      ...l,
+      cluster: {
+        ...l.cluster,
+        imageUrl: photo.url,
+        imageCredit: { credit: photo.credit, creditUrl: photo.creditUrl },
+      },
+    };
+  });
 }
 
 /**
@@ -467,7 +470,7 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
 
 /**
  * Every story without its own photo gets a filler from its section's pool
- * (lib/news/filler.ts; KV read only). Any failure keeps the drawn covers.
+ * (lib/news/filler.ts; database read only). Any failure keeps the drawn covers.
  */
 async function withFillers(list: LoadedCluster[]): Promise<LoadedCluster[]> {
   try {
@@ -477,15 +480,15 @@ async function withFillers(list: LoadedCluster[]): Promise<LoadedCluster[]> {
         .map((l) => fillerPoolFor(l.cluster.section, l.cluster.region)),
     );
     if (needed.size === 0) return list;
-    const entries = await Promise.all(
-      [...needed].map(
-        async (pool) =>
-          [pool, (await cacheGet<FillerPhoto[]>(fillerKey(pool))) ?? []] as const,
-      ),
+    if (!isDbConfigured()) return list;
+    const { dbPhotoSets } = await import("@/lib/db/queries/photos");
+    const sets = await dbPhotoSets([...needed].map(fillerKey));
+    const pools = new Map<string, FillerPhoto[]>(
+      [...needed].map((pool) => [pool, sets.get(fillerKey(pool)) ?? []]),
     );
     const filled = assignFillers(
       list.map((l) => l.cluster),
-      new Map(entries),
+      pools,
     );
     return list.map((l, i) => ({ ...l, cluster: filled[i]! }));
   } catch (err) {
