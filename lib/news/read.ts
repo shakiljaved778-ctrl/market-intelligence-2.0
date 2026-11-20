@@ -1,8 +1,10 @@
 import { cache } from "react";
 import { EDITORIAL_ARTICLES, isEditorialCurrent } from "@/content/editorial";
+import { cacheGet } from "@/lib/cache/swr";
 import {
   eurekaArticles,
   eurekaBody,
+  eurekaCoverKey,
   type ArticleBody,
   type RawArticle,
 } from "@/lib/content/authored";
@@ -285,8 +287,27 @@ async function computeDemoWire(): Promise<LoadedCluster[]> {
  * out-rank or masquerade as today's news.
  */
 async function computeEurekaClusters(): Promise<LoadedCluster[]> {
-  return (await rankAuthored(eurekaArticles(), new Date())).filter(
+  const loaded = (await rankAuthored(eurekaArticles(), new Date())).filter(
     (l) => l.cluster.section === "eureka",
+  );
+  // The photo the cluster job stored for each explainer (KV read only; none
+  // yet, or no KV, keeps the drawn cover).
+  return Promise.all(
+    loaded.map(async (l) => {
+      if (l.cluster.imageUrl) return l;
+      const photo = await cacheGet<{ url: string; credit: string; creditUrl: string }>(
+        eurekaCoverKey(l.primaryId),
+      );
+      if (!photo) return l;
+      return {
+        ...l,
+        cluster: {
+          ...l.cluster,
+          imageUrl: photo.url,
+          imageCredit: { credit: photo.credit, creditUrl: photo.creditUrl },
+        },
+      };
+    }),
   );
 }
 
