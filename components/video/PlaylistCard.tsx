@@ -115,10 +115,10 @@ export function PlaylistCard({
       </div>
       <figcaption className="mt-2">
         <span className="text-ink-3 text-[11px]">
-          {latest ? `Latest from the ${name} · YouTube` : `YouTube · ${name}`}
+          {latest ? `Latest · ${name} · YouTube` : `YouTube · ${name}`}
         </span>
         <span className="font-editorial text-ink mt-0.5 line-clamp-2 block text-[15px] leading-snug">
-          {latest ? latest.title : `Latest videos from the ${name}`}
+          {latest ? latest.title : `Latest videos · ${name}`}
         </span>
       </figcaption>
     </figure>
