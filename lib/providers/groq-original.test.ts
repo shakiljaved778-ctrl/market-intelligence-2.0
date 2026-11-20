@@ -33,6 +33,34 @@ describe("Mizaan Original — no forecasts", () => {
     ).toEqual(["will likely", "set the tone", "in the weeks ahead"]);
   });
 
+  it("catches inflected and hedged forecasts", async () => {
+    const { speculativePhrases } = await import("./groq");
+    expect(
+      speculativePhrases(
+        "Calm markets, setting the tone for investors. The IPO wave is set to continue; the deal could channel capital and may prompt scrutiny, suggesting that regulators will monitor it. Traders will keep an eye on oil.",
+        "IPO wave; oil steady.",
+      ),
+    ).toEqual([
+      "setting the tone",
+      "is set to",
+      "could channel",
+      "may prompt",
+      "will monitor",
+      "will keep an eye",
+      "suggesting that regulators will",
+    ]);
+  });
+
+  it("leaves plain past-tense reporting alone", async () => {
+    const { speculativePhrases } = await import("./groq");
+    expect(
+      speculativePhrases(
+        "The index slipped 0.85 percent. The ECB said OpenAI and Anthropic plan to follow. OPEC meets on Sunday, the agency reported.",
+        "index slipped",
+      ),
+    ).toEqual([]);
+  });
+
   it("allows wording a report itself uses (attributed)", async () => {
     const { speculativePhrases } = await import("./groq");
     expect(
