@@ -5,9 +5,13 @@ import { useState } from "react";
 
 /**
  * One official video (owner choice, 2026-11-19). A thumbnail and a play button
- * until the reader presses play — only then is the player loaded, from
- * youtube-nocookie.com, so the page itself makes no YouTube request and sets
- * no YouTube cookie. Labelled with the institution that published it.
+ * until the reader presses play — only then is YouTube's player loaded, so the
+ * page itself makes no YouTube request. The standard youtube.com player (not
+ * youtube-nocookie) is used so a signed-in reader is recognised: the
+ * privacy-enhanced player hides that sign-in and YouTube then answers many
+ * readers (VPNs especially) with "Sign in to confirm you're not a bot"
+ * (owner report, 2026-11-20). "Watch on YouTube" is always offered as the
+ * fallback; on a phone it opens the YouTube app.
  */
 export function VideoCard({
   videoId,
@@ -28,7 +32,7 @@ export function VideoCard({
       <div className="border-line bg-surface relative aspect-video w-full overflow-hidden rounded-[8px] border">
         {playing ? (
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`}
             title={title}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
@@ -67,6 +71,14 @@ export function VideoCard({
         <span className="font-editorial text-ink mt-0.5 line-clamp-2 block text-[15px] leading-snug">
           {title}
         </span>
+        <a
+          href={`https://www.youtube.com/watch?v=${videoId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-ink-3 hover:text-ink mt-1 inline-block text-[11px] underline-offset-2 hover:underline"
+        >
+          Watch on YouTube ↗
+        </a>
       </figcaption>
     </figure>
   );

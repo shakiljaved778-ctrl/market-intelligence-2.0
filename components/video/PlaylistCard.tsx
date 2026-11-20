@@ -7,8 +7,9 @@ import { useState } from "react";
  * An institution's latest videos (owner request, 2026-11-20: no YouTube key).
  * The card is drawn by us — no request to YouTube, no thumbnail fetch — until
  * the reader presses play; then YouTube's own player loads the channel's
- * uploads playlist from youtube-nocookie.com, newest first. YouTube keeps the
- * playlist current, so this needs no key, no job and no stored data.
+ * uploads playlist, newest first. YouTube keeps the playlist current, so this
+ * needs no key, no job and no stored data. Standard youtube.com player and an
+ * always-present "Watch on YouTube" link: see VideoCard for why.
  */
 export function PlaylistCard({
   name,
@@ -36,8 +37,8 @@ export function PlaylistCard({
           <iframe
             src={
               latest
-                ? `https://www.youtube-nocookie.com/embed/${latest.videoId}?list=${listId}&autoplay=1&rel=0`
-                : `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&autoplay=1&rel=0`
+                ? `https://www.youtube.com/embed/${latest.videoId}?list=${listId}&autoplay=1&rel=0&playsinline=1`
+                : `https://www.youtube.com/embed/videoseries?list=${listId}&autoplay=1&rel=0&playsinline=1`
             }
             title={`${name} — latest videos`}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -120,6 +121,18 @@ export function PlaylistCard({
         <span className="font-editorial text-ink mt-0.5 line-clamp-2 block text-[15px] leading-snug">
           {latest ? latest.title : `Latest videos · ${name}`}
         </span>
+        <a
+          href={
+            latest
+              ? `https://www.youtube.com/watch?v=${latest.videoId}&list=${listId}`
+              : `https://www.youtube.com/playlist?list=${listId}`
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-ink-3 hover:text-ink mt-1 inline-block text-[11px] underline-offset-2 hover:underline"
+        >
+          Watch on YouTube ↗
+        </a>
       </figcaption>
     </figure>
   );
