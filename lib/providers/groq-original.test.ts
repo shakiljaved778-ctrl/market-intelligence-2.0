@@ -21,3 +21,25 @@ describe("Mizaan Original — parsing the model's output", () => {
     expect(parseOriginal(`# Title\nDek: one line\n${para(50)}`)).toBeNull();
   });
 });
+
+describe("Mizaan Original — no forecasts", () => {
+  it("flags forecast wording the reports never use", async () => {
+    const { speculativePhrases } = await import("./groq");
+    expect(
+      speculativePhrases(
+        "Oil will likely set the tone in the weeks ahead.",
+        "Oil prices steady; OPEC meets next week.",
+      ),
+    ).toEqual(["will likely", "set the tone", "in the weeks ahead"]);
+  });
+
+  it("allows wording a report itself uses (attributed)", async () => {
+    const { speculativePhrases } = await import("./groq");
+    expect(
+      speculativePhrases(
+        "The bank said rates are expected to stay on hold.",
+        "Rates are expected to stay on hold, the bank said.",
+      ),
+    ).toEqual([]);
+  });
+});

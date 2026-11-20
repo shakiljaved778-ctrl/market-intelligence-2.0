@@ -117,6 +117,8 @@ export const GALLERY_BACKFILL_PER_RUN = 12;
 export const ORIGINAL_EVERY_H = 12;
 /** Reports a Mizaan Original is written from (the top global-markets stories). */
 export const ORIGINAL_REPORTS = 8;
+/** Gulf market/economy reports added for the Original's Gulf section. */
+export const ORIGINAL_GULF_REPORTS = 3;
 
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
@@ -703,12 +705,19 @@ export async function clusterTask(): Promise<JobSummary> {
     // the top-ranked fresh global Markets/Economy stories (not Gulf ones).
     if (isGroqConfigured()) {
       try {
-        const { latestOriginalTime, persistOriginal } = await import(
+        const { latestOriginalMeta, persistOriginal } = await import(
           "@/lib/db/queries/originals"
         );
-        const { generateOriginal } = await import("@/lib/providers/groq");
-        const last = await latestOriginalTime("global-markets");
-        if (!last || Date.now() - last.getTime() >= ORIGINAL_EVERY_H * 3_600_000) {
+        const { generateOriginal, ORIGINAL_FORMAT } = await import(
+          "@/lib/providers/groq"
+        );
+        const last = await latestOriginalMeta("global-markets");
+        const due =
+          !last ||
+          Date.now() - last.at.getTime() >= ORIGINAL_EVERY_H * 3_600_000 ||
+          // Written under older rules: replace it now.
+          !last.model.endsWith(`#${ORIGINAL_FORMAT}`);
+        if (due) {
           const articleById = new Map(recent.map((a) => [a.id, a]));
           const picks = ranked
             .filter((c) => Date.now() - Date.parse(c.eventTime) <= 24 * 3_600_000)
@@ -727,23 +736,45 @@ export async function clusterTask(): Promise<JobSummary> {
               );
             })
             .slice(0, ORIGINAL_REPORTS);
+          // The top fresh Gulf market/economy stories feed the piece's Gulf
+          // section (owner request, 2026-11-20).
+          const gulfPicks = ranked
+            .filter((c) => Date.now() - Date.parse(c.eventTime) <= 48 * 3_600_000)
+            .filter((c) => {
+              const dek = dekById.get(c.primaryId) ?? null;
+              const section = classifySection({
+                title: c.title,
+                dek,
+                topics: c.topics,
+                tickers: c.tickers,
+                sourceId: sourceById.get(c.primaryId) ?? null,
+              });
+              return (
+                (section === "markets" || section === "economy") &&
+                gccPlace(regionOfCluster(c, dek)) !== null
+              );
+            })
+            .slice(0, ORIGINAL_GULF_REPORTS);
           // Signed moves for the instruments the reports name.
           const moves: Record<string, number> = {};
           for (const t of new Set(picks.flatMap((c) => c.tickers))) {
             const q = await cacheGet<{ changePct?: number }>(`market:quote:${t}`);
             if (q && typeof q.changePct === "number") moves[t] = q.changePct;
           }
-          const reports = picks.map((c) => ({
+          const report = (c: (typeof ranked)[number]) => ({
             title: c.title,
             dek: dekById.get(c.primaryId) ?? null,
             source:
               sourceName.get(sourceById.get(c.primaryId) ?? "") ??
               sourceById.get(c.primaryId) ??
               "",
-          }));
+          });
+          const reports = picks.map(report);
+          const gulfReports = gulfPicks.map(report);
           const now = new Date();
           const original = await generateOriginal({
             reports,
+            gulfReports,
             moves,
             date: now.toISOString(),
           });
@@ -763,13 +794,13 @@ export async function clusterTask(): Promise<JobSummary> {
               title: original.title,
               dek: original.dek,
               bodyMd: original.body,
-              sources: picks.map((c, i) => ({
+              sources: [...picks, ...gulfPicks].map((c) => ({
                 title: c.title,
-                source: reports[i]!.source,
+                source: report(c).source,
                 url: articleById.get(c.primaryId)?.url ?? "",
                 slug: c.slug,
               })),
-              model: original.model,
+              model: `${original.model}#${ORIGINAL_FORMAT}`,
               coverUrl: cover?.url ?? null,
               coverCredit: cover?.credit ?? null,
               coverCreditUrl: cover?.creditUrl ?? null,
