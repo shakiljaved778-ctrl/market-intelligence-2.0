@@ -1,6 +1,6 @@
 import { desc, lt, sql } from "drizzle-orm";
 import { dbRead, getDb } from "@/lib/db/client";
-import { videos } from "@/lib/db/schema";
+import { videoPlaylists, videos } from "@/lib/db/schema";
 
 export interface StoredVideo {
   videoId: string;
@@ -64,6 +64,54 @@ export async function dbRecentVideos(limit: number): Promise<StoredVideo[]> {
       title: r.title,
       publishedAt: r.publishedAt.toISOString(),
       thumbnailUrl: r.thumbnailUrl,
+    }));
+  });
+}
+
+export interface StoredPlaylistLatest {
+  channel: string;
+  listId: string;
+  latestVideoId: string;
+  latestTitle: string;
+  thumbnailUrl: string;
+  fetchedAt: string;
+}
+
+/** Upsert each channel's newest upload (keyless, via oEmbed). */
+export async function persistPlaylistLatest(
+  rows: Omit<StoredPlaylistLatest, "fetchedAt">[],
+): Promise<number> {
+  const db = getDb();
+  if (!db || rows.length === 0) return 0;
+  await db
+    .insert(videoPlaylists)
+    .values(rows)
+    .onConflictDoUpdate({
+      target: videoPlaylists.channel,
+      set: {
+        listId: sql`excluded.list_id`,
+        latestVideoId: sql`excluded.latest_video_id`,
+        latestTitle: sql`excluded.latest_title`,
+        thumbnailUrl: sql`excluded.thumbnail_url`,
+        fetchedAt: sql`now()`,
+      },
+    });
+  return rows.length;
+}
+
+/** Each channel's stored newest upload. */
+export async function dbPlaylistLatest(): Promise<StoredPlaylistLatest[]> {
+  return dbRead("dbPlaylistLatest", async () => {
+    const db = getDb();
+    if (!db) return [];
+    const rows = await db.select().from(videoPlaylists);
+    return rows.map((r) => ({
+      channel: r.channel,
+      listId: r.listId,
+      latestVideoId: r.latestVideoId,
+      latestTitle: r.latestTitle,
+      thumbnailUrl: r.thumbnailUrl,
+      fetchedAt: r.fetchedAt.toISOString(),
     }));
   });
 }

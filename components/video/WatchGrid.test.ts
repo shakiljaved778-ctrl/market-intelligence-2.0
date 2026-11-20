@@ -20,4 +20,28 @@ describe("official playlists (no YouTube key)", () => {
     expect(html).not.toContain("<iframe");
     expect(html).not.toContain("ytimg");
   });
+
+  it("shows the newest video's picture and title once the job has stored them", () => {
+    const html = renderToStaticMarkup(
+      createElement(WatchGrid, {
+        videos: [],
+        playlists: [
+          {
+            id: "federal-reserve",
+            name: "Federal Reserve",
+            listId: "UUAzhpt9DmG6PnHXjmJTvRGQ",
+            latest: {
+              videoId: "Txga74VI9UE",
+              title: "FOMC Press Conference",
+              thumbnailUrl: "https://i.ytimg.com/vi/Txga74VI9UE/hqdefault.jpg",
+            },
+          },
+        ],
+      }),
+    );
+    expect(html).toContain("https://i.ytimg.com/vi/Txga74VI9UE/hqdefault.jpg");
+    expect(html).toContain("FOMC Press Conference");
+    expect(html).toContain("Latest from the Federal Reserve");
+    expect(html).not.toContain("<iframe");
+  });
 });

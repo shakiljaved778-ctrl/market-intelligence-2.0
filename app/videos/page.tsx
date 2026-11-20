@@ -1,18 +1,18 @@
 import { WatchGrid } from "@/components/video/WatchGrid";
 import { NoData } from "@/components/market/Provenance";
-import { officialPlaylists } from "@/lib/videos/playlists";
+import { readOfficialPlaylists } from "@/lib/videos/playlists";
 import { pageMeta } from "@/lib/seo";
 import { readVideos } from "@/lib/videos/read";
 
 export const metadata = pageMeta(
   "/videos",
   "Videos from central banks and institutions",
-  "The latest videos from the Federal Reserve, IMF and Bank of England — from their official YouTube channels.",
+  "The latest videos from central banks, the IMF, the World Bank, the OECD, the WTO and Gulf and global exchanges — from their official YouTube channels.",
 );
 
 export default async function VideosPage() {
   const videos = await readVideos(24);
-  const playlists = officialPlaylists();
+  const playlists = await readOfficialPlaylists();
   return (
     <div className="py-8">
       <p className="t-micro text-ink-3">Watch</p>

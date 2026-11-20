@@ -327,6 +327,21 @@ export const videos = pgTable(
   (t) => [index("videos_published_idx").on(t.publishedAt.desc())],
 );
 
+/**
+ * The newest video of each official channel's uploads playlist (keyless, via
+ * YouTube oEmbed; owner request, 2026-11-20) — so each channel card shows the
+ * latest video's picture and title. References only; refreshed every 6 hours.
+ */
+export const videoPlaylists = pgTable("video_playlists", {
+  /** Channel id from content/videos.yaml (e.g. "federal-reserve"). */
+  channel: text("channel").primaryKey(),
+  listId: text("list_id").notNull(),
+  latestVideoId: text("latest_video_id").notNull(),
+  latestTitle: text("latest_title").notNull(),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const jobRuns = pgTable("job_runs", {
   id: serial("id").primaryKey(),
   job: text("job").notNull(),

@@ -57,6 +57,13 @@
       "when": 1795124138194,
       "tag": "0007_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795154573701,
+      "tag": "0008_video_playlists",
+      "breakpoints": true
     }
   ]
 }

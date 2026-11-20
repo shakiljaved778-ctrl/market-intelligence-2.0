@@ -25,6 +25,13 @@
 #   cdc-newsroom                       feed times out (no feed on its page); the
 #                                      World Bank URL now returns HTML; the CDC
 #                                      feed is an old COVID-19 feed, 0 items.
+# YouTube channels probe, 2026-11-20 (run 44684967386): oEmbed of an uploads
+#   playlist returns the newest video's thumbnail + channel name (keyless);
+#   official channels confirmed and added to content/videos.yaml: World Bank
+#   Group, OECD, WTO, WEF, Nasdaq, Qatar Stock Exchange, ADGM. Rejected:
+#   @opec/@iea/@difc/@adxuae (someone else's), @ecb/@bisbank/@ustreasury/
+#   @secgov/@bankofcanada/@reservebankofaustralia/@bankofjapan/
+#   @saudiexchange/@dubaifinancialmarket (no such handle), @nyse (unclear).
 # Video pages probe, 2026-11-20 (run 44682813823): federalreserve.gov has no
 #   robots.txt and advertises its own feeds/videos.xml; the Bank of England's
 #   press-conference page embeds a YouTube playlist (videoseries); the ECB,

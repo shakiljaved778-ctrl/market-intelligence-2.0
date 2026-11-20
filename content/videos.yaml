@@ -11,9 +11,15 @@
 # Safety: a channel is used only when YouTube's own title for it is one of
 # `expect_titles` — a wrong id or handle is skipped, never shown.
 #
-# Channel ids below were read from each institution's YouTube page by the
-# probe of 2026-11-19 (run 44620192311). World Bank and ECB are looked up by
-# their YouTube username / handle and pass only if the title matches.
+# Channel ids and titles below were read from each institution's YouTube page
+# by the probes of 2026-11-19 and 2026-11-20 (runs 44620192311, 44684967386).
+# Rejected there: handles that belong to someone else (@opec, @iea, @difc,
+# @adxuae) or do not exist (ECB, BIS, US Treasury, SEC, Bank of Canada, RBA,
+# Bank of Japan, Saudi Exchange, DFM).
+#
+# Without a YouTube API key each channel shows as its uploads playlist with
+# its newest video's picture and title (oEmbed, macro job). The homepage shows
+# the first six channels in this order; /videos shows all.
 channels:
   - id: federal-reserve
     name: Federal Reserve
@@ -25,6 +31,11 @@ channels:
     channelId: UCIYhr3JsLYfKkCM7-W5B6DA
     expect_titles: [IMF, International Monetary Fund]
     license_note: Official International Monetary Fund channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: qatar-stock-exchange
+    name: Qatar Stock Exchange
+    channelId: UCVwO-M55IgGX8Zh_TlANqzQ
+    expect_titles: [Qatar Stock Exchange]
+    license_note: Official Qatar Stock Exchange channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
   - id: bank-of-england
     name: Bank of England
     channelId: UCZ25rmSDSnjIWZxjd2-04Rg
@@ -32,11 +43,31 @@ channels:
     license_note: Official Bank of England channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
   - id: world-bank
     name: World Bank
-    username: WorldBank
-    expect_titles: [World Bank, World Bank Group, The World Bank]
-    license_note: Official World Bank channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
-  - id: ecb
-    name: European Central Bank
-    handle: "@ecb"
-    expect_titles: [European Central Bank, ECB]
-    license_note: Official European Central Bank channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+    channelId: UCE9mrcoX-oE-2f1BL-iPPoQ
+    expect_titles: [World Bank Group, World Bank, The World Bank]
+    license_note: Official World Bank Group channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: adgm
+    name: ADGM
+    channelId: UCqwnzB7WLu1U4XPzweDjDtA
+    expect_titles: [ADGM, Abu Dhabi Global Market]
+    license_note: Official Abu Dhabi Global Market channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: oecd
+    name: OECD
+    channelId: UCR-Ja1yBcjkhuQblxnroZJg
+    expect_titles: [OECD]
+    license_note: Official OECD channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: wto
+    name: World Trade Organization
+    channelId: UCS3LJf8IInqTB0fjJeZpSFw
+    expect_titles: [World Trade Organization, WTO]
+    license_note: Official World Trade Organization channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: world-economic-forum
+    name: World Economic Forum
+    channelId: UCw-kH-Od73XDAt7qtH9uBYA
+    expect_titles: [World Economic Forum]
+    license_note: Official World Economic Forum channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
+  - id: nasdaq
+    name: Nasdaq
+    channelId: UCDhqADfY8S2N8BfrffZAc2w
+    expect_titles: [Nasdaq]
+    license_note: Official Nasdaq channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
