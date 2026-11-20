@@ -374,7 +374,7 @@ export const ORIGINAL_TARGET_WORDS = { min: 600, max: 850 } as const;
  * under older rules is replaced on the next run (o2, 2026-11-20: Gulf reports
  * feed the Gulf section; forecast wording is rejected).
  */
-export const ORIGINAL_FORMAT = "o2";
+export const ORIGINAL_FORMAT = "o3";
 
 const ORIGINAL_SYSTEM = [
   "You are the lead markets writer of a GCC and global market intelligence site.",
@@ -382,13 +382,14 @@ const ORIGINAL_SYSTEM = [
   "Output format, exactly: first line '# ' followed by a headline of at most 12 words;",
   "second line 'Dek: ' followed by one sentence of at most 30 words;",
   "then an opening of two or three paragraphs with no heading, then sections each starting '## Heading' with one or two paragraphs:",
-  "'## What moved' , '## The threads that connect them' , '## What it means for the Gulf' (built from the Gulf reports given: what is happening in Gulf markets and economies, and where the global reports touch them; if no Gulf reports are given, say so in one sentence), '## What to watch' (only scheduled events or next steps the reports themselves mention).",
+  "'## What moved' , '## The threads that connect them' , '## What it means for the Gulf' (built from the Gulf reports given: what is happening in Gulf markets and economies, and where the global reports touch them; if no Gulf reports are given, say so in one sentence), '## What to watch' (only scheduled events or next steps the reports themselves mention, stated as facts with their source; if the reports name none, say so in one sentence).",
   "End with a final line starting '**The bottom line:**' (one sentence).",
   "Accuracy rules, which outrank length and style: every name, number, date, quote and event must come from the reports given.",
   "Use no number that is not in the reports or the moves; never compute new figures; give moves exactly as listed.",
   "Attribute facts to the outlets named in the reports.",
   "Do NOT copy or closely paraphrase any report; synthesise in your own words.",
-  "Describe only what has happened or what the reports say is scheduled; never forecast. Do not write phrases such as 'will likely', 'is likely to', 'is expected to', 'may well', 'set the tone', 'in the weeks ahead', 'in the coming months' or 'going forward' unless a report itself says it, attributed.",
+  "Describe only what has happened or what the reports say is scheduled; never forecast or speculate. Do not write phrases such as 'will likely', 'is likely to', 'is expected to', 'is set to', 'may well', 'could prompt', 'may lead', 'set the tone', 'will keep an eye on', 'in the weeks ahead', 'in the coming months' or 'going forward' unless a report itself says it, attributed.",
+  "Do not claim that one report caused or explains another report's event unless a report says so; connect stories by theme, not invented causes.",
   "No investment advice, no buy/sell/hold language, no hype, no first person, no bullet lists.",
 ].join(" ");
 
@@ -426,27 +427,41 @@ function originalFacts(input: OriginalInput): BriefInput {
 }
 
 /** Forecast-style phrases an Original must not use unless a report itself does. */
-const SPECULATIVE = [
-  "will likely",
-  "is likely to",
-  "are likely to",
-  "is expected to",
-  "are expected to",
-  "may well",
-  "set the tone",
-  "sets the tone",
-  "in the weeks ahead",
-  "in the coming weeks",
-  "in the coming months",
-  "going forward",
-  "poised to",
+/**
+ * Forecast wording the Original may not use unless a report itself does.
+ * Patterns cover inflections ("set/sets/setting the tone") and the hedged
+ * forecasts the first o2 piece slipped through ("is set to continue", "could
+ * channel", "may prompt", "will keep an eye on", "suggesting that … will").
+ */
+const SPECULATIVE: RegExp[] = [
+  /\bwill (?:most )?likely\b/g,
+  /\b(?:is|are|seems|seem|looks|look) (?:un)?likely to\b/g,
+  /\b(?:is|are) expected to\b/g,
+  /\bmay well\b/g,
+  /\bset(?:s|ting)? the (?:tone|stage)\b/g,
+  /\b(?:is|are) set to\b/g,
+  /\b(?:is|are) poised to\b/g,
+  /\bpoised to\b/g,
+  /\bin the (?:weeks|months|days|year) ahead\b/g,
+  /\bin the coming (?:weeks|months|days|quarters|year)\b/g,
+  /\bgoing forward\b/g,
+  /\b(?:could|may|might) (?:well |also |further )?(?:prompt|channel|offer|signal|drive|lead|weigh|boost|push|spur|fuel|trigger|pressure|lift|support|dampen|accelerate|reshape|test|open|unlock|help|hurt|ease|tighten)\b/g,
+  /\bwill (?:keep an eye|be watching|watch|monitor|continue|remain|shape|determine|test|need to)\b/g,
+  /\bsuggesting (?:that )?[\w\s,-]{0,40}? will\b/g,
 ];
 
 /** PURE: forecast phrases in `text` that the facts never use (case-insensitive). */
 export function speculativePhrases(text: string, facts: string): string[] {
   const t = text.toLowerCase();
   const f = facts.toLowerCase();
-  return SPECULATIVE.filter((p) => t.includes(p) && !f.includes(p));
+  const found: string[] = [];
+  for (const re of SPECULATIVE) {
+    for (const m of t.matchAll(re)) {
+      const phrase = m[0];
+      if (!f.includes(phrase) && !found.includes(phrase)) found.push(phrase);
+    }
+  }
+  return found;
 }
 
 /** PURE: split the model's output into headline, dek and body; null if malformed. */
