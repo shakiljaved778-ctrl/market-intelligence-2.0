@@ -41,7 +41,7 @@ describe("official playlists (no YouTube key)", () => {
     );
     expect(html).toContain("https://i.ytimg.com/vi/Txga74VI9UE/hqdefault.jpg");
     expect(html).toContain("FOMC Press Conference");
-    expect(html).toContain("Latest from the Federal Reserve");
+    expect(html).toContain("Latest · Federal Reserve · YouTube");
     expect(html).not.toContain("<iframe");
   });
 });

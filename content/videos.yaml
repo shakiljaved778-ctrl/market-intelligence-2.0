@@ -14,17 +14,20 @@
 # Channel ids and titles below were read from each institution's YouTube page
 # by the probes of 2026-11-19 and 2026-11-20 (runs 44620192311, 44684967386).
 # Rejected there: handles that belong to someone else (@opec, @iea, @difc,
-# @adxuae) or do not exist (ECB, BIS, US Treasury, SEC, Bank of Canada, RBA,
+# @adxuae, and @bankofengland — its uploads are not the Bank of England's;
+# removed 2026-11-20) or do not exist (ECB, BIS, US Treasury, SEC, Bank of Canada, RBA,
 # Bank of Japan, Saudi Exchange, DFM).
 #
 # Without a YouTube API key each channel shows as its uploads playlist with
-# its newest video's picture and title (oEmbed, macro job). The homepage shows
+# its newest video's picture and title (oEmbed, macro job). `expect_titles`
+# lists only the institution's proper name(s) — never a handle-style variant,
+# which a look-alike channel can carry. The homepage shows
 # the first six channels in this order; /videos shows all.
 channels:
   - id: federal-reserve
     name: Federal Reserve
     channelId: UCAzhpt9DmG6PnHXjmJTvRGQ
-    expect_titles: [Federal Reserve, federalreserve]
+    expect_titles: [Federal Reserve]
     license_note: Official US Federal Reserve channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
   - id: imf
     name: IMF
@@ -36,11 +39,6 @@ channels:
     channelId: UCVwO-M55IgGX8Zh_TlANqzQ
     expect_titles: [Qatar Stock Exchange]
     license_note: Official Qatar Stock Exchange channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
-  - id: bank-of-england
-    name: Bank of England
-    channelId: UCZ25rmSDSnjIWZxjd2-04Rg
-    expect_titles: [Bank of England, bankofengland]
-    license_note: Official Bank of England channel; embedded with YouTube's player under the YouTube Terms of Service. References only.
   - id: world-bank
     name: World Bank
     channelId: UCE9mrcoX-oE-2f1BL-iPPoQ
