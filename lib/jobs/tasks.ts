@@ -113,6 +113,10 @@ export const GCC_COVERS_PER_RUN = 12;
 export const GALLERY_SIZE = 2;
 /** Stories that already have a cover get their gallery a few per run. */
 export const GALLERY_BACKFILL_PER_RUN = 12;
+/** A new Mizaan Original (homepage lead piece) at most this often. */
+export const ORIGINAL_EVERY_H = 12;
+/** Reports a Mizaan Original is written from (the top global-markets stories). */
+export const ORIGINAL_REPORTS = 8;
 
 export async function macroTask(): Promise<JobSummary> {
   let out = 0;
@@ -693,6 +697,94 @@ export async function clusterTask(): Promise<JobSummary> {
     console.log(
       `[cluster] enrich: ${briefsWritten} briefs, ${backfilled} backfilled, ${coversWritten} covers, ${galleriesWritten} galleries written`,
     );
+
+    // Mizaan Original (owner request, 2026-11-20): every ORIGINAL_EVERY_H
+    // hours, one broad AI-written overview of the global markets day, from
+    // the top-ranked fresh global Markets/Economy stories (not Gulf ones).
+    if (isGroqConfigured()) {
+      try {
+        const { latestOriginalTime, persistOriginal } = await import(
+          "@/lib/db/queries/originals"
+        );
+        const { generateOriginal } = await import("@/lib/providers/groq");
+        const last = await latestOriginalTime("global-markets");
+        if (!last || Date.now() - last.getTime() >= ORIGINAL_EVERY_H * 3_600_000) {
+          const articleById = new Map(recent.map((a) => [a.id, a]));
+          const picks = ranked
+            .filter((c) => Date.now() - Date.parse(c.eventTime) <= 24 * 3_600_000)
+            .filter((c) => {
+              const dek = dekById.get(c.primaryId) ?? null;
+              const section = classifySection({
+                title: c.title,
+                dek,
+                topics: c.topics,
+                tickers: c.tickers,
+                sourceId: sourceById.get(c.primaryId) ?? null,
+              });
+              return (
+                (section === "markets" || section === "economy") &&
+                gccPlace(regionOfCluster(c, dek)) === null
+              );
+            })
+            .slice(0, ORIGINAL_REPORTS);
+          // Signed moves for the instruments the reports name.
+          const moves: Record<string, number> = {};
+          for (const t of new Set(picks.flatMap((c) => c.tickers))) {
+            const q = await cacheGet<{ changePct?: number }>(`market:quote:${t}`);
+            if (q && typeof q.changePct === "number") moves[t] = q.changePct;
+          }
+          const reports = picks.map((c) => ({
+            title: c.title,
+            dek: dekById.get(c.primaryId) ?? null,
+            source:
+              sourceName.get(sourceById.get(c.primaryId) ?? "") ??
+              sourceById.get(c.primaryId) ??
+              "",
+          }));
+          const now = new Date();
+          const original = await generateOriginal({
+            reports,
+            moves,
+            date: now.toISOString(),
+          });
+          if (original) {
+            const slug = `global-markets-${now.toISOString().slice(0, 13).replace("T", "-")}`;
+            const [cover] = isPexelsConfigured()
+              ? await searchPexelsPhotos(
+                  coverQueries("markets", "stock exchange")[0]!,
+                  slug,
+                  usedCovers,
+                  1,
+                )
+              : [];
+            await persistOriginal({
+              slug,
+              kind: "global-markets",
+              title: original.title,
+              dek: original.dek,
+              bodyMd: original.body,
+              sources: picks.map((c, i) => ({
+                title: c.title,
+                source: reports[i]!.source,
+                url: articleById.get(c.primaryId)?.url ?? "",
+                slug: c.slug,
+              })),
+              model: original.model,
+              coverUrl: cover?.url ?? null,
+              coverCredit: cover?.credit ?? null,
+              coverCreditUrl: cover?.creditUrl ?? null,
+            });
+            console.log(`[cluster] Mizaan Original written: ${slug}`);
+          } else {
+            console.log(
+              `[cluster] Mizaan Original not written (${picks.length} reports or the draft did not pass the checks)`,
+            );
+          }
+        }
+      } catch (err) {
+        console.error("[cluster] Mizaan Original failed:", err);
+      }
+    }
   }
 
   return { itemsIn: recent.length, itemsOut: stored };

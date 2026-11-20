@@ -342,6 +342,39 @@ export const videoPlaylists = pgTable("video_playlists", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Mizaan Originals — broad, AI-written overview pieces that lead the homepage
+ * (owner request, 2026-11-20). ORIGINAL prose synthesised by the cluster job
+ * from cited reports (never source text, §10); labelled AI-written in the UI.
+ */
+export const originals = pgTable(
+  "originals",
+  {
+    id: serial("id").primaryKey(),
+    slug: text("slug").notNull(),
+    /** What the piece covers, e.g. "global-markets". */
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    dek: text("dek").notNull(),
+    bodyMd: text("body_md").notNull(),
+    /** The cited reports: headline, outlet, link, and our story page. */
+    sources: jsonb("sources")
+      .$type<{ title: string; source: string; url: string; slug: string | null }[]>()
+      .notNull(),
+    model: text("model").notNull(),
+    coverUrl: text("cover_url"),
+    coverCredit: text("cover_credit"),
+    coverCreditUrl: text("cover_credit_url"),
+    publishedAt: timestamp("published_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("originals_slug_uq").on(t.slug),
+    index("originals_published_idx").on(t.publishedAt.desc()),
+  ],
+);
+
 export const jobRuns = pgTable("job_runs", {
   id: serial("id").primaryKey(),
   job: text("job").notNull(),
