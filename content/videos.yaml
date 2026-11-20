@@ -6,7 +6,8 @@
 # path YouTube's robots.txt disallows. It stores references only (video id,
 # title, time, thumbnail URL), refreshed or deleted within 30 days per the
 # YouTube API Services policies. Videos play in YouTube's own embedded player
-# (youtube-nocookie.com) only when a reader presses play.
+# (youtube.com/embed) only when a reader presses play, with a "Watch on
+# YouTube" link beside every card.
 #
 # Safety: a channel is used only when YouTube's own title for it is one of
 # `expect_titles` — a wrong id or handle is skipped, never shown.

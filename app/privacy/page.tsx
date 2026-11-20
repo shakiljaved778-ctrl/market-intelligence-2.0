@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <Prose eyebrow="what we keep" title="Privacy" updated="16 September 2026">
+    <Prose eyebrow="what we keep" title="Privacy" updated="20 November 2026">
       <p>
         Mizaan runs <strong>without user accounts</strong> in this version. We
         don&rsquo;t ask for your name, email or payment details, and we don&rsquo;t
@@ -34,6 +34,11 @@ export default function PrivacyPage() {
         schedule, not from your browser, so those providers don&rsquo;t see you.
         Outbound links take you to publishers whose own privacy practices apply once you
         leave Mizaan.
+      </p>
+      <p>
+        Videos come from official institutions&rsquo; YouTube channels. YouTube&rsquo;s
+        player loads only when you press play; from then on YouTube&rsquo;s own privacy
+        policy and cookies apply to that player.
       </p>
     </Prose>
   );

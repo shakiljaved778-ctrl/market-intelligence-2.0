@@ -13,8 +13,8 @@ const CSP_REPORT_ONLY = [
   "img-src 'self' data: https:", // Pexels/og:image references are remote
   "font-src 'self'",
   "connect-src 'self'",
-  // Official videos play from YouTube's privacy-enhanced domain, on click only.
-  "frame-src https://www.youtube-nocookie.com",
+  // Official videos play in YouTube's standard player, on click only.
+  "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
