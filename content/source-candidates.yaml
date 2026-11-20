@@ -427,3 +427,102 @@ candidates:
     name: Federal Reserve — videos feed
     url: https://www.federalreserve.gov/feeds/videos.xml
     region: US
+  # More official YouTube channels + the keyless thumbnail route (2026-11-20):
+  # each handle page gives the channel id (its RSS link) and YouTube's own name
+  # for it; oEmbed of an uploads playlist gives the newest video's thumbnail.
+  - id: yt-oembed-playlist
+    name: YouTube oEmbed — Fed uploads playlist
+    url: https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fplaylist%3Flist%3DUUAzhpt9DmG6PnHXjmJTvRGQ&format=json
+    region: US
+  - id: yt-ecb
+    name: YouTube channel @ecb
+    url: https://www.youtube.com/@ecb
+    region: EU
+  - id: yt-ecb2
+    name: YouTube channel @EuropeanCentralBankECB
+    url: https://www.youtube.com/@EuropeanCentralBankECB
+    region: EU
+  - id: yt-worldbank
+    name: YouTube channel user/WorldBank
+    url: https://www.youtube.com/user/WorldBank
+    region: GLOBAL
+  - id: yt-oecd
+    name: YouTube channel @oecd
+    url: https://www.youtube.com/@oecd
+    region: GLOBAL
+  - id: yt-wto
+    name: YouTube channel @wto
+    url: https://www.youtube.com/@wto
+    region: GLOBAL
+  - id: yt-bis
+    name: YouTube channel @bisbank
+    url: https://www.youtube.com/@bisbank
+    region: GLOBAL
+  - id: yt-un
+    name: YouTube channel @unitednations
+    url: https://www.youtube.com/@unitednations
+    region: GLOBAL
+  - id: yt-nasdaq
+    name: YouTube channel @nasdaq
+    url: https://www.youtube.com/@nasdaq
+    region: US
+  - id: yt-nyse
+    name: YouTube channel @nyse
+    url: https://www.youtube.com/@nyse
+    region: US
+  - id: yt-ustreasury
+    name: YouTube channel @ustreasury
+    url: https://www.youtube.com/@ustreasury
+    region: US
+  - id: yt-sec
+    name: YouTube channel @secgov
+    url: https://www.youtube.com/@secgov
+    region: US
+  - id: yt-bankofcanada
+    name: YouTube channel @bankofcanada
+    url: https://www.youtube.com/@bankofcanada
+    region: GLOBAL
+  - id: yt-rba
+    name: YouTube channel @reservebankofaustralia
+    url: https://www.youtube.com/@reservebankofaustralia
+    region: GLOBAL
+  - id: yt-bankofjapan
+    name: YouTube channel @bankofjapan
+    url: https://www.youtube.com/@bankofjapan
+    region: GLOBAL
+  - id: yt-saudiexchange
+    name: YouTube channel @saudiexchange
+    url: https://www.youtube.com/@saudiexchange
+    region: SA
+  - id: yt-dfm
+    name: YouTube channel @dubaifinancialmarket
+    url: https://www.youtube.com/@dubaifinancialmarket
+    region: AE
+  - id: yt-adx
+    name: YouTube channel @adxuae
+    url: https://www.youtube.com/@adxuae
+    region: AE
+  - id: yt-difc
+    name: YouTube channel @difc
+    url: https://www.youtube.com/@difc
+    region: AE
+  - id: yt-adgm
+    name: YouTube channel @adgm
+    url: https://www.youtube.com/@adgm
+    region: AE
+  - id: yt-qse
+    name: YouTube channel @qatarstockexchange
+    url: https://www.youtube.com/@qatarstockexchange
+    region: QA
+  - id: yt-opec
+    name: YouTube channel @opec
+    url: https://www.youtube.com/@opec
+    region: GLOBAL
+  - id: yt-iea
+    name: YouTube channel @iea
+    url: https://www.youtube.com/@iea
+    region: GLOBAL
+  - id: yt-weforum
+    name: YouTube channel @wef
+    url: https://www.youtube.com/@wef
+    region: GLOBAL

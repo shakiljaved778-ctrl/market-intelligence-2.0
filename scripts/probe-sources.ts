@@ -132,7 +132,12 @@ async function probe(c: Candidate): Promise<string[]> {
       lines.push(
         `youtube: ${yt.length} embedded video ids: ${yt.slice(0, 12).join(", ")}`,
       );
-    if (/oembed/.test(c.url)) lines.push(`  body: ${body.slice(0, 400)}`);
+    if (/oembed/.test(c.url)) lines.push(`  body: ${body.slice(0, 600)}`);
+    // A YouTube channel page: its name as YouTube states it (identity check).
+    if (/youtube\.com\/(@|user\/|channel\/)/.test(c.url)) {
+      const og = body.match(/<meta property="og:title" content="([^"]*)"/)?.[1];
+      lines.push(`channel title: ${og ?? "(none)"}`);
+    }
     const links = feedLinks(body, res.url);
     lines.push(
       links.length
