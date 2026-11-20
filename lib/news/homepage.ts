@@ -211,8 +211,12 @@ export function buildHomepage(
  * section cover. The cluster job also clears repeated photos at the source
  * (dedupeRecentCovers); this guarantees it on the page in the meantime.
  */
-export function withUniqueCovers(layout: HomepageLayout): HomepageLayout {
-  const seen = new Set<string>();
+export function withUniqueCovers(
+  layout: HomepageLayout,
+  /** Photos already shown higher up (the top-stories row). */
+  taken: ReadonlySet<string> = new Set(),
+): HomepageLayout {
+  const seen = new Set<string>(taken);
   const unique = (c: WireCluster): WireCluster => {
     if (!c.imageUrl) return c;
     if (seen.has(c.imageUrl)) return { ...c, imageUrl: null, imageCredit: null };

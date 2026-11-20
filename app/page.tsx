@@ -15,6 +15,9 @@ import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/rea
 import { pickFeatured } from "@/lib/news/featured";
 import { liveTicker } from "@/lib/news/live";
 import { LiveTicker } from "@/components/news/LiveTicker";
+import { OriginalCard } from "@/components/news/OriginalCard";
+import { readLatestOriginal } from "@/lib/news/originals";
+import { topStories } from "@/lib/news/top-stories";
 import { WatchGrid } from "@/components/video/WatchGrid";
 import { readOfficialPlaylists } from "@/lib/videos/playlists";
 import { pickVideoStrip, readVideos } from "@/lib/videos/read";
@@ -131,7 +134,28 @@ export default async function BoardPage() {
   // Slot selection lives in lib/news/homepage.ts (pure, tested): one slot per
   // story, nothing older than 72 hours in a top slot, finance leads, and
   // non-finance sections get one row each.
-  const featured = pickFeatured(clusters);
+  // The page opens with three broad headlines (owner request, 2026-11-20):
+  // global markets (the Mizaan Original when one is fresh), GCC and general
+  // finance. Those stories are then left out of the rest of the page.
+  const original = await readLatestOriginal(now.getTime());
+  const top = topStories(clusters, {
+    now: now.getTime(),
+    hasOriginal: Boolean(original),
+  });
+  const topSlugs = new Set(
+    [top.global, top.gcc, top.finance].filter(Boolean).map((c) => c!.slug),
+  );
+  const topPhotos = new Set(
+    [
+      original?.coverUrl,
+      top.global?.imageUrl,
+      top.gcc?.imageUrl,
+      top.finance?.imageUrl,
+    ].filter((u): u is string => Boolean(u)),
+  );
+  const rest = clusters.filter((c) => !topSlugs.has(c.slug));
+  const pick = pickFeatured(clusters);
+  const featured = pick && topSlugs.has(pick.cluster.slug) ? null : pick;
   // Live news ticker: the editor-flagged live story, then the newest headlines.
   const live = liveTicker(clusters, liveEditorialIds(now.getTime()), now.getTime());
   const {
@@ -145,10 +169,11 @@ export default async function BoardPage() {
     blocks,
     latest,
   } = withUniqueCovers(
-    buildHomepage(clusters, {
+    buildHomepage(rest, {
       now: now.getTime(),
       featured,
     }),
+    topPhotos,
   );
   // The latest session recap — shown only while it is recent (a week-old recap
   // is not "the session recap"). Built from real stored closes, or absent.
@@ -180,6 +205,40 @@ export default async function BoardPage() {
         </div>
 
         <LiveTicker items={live} now={now} />
+
+        {/* Top stories: three broad headlines in the card format. */}
+        {original || top.global || top.gcc || top.finance ? (
+          <section aria-labelledby="top-stories-heading" className="mb-10">
+            <h2 id="top-stories-heading" className="sr-only">
+              Top stories
+            </h2>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {original ? (
+                <div className="flex flex-col">
+                  <p className="t-micro text-ink-3 mb-2">Global markets</p>
+                  <OriginalCard original={original} />
+                </div>
+              ) : top.global ? (
+                <div className="flex flex-col">
+                  <p className="t-micro text-ink-3 mb-2">Global markets</p>
+                  <StoryCard cluster={top.global} variant="card" />
+                </div>
+              ) : null}
+              {top.gcc ? (
+                <div className="flex flex-col">
+                  <p className="t-micro text-ink-3 mb-2">GCC</p>
+                  <StoryCard cluster={top.gcc} variant="card" />
+                </div>
+              ) : null}
+              {top.finance ? (
+                <div className="flex flex-col">
+                  <p className="t-micro text-ink-3 mb-2">Finance</p>
+                  <StoryCard cluster={top.finance} variant="card" />
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         {/* GCC market news opens the page (owner request, 2026-11-14). */}
         <NewsBand

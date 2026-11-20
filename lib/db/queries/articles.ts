@@ -81,7 +81,9 @@ export async function persistArticles(
 /** Recent articles for the cluster stage, joined to their source tier/trust. */
 export async function dbRecentArticles(
   sinceHours = 48,
-): Promise<(PipelineArticle & { trustScore: number; sourceSlug: string })[]> {
+): Promise<
+  (PipelineArticle & { trustScore: number; sourceSlug: string; url: string })[]
+> {
   const db = getDb();
   if (!db) return [];
   const since = new Date(Date.now() - sinceHours * 3_600_000);
@@ -91,6 +93,7 @@ export async function dbRecentArticles(
       headline: articles.headline,
       dek: articles.dek,
       publishedAt: articles.publishedAt,
+      url: articles.url,
       sourceSlug: sources.slug,
       trustScore: sources.trustScore,
     })
@@ -105,6 +108,7 @@ export async function dbRecentArticles(
     headline: r.headline,
     dek: r.dek,
     publishedAt: r.publishedAt.toISOString(),
+    url: r.url,
   }));
 }
 

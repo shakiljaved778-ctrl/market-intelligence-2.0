@@ -222,6 +222,9 @@ async function callGroq(
   input: BriefInput,
   retried = false,
   correction?: string,
+  system: string = SYSTEM,
+  user: string = prompt(input),
+  maxTokens = 3000,
 ): Promise<Brief> {
   const wait = lastCallAt + minIntervalMs - Date.now();
   if (wait > 0) await sleep(wait);
@@ -238,10 +241,10 @@ async function callGroq(
       temperature: 0.4,
       // Headroom for reasoning models (e.g. gpt-oss): the ~800-token article
       // plus the reasoning pass. Too small a budget yields empty content.
-      max_tokens: 3000,
+      max_tokens: maxTokens,
       messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: prompt(input) },
+        { role: "system", content: system },
+        { role: "user", content: user },
         ...(correction ? [{ role: "user", content: correction }] : []),
       ],
     }),
@@ -252,7 +255,7 @@ async function callGroq(
     await sleep(
       Math.min(Number.isFinite(after) && after > 0 ? after * 1000 : 10_000, 30_000),
     );
-    return callGroq(model, input, true, correction);
+    return callGroq(model, input, true, correction, system, user, maxTokens);
   }
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -331,4 +334,149 @@ export async function generateBrief(
     console.warn("[groq] brief failed:", err instanceof Error ? err.message : err);
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Mizaan Original — a broad, AI-written overview of the global markets day
+// (owner request, 2026-11-20: the homepage opens with an original lead piece).
+// Same guardrails as the briefs: original prose synthesised from cited reports,
+// every figure and institution must appear in the facts, editorial exclusions,
+// labelled AI-written in the UI, generated only in the scheduled cluster job.
+// ---------------------------------------------------------------------------
+
+export interface OriginalReport {
+  title: string;
+  dek?: string | null;
+  source: string;
+}
+
+export interface OriginalInput {
+  /** The day's top global-markets reports (headline, summary, outlet). */
+  reports: OriginalReport[];
+  /** ticker -> latest % move, for the instruments the reports name. */
+  moves?: Record<string, number>;
+  /** ISO date the piece is written for. */
+  date: string;
+}
+
+export interface Original {
+  title: string;
+  dek: string;
+  body: string;
+  model: string;
+}
+
+export const ORIGINAL_TARGET_WORDS = { min: 600, max: 850 } as const;
+
+const ORIGINAL_SYSTEM = [
+  "You are the lead markets writer of a GCC and global market intelligence site.",
+  `Write ONE original, well-crafted overview article of ${ORIGINAL_TARGET_WORDS.min}-${ORIGINAL_TARGET_WORDS.max} words that ties the day's global financial-market reports together into a broad, readable picture.`,
+  "Output format, exactly: first line '# ' followed by a headline of at most 12 words;",
+  "second line 'Dek: ' followed by one sentence of at most 30 words;",
+  "then an opening of two or three paragraphs with no heading, then sections each starting '## Heading' with one or two paragraphs:",
+  "'## What moved' , '## The threads that connect them' , '## What it means for the Gulf' (only what the reports themselves support; otherwise say plainly that the reports do not address the Gulf), '## What to watch' (only next steps the reports mention).",
+  "End with a final line starting '**The bottom line:**' (one sentence).",
+  "Accuracy rules, which outrank length and style: every name, number, date, quote and event must come from the reports given.",
+  "Use no number that is not in the reports or the moves; never compute new figures; give moves exactly as listed.",
+  "Attribute facts to the outlets named in the reports.",
+  "Do NOT copy or closely paraphrase any report; synthesise in your own words.",
+  "No investment advice, no buy/sell/hold language, no predictions, no hype, no first person, no bullet lists.",
+].join(" ");
+
+function originalPrompt(input: OriginalInput): string {
+  const moves = Object.entries(input.moves ?? {})
+    .map(([s, m]) => `${s} ${m >= 0 ? "+" : ""}${m.toFixed(2)}%`)
+    .join(", ");
+  return [
+    `Date: ${input.date.slice(0, 10)}`,
+    "Reports (synthesise, do not copy):",
+    ...input.reports.map(
+      (r, i) => `${i + 1}. ${r.title}${r.dek ? ` — ${r.dek}` : ""} (${r.source})`,
+    ),
+    moves ? `Latest moves: ${moves}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** The reports as a BriefInput, so the brief's grounding checks apply unchanged. */
+function originalFacts(input: OriginalInput): BriefInput {
+  return {
+    title: input.reports.map((r) => r.title).join(" | "),
+    section: "markets",
+    sourceDeks: input.reports.map((r) => r.dek ?? "").filter(Boolean),
+    sources: [...new Set(input.reports.map((r) => r.source))],
+    moves: input.moves,
+    publishedAt: input.date,
+  };
+}
+
+/** PURE: split the model's output into headline, dek and body; null if malformed. */
+export function parseOriginal(text: string): Omit<Original, "model"> | null {
+  const lines = text.trim().split(/\r?\n/);
+  const h = lines.findIndex((l) => /^#\s+\S/.test(l));
+  const d = lines.findIndex((l) => /^Dek:\s*\S/i.test(l));
+  if (h < 0 || d < 0 || d < h) return null;
+  const title = lines[h]!.replace(/^#\s+/, "").replace(/\*+/g, "").trim();
+  const dek = lines[d]!.replace(/^Dek:\s*/i, "").trim();
+  const body = lines
+    .slice(d + 1)
+    .join("\n")
+    .trim();
+  if (!title || !dek || wordCount(body) < 250) return null;
+  return { title, dek, body };
+}
+
+/**
+ * Write a Mizaan Original from the day's reports. One rewrite if the draft
+ * uses a figure, institution or excluded topic not in the facts; null when
+ * unconfigured, malformed or still ungrounded.
+ */
+export async function generateOriginal(input: OriginalInput): Promise<Original | null> {
+  if (!isGroqConfigured() || input.reports.length < 3) return null;
+  const facts = originalFacts(input);
+  const user = originalPrompt(input);
+  const problems = (text: string) => [
+    ...ungroundedFigures(text, facts).map((f) => `figure ${f}`),
+    ...ungroundedInstitutions(text, facts).map((n) => `name "${n}"`),
+    ...excludedTermsIn(text).map((t) => `excluded topic "${t}"`),
+  ];
+  const models = resolvedModel ? [resolvedModel] : candidateModels();
+  for (const model of models) {
+    try {
+      let out = await callGroq(
+        model,
+        facts,
+        false,
+        undefined,
+        ORIGINAL_SYSTEM,
+        user,
+        4000,
+      );
+      let bad = problems(out.body);
+      if (bad.length) {
+        out = await callGroq(
+          model,
+          facts,
+          false,
+          `Your draft used details that are not in the reports: ${bad.join(", ")}. Rewrite it without them, keeping the same format.`,
+          ORIGINAL_SYSTEM,
+          user,
+          4000,
+        );
+        bad = problems(out.body);
+        if (bad.length)
+          throw new Error(`ungrounded details after rewrite: ${bad.join(", ")}`);
+      }
+      const parsed = parseOriginal(out.body);
+      if (!parsed) throw new Error("original: malformed output");
+      return { ...parsed, model: out.model };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (MODEL_UNAVAILABLE.test(msg) && models.length > 1) continue;
+      console.warn("[groq] original failed:", msg);
+      return null;
+    }
+  }
+  return null;
 }
