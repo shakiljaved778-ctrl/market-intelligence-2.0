@@ -15,7 +15,8 @@ import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/rea
 import { pickFeatured } from "@/lib/news/featured";
 import { liveTicker } from "@/lib/news/live";
 import { LiveTicker } from "@/components/news/LiveTicker";
-import { VideoGrid } from "@/components/video/VideoGrid";
+import { WatchGrid } from "@/components/video/WatchGrid";
+import { officialPlaylists } from "@/lib/videos/playlists";
 import { pickVideoStrip, readVideos } from "@/lib/videos/read";
 import { liveEditorialIds } from "@/content/editorial";
 import { buildHomepage, photoFirst, withUniqueCovers } from "@/lib/news/homepage";
@@ -117,6 +118,7 @@ export default async function BoardPage() {
   ]);
   // Official-institution videos: each channel's newest first, four in all.
   const videos = pickVideoStrip(allVideos, 4);
+  const playlists = officialPlaylists();
   // Homepage counters — each is a plain count of what is on the wire now.
   const now = new Date();
   const ageMs = (c: WireCluster) => now.getTime() - new Date(c.eventTime).getTime();
@@ -297,9 +299,10 @@ export default async function BoardPage() {
           className="mt-10"
         />
 
-        {/* Short videos from official institutions (owner choice, 2026-11-19).
-            Omitted when none are stored. */}
-        {videos.length > 0 ? (
+        {/* Short videos from official institutions (owner choice, 2026-11-19):
+            stored videos when the YouTube API is configured, otherwise each
+            institution's latest-uploads playlist (no key needed). */}
+        {videos.length > 0 || playlists.length > 0 ? (
           <section className="mt-10" aria-labelledby="watch-heading">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 id="watch-heading" className="t-h3 font-editorial text-ink">
@@ -309,7 +312,7 @@ export default async function BoardPage() {
                 All videos <span aria-hidden>→</span>
               </Link>
             </div>
-            <VideoGrid videos={videos} />
+            <WatchGrid videos={videos} playlists={playlists} />
           </section>
         ) : null}
       </section>
