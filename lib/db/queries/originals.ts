@@ -65,21 +65,6 @@ export async function persistOriginal(
     });
 }
 
-/** The newest Original of a kind: when it was published and by which model/format. */
-export async function latestOriginalMeta(
-  kind: string,
-): Promise<{ at: Date; model: string } | null> {
-  const db = getDb();
-  if (!db) return null;
-  const rows = await db
-    .select({ at: originals.publishedAt, model: originals.model })
-    .from(originals)
-    .where(eq(originals.kind, kind))
-    .orderBy(desc(originals.publishedAt))
-    .limit(1);
-  return rows[0] ?? null;
-}
-
 export async function dbLatestOriginal(kind: string): Promise<StoredOriginal | null> {
   return dbRead("dbLatestOriginal", async () => {
     const db = getDb();
