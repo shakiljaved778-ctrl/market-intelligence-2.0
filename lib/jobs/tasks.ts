@@ -123,7 +123,10 @@ export const GCC_COVERS_PER_RUN = 12;
  * pages and lists use these (owner request, 2026-11-20: no blank cards).
  * Pexels searches are cached for 7 days, so repeats cost no quota.
  */
-export const COVER_BACKFILL_PER_RUN = 16;
+export const COVER_BACKFILL_PER_RUN = 24;
+/** A story no photo search could cover is retried at most this often. */
+export const COVER_RETRY_AFTER_S = 24 * 60 * 60;
+const coverFailedKey = (slug: string) => `cover:failed:${slug}`;
 /** Extra illustrative photos on a story page, beside its cover (owner request, 2026-11-19). */
 export const GALLERY_SIZE = 2;
 /** Stories that already have a cover get their gallery a few per run. */
@@ -462,6 +465,7 @@ export async function clusterTask(): Promise<JobSummary> {
     const {
       existingClusterBriefs,
       clustersNeedingBrief,
+      clustersNeedingCover,
       setClusterBrief,
       existingClusterCovers,
       setClusterCover,
@@ -642,14 +646,29 @@ export async function clusterTask(): Promise<JobSummary> {
           coversWritten += 1;
       }
     }
-    // Every other ranked story still on the drawn fallback gets a photo too,
-    // newest first, a few per run (owner request, 2026-11-20).
+    // Every other story still on the drawn fallback gets a photo too, a few
+    // per run (owner request, 2026-11-20: no blank cards): first the ranked
+    // stories outside the top slice, newest first; then stored stories older
+    // than this run's 48h window, which section pages still list. A story no
+    // search could cover waits COVER_RETRY_AFTER_S before it is tried again.
     if (isPexelsConfigured()) {
+      let left = COVER_BACKFILL_PER_RUN;
+      const tried = new Set<string>();
+      const cover = async (
+        slug: string,
+        section: ReturnType<typeof classifySection>,
+        extra: string,
+      ) => {
+        tried.add(slug);
+        if (await cacheGet<boolean>(coverFailedKey(slug))) return;
+        left -= 1;
+        if (await writeCover(slug, coverQueries(section, extra))) coversWritten += 1;
+        else await cachePut(coverFailedKey(slug), COVER_RETRY_AFTER_S, true);
+      };
       const rest = ranked
         .slice(top.length)
         .sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime));
       const haveRestCover = await existingClusterCovers(rest.map((c) => c.slug));
-      let left = COVER_BACKFILL_PER_RUN;
       for (const c of rest) {
         if (left <= 0) break;
         if (haveRestCover.has(c.slug)) continue;
@@ -662,14 +681,60 @@ export async function clusterTask(): Promise<JobSummary> {
           sourceId: sourceById.get(c.primaryId) ?? null,
         });
         if (!shown(section)) continue;
-        left -= 1;
-        const extra =
+        await cover(
+          c.slug,
+          section,
           gccPlace(regionOfCluster(c, dek)) ??
-          c.entities[0] ??
-          c.tickers[0] ??
-          c.topics[0]?.replace(/_/g, " ") ??
-          "";
-        if (await writeCover(c.slug, coverQueries(section, extra))) coversWritten += 1;
+            c.entities[0] ??
+            c.tickers[0] ??
+            c.topics[0]?.replace(/_/g, " ") ??
+            "",
+        );
+      }
+      if (left > 0) {
+        for (const b of await clustersNeedingCover(left * 4)) {
+          if (left <= 0) break;
+          if (tried.has(b.slug)) continue;
+          const section = classifySection({
+            title: b.title,
+            dek: b.primaryDek,
+            topics: b.primaryTopic ? [b.primaryTopic] : [],
+            tickers: b.tickers,
+            sourceId: b.sourceSlugs[0] ?? null,
+          });
+          if (!shown(section)) continue;
+          const region = classifyRegion({
+            title: b.title,
+            dek: b.primaryDek,
+            sourceRegion: regionOf.get(b.sourceSlugs[0] ?? "") ?? null,
+          });
+          await cover(
+            b.slug,
+            section,
+            gccPlace(region) ??
+              b.tickers[0] ??
+              b.primaryTopic?.replace(/_/g, " ") ??
+              "",
+          );
+        }
+      }
+    }
+    // Eureka explainers are authored content, not stored stories: each gets
+    // one photo by prize field, kept in KV for the pages to read.
+    if (isPexelsConfigured()) {
+      const { eurekaArticles, eurekaCoverKey, eurekaCoverQueries } = await import(
+        "@/lib/content/authored"
+      );
+      for (const a of eurekaArticles()) {
+        if (await cacheGet(eurekaCoverKey(a.id))) continue;
+        for (const q of eurekaCoverQueries(a.url)) {
+          const [photo] = await searchPexelsPhotos(q, String(a.id), usedCovers, 1);
+          if (!photo) continue;
+          await cachePut(eurekaCoverKey(a.id), TTL.eurekaCover, photo);
+          usedCovers.add(photo.url);
+          coversWritten += 1;
+          break;
+        }
       }
     }
     // Stories that already had a cover before galleries existed get their extra

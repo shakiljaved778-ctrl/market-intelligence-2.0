@@ -26,3 +26,26 @@ export function eurekaBody(id: number): ArticleBody | null {
 }
 
 export type { RawArticle, ArticleBody };
+
+/**
+ * Eureka cover photos (owner request, 2026-11-20: no blank cards). The cluster
+ * job finds one Pexels photo per explainer and stores it in KV under this key;
+ * pages only read it (no vendor call on render). Searches follow the prize
+ * field in the explainer's nobelprize.org link.
+ */
+export const eurekaCoverKey = (id: number) => `cover:eureka:${id}`;
+
+const FIELD_QUERIES: Record<string, string[]> = {
+  physics: ["physics laboratory", "science laboratory"],
+  chemistry: ["chemistry laboratory", "science laboratory"],
+  medicine: ["microscope laboratory", "medical research"],
+  "economic-sciences": ["mathematics chalkboard", "economics"],
+  literature: ["library books", "old books"],
+  peace: ["peace", "dove"],
+};
+
+/** PURE: photo searches for an explainer, from its nobelprize.org URL. */
+export function eurekaCoverQueries(url: string): string[] {
+  const field = /\/prizes\/([a-z-]+)\//.exec(url)?.[1] ?? "";
+  return FIELD_QUERIES[field] ?? ["science laboratory"];
+}

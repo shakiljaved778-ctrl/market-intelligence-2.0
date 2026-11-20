@@ -21,6 +21,7 @@ export const TTL = {
   newsWire: 90,
   searchSymbol: 24 * 60 * 60,
   coverImage: 7 * 24 * 60 * 60, // stock photos are stable; cache hard.
+  eurekaCover: 30 * 24 * 60 * 60, // one photo per authored Eureka explainer
 } as const;
 
 export type TtlKey = keyof typeof TTL;

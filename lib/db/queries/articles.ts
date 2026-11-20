@@ -304,6 +304,27 @@ export async function clustersNeedingBrief(
   limit: number,
   windowDays = 14,
 ): Promise<ClusterNeedingBrief[]> {
+  return clustersMissing("brief", limit, windowDays);
+}
+
+/**
+ * Published stories from the last `windowDays` still on the drawn cover (no
+ * photo), newest first — including stories older than the cluster job's 48h
+ * re-cluster window, which section pages still list (owner request,
+ * 2026-11-20: no blank cards).
+ */
+export async function clustersNeedingCover(
+  limit: number,
+  windowDays = 30,
+): Promise<ClusterNeedingBrief[]> {
+  return clustersMissing("cover", limit, windowDays);
+}
+
+async function clustersMissing(
+  what: "brief" | "cover",
+  limit: number,
+  windowDays: number,
+): Promise<ClusterNeedingBrief[]> {
   const db = getDb();
   if (!db || limit <= 0) return [];
   const since = new Date(Date.now() - windowDays * 86_400_000);
@@ -320,7 +341,7 @@ export async function clustersNeedingBrief(
     .where(
       and(
         eq(clusters.status, "published"),
-        isNull(clusters.briefMd),
+        what === "brief" ? isNull(clusters.briefMd) : isNull(clusters.coverUrl),
         gte(clusters.eventTime, since),
       ),
     )
