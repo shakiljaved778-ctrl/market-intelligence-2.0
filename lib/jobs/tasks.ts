@@ -456,8 +456,13 @@ export async function clusterTask(): Promise<JobSummary> {
   // gated on its own key and only for clusters that don't already have one, so a
   // story costs at most one call per provider. Both are persisted on the cluster
   // row (URL/attribution + synthesised prose only — never source text, §10).
-  const { generateBrief, isGroqConfigured, BRIEF_MIN_WORDS, BRIEF_FORMAT } =
-    await import("@/lib/providers/groq");
+  const {
+    generateBrief,
+    groqDailyLimitReached,
+    isGroqConfigured,
+    BRIEF_MIN_WORDS,
+    BRIEF_FORMAT,
+  } = await import("@/lib/providers/groq");
   const { searchPexelsPhotos, isPexelsConfigured } = await import(
     "@/lib/providers/pexels"
   );
@@ -602,7 +607,8 @@ export async function clusterTask(): Promise<JobSummary> {
         if (brief) {
           await setClusterBrief(c.slug, brief.body, `${brief.model}#${BRIEF_FORMAT}`);
           briefsWritten += 1;
-        } else {
+        } else if (!groqDailyLimitReached()) {
+          // A daily-quota refusal is not the story's fault: retry next run.
           await cachePut(briefFailedKey(c.slug), BRIEF_RETRY_AFTER_S, true);
         }
       }
@@ -846,7 +852,7 @@ export async function clusterTask(): Promise<JobSummary> {
         if (brief) {
           await setClusterBrief(b.slug, brief.body, `${brief.model}#${BRIEF_FORMAT}`);
           backfilled += 1;
-        } else {
+        } else if (!groqDailyLimitReached()) {
           await cachePut(briefFailedKey(b.slug), BRIEF_RETRY_AFTER_S, true);
         }
       }

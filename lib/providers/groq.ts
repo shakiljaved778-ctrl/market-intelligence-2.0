@@ -227,6 +227,9 @@ async function callGroq(
   user: string = prompt(input),
   maxTokens = 3000,
 ): Promise<Brief> {
+  if (groqDailyLimitReached()) {
+    throw new Error("Groq daily token limit reached; skipping until it resets");
+  }
   const wait = lastCallAt + minIntervalMs - Date.now();
   if (wait > 0) await sleep(wait);
   lastCallAt = Date.now();
@@ -250,6 +253,24 @@ async function callGroq(
       ],
     }),
   });
+  if (res.status === 429) {
+    // The free tier's DAILY token allowance is spent: waiting cannot help, so
+    // stop calling until it resets (owner's runs slowed by ~50 s per story).
+    const detail = await res
+      .clone()
+      .text()
+      .catch(() => "");
+    if (/tokens per day|\(TPD\)/i.test(detail)) {
+      const m = /try again in (?:(\d+)h)?(?:(\d+)m)?([\d.]+)?s?/i.exec(detail);
+      const ms =
+        m && (m[1] || m[2] || m[3])
+          ? ((Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0)) * 60 + Number(m[3] ?? 0)) *
+            1000
+          : 15 * 60_000;
+      dailyLimitUntil = Date.now() + Math.max(ms, 60_000);
+      throw new Error(`Groq daily token limit reached (model=${model})`);
+    }
+  }
   if (res.status === 429 && !retried) {
     // Free-tier rate limit: wait as asked (capped) and try once more.
     const after = Number(res.headers.get("retry-after"));
@@ -269,6 +290,16 @@ async function callGroq(
 }
 
 const MODEL_UNAVAILABLE = /404|model_not_found|does not exist|decommission|deprecat/i;
+
+let dailyLimitUntil = 0;
+/** True while the free tier's daily token allowance is spent (this process). */
+export function groqDailyLimitReached(now = Date.now()): boolean {
+  return now < dailyLimitUntil;
+}
+/** For tests. */
+export function __setGroqDailyLimitUntil(t: number): void {
+  dailyLimitUntil = t;
+}
 
 /**
  * Generate an original brief for a story. Tries candidate models until one is
