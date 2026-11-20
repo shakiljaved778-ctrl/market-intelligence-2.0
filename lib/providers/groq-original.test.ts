@@ -92,3 +92,13 @@ describe("Mizaan Original — read-time exclusions", () => {
     ).toEqual([]);
   });
 });
+
+describe("Groq daily allowance", () => {
+  it("reports the daily limit only until it resets", async () => {
+    const { groqDailyLimitReached, __setGroqDailyLimitUntil } = await import("./groq");
+    __setGroqDailyLimitUntil(1_000);
+    expect(groqDailyLimitReached(999)).toBe(true);
+    expect(groqDailyLimitReached(1_001)).toBe(false);
+    __setGroqDailyLimitUntil(0);
+  });
+});
