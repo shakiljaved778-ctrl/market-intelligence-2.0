@@ -25,14 +25,32 @@ export function officialPlaylists(): OfficialPlaylist[] {
  * macro job's oEmbed refresh). Excluded titles are dropped; with no database
  * or nothing stored, the cards fall back to the drawn design.
  */
+export const playlistLatestKey = "videos:playlist-latest";
+
+interface LatestRow {
+  channel: string;
+  listId: string;
+  latestVideoId: string;
+  latestTitle: string;
+  thumbnailUrl: string;
+}
+
+/** The stored newest uploads: the KV copy first, the database if KV has none. */
+async function storedLatest(): Promise<LatestRow[]> {
+  const { cacheGet } = await import("@/lib/cache/swr");
+  const cached = await cacheGet<LatestRow[]>(playlistLatestKey);
+  if (cached && cached.length > 0) return cached;
+  const { isDbConfigured } = await import("@/lib/db/client");
+  if (!isDbConfigured()) return [];
+  const { dbPlaylistLatest } = await import("@/lib/db/queries/videos");
+  return dbPlaylistLatest();
+}
+
 export async function readOfficialPlaylists(): Promise<OfficialPlaylist[]> {
   const list = officialPlaylists();
-  const { isDbConfigured } = await import("@/lib/db/client");
-  if (!isDbConfigured()) return list;
   try {
-    const { dbPlaylistLatest } = await import("@/lib/db/queries/videos");
     const { checkExclusion } = await import("@/lib/curation/exclusions");
-    const latest = new Map((await dbPlaylistLatest()).map((r) => [r.channel, r]));
+    const latest = new Map((await storedLatest()).map((r) => [r.channel, r]));
     return list.map((p) => {
       const r = latest.get(p.id);
       if (

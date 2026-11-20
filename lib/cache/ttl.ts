@@ -22,6 +22,8 @@ export const TTL = {
   searchSymbol: 24 * 60 * 60,
   coverImage: 7 * 24 * 60 * 60, // stock photos are stable; cache hard.
   eurekaCover: 30 * 24 * 60 * 60, // one photo per authored Eureka explainer
+  fillerPool: 7 * 24 * 60 * 60, // section filler-photo pools (lib/news/filler.ts)
+  playlistLatest: 7 * 24 * 60 * 60, // each video channel's newest upload (KV copy)
 } as const;
 
 export type TtlKey = keyof typeof TTL;
