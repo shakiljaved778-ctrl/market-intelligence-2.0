@@ -71,3 +71,24 @@ describe("Mizaan Original — no forecasts", () => {
     ).toEqual([]);
   });
 });
+
+describe("Mizaan Original — read-time exclusions", () => {
+  it("flags Qatar political wording the site would hide", async () => {
+    const { originalExclusions } = await import("./groq");
+    const found = originalExclusions(
+      "The Qatar Stock Exchange slipped 0.85 percent. Geopolitical risk weighed on oil, and the Qatari-German ties with Berlin deepened.",
+    );
+    expect(found.map((f) => f.toLowerCase())).toEqual(
+      expect.arrayContaining(["geopolitical", "ties with"]),
+    );
+  });
+
+  it("passes a Qatar markets piece with no political wording", async () => {
+    const { originalExclusions } = await import("./groq");
+    expect(
+      originalExclusions(
+        "The Qatar Stock Exchange index slipped 0.85 percent to 9,993 points as all sectors fell, the Qatar News Agency reported.",
+      ),
+    ).toEqual([]);
+  });
+});

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { swr } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
-import { excludedTermsIn } from "@/lib/curation/exclusions";
+import { checkExclusion, excludedTermsIn } from "@/lib/curation/exclusions";
 
 /**
  * Groq — hosted LLM used to generate ORIGINAL article bodies from a story's
@@ -196,6 +196,7 @@ const SYSTEM = [
   "If the facts are thin, keep each section short rather than pad it.",
   "Do NOT copy or closely paraphrase sentences from any source; synthesise in your own words.",
   "No investment advice, no buy/sell/hold language, no hype, no first person, no bullet lists.",
+  "For Qatar, cover markets and the economy only: never mention Qatar's politics, government, ministers, officials, diplomacy, foreign relations, elections or geopolitics, and avoid political words (political, geopolitical, sanctions, summit, military) anywhere in the piece.",
 ].join(" ");
 
 /**
@@ -391,6 +392,7 @@ const ORIGINAL_SYSTEM = [
   "Describe only what has happened or what the reports say is scheduled; never forecast or speculate. Do not write phrases such as 'will likely', 'is likely to', 'is expected to', 'is set to', 'may well', 'could prompt', 'may lead', 'set the tone', 'will keep an eye on', 'in the weeks ahead', 'in the coming months' or 'going forward' unless a report itself says it, attributed.",
   "Do not claim that one report caused or explains another report's event unless a report says so; connect stories by theme, not invented causes.",
   "No investment advice, no buy/sell/hold language, no hype, no first person, no bullet lists.",
+  "For Qatar, cover markets and the economy only: never mention Qatar's politics, government, ministers, officials, diplomacy, foreign relations, elections or geopolitics, and avoid political words (political, geopolitical, sanctions, summit, military) anywhere in the piece.",
 ].join(" ");
 
 function originalPrompt(input: OriginalInput): string {
@@ -464,6 +466,30 @@ export function speculativePhrases(text: string, facts: string): string[] {
   return found;
 }
 
+/**
+ * PURE: why the site would hide this Original, if it would. The piece names
+ * Qatar, so the FULL read-time exclusion check applies (Qatar politics,
+ * government, diplomacy and political words), not just the always-terms —
+ * the same check `lib/news/originals.ts` runs before showing it. Returns the
+ * matched terms (one per pass, so a rewrite sees every problem).
+ */
+export function originalExclusions(text: string): string[] {
+  const found: string[] = [];
+  let rest = text;
+  for (let i = 0; i < 8; i++) {
+    const v = checkExclusion({ texts: [rest] });
+    if (!v.excluded || !v.reason) break;
+    const term = v.reason.replace(/^[a-z-]+:\s*(?:minister\s+)?/i, "");
+    if (!term || found.includes(term)) break;
+    found.push(term);
+    rest = rest.replace(
+      new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu"),
+      " ",
+    );
+  }
+  return found;
+}
+
 /** PURE: split the model's output into headline, dek and body; null if malformed. */
 export function parseOriginal(text: string): Omit<Original, "model"> | null {
   const lines = text.trim().split(/\r?\n/);
@@ -492,7 +518,7 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
   const problems = (text: string) => [
     ...ungroundedFigures(text, facts).map((f) => `figure ${f}`),
     ...ungroundedInstitutions(text, facts).map((n) => `name "${n}"`),
-    ...excludedTermsIn(text).map((t) => `excluded topic "${t}"`),
+    ...originalExclusions(text).map((t) => `excluded topic "${t}"`),
     ...speculativePhrases(text, factsText(facts)).map((p) => `forecast wording "${p}"`),
   ];
   const models = resolvedModel ? [resolvedModel] : candidateModels();
@@ -513,7 +539,7 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
           model,
           facts,
           false,
-          `Your draft used details that are not in the reports: ${bad.join(", ")}. Rewrite it without them, keeping the same format.`,
+          `Your draft has problems: ${bad.join(", ")}. Rewrite it without them (for an excluded topic, drop every sentence about it), keeping the same format.`,
           ORIGINAL_SYSTEM,
           user,
           4000,

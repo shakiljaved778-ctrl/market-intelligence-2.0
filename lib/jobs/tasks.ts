@@ -705,18 +705,20 @@ export async function clusterTask(): Promise<JobSummary> {
     // the top-ranked fresh global Markets/Economy stories (not Gulf ones).
     if (isGroqConfigured()) {
       try {
-        const { latestOriginalMeta, persistOriginal } = await import(
+        const { dbLatestOriginal, persistOriginal } = await import(
           "@/lib/db/queries/originals"
         );
-        const { generateOriginal, ORIGINAL_FORMAT } = await import(
+        const { generateOriginal, originalExclusions, ORIGINAL_FORMAT } = await import(
           "@/lib/providers/groq"
         );
-        const last = await latestOriginalMeta("global-markets");
+        const last = await dbLatestOriginal("global-markets");
         const due =
           !last ||
-          Date.now() - last.at.getTime() >= ORIGINAL_EVERY_H * 3_600_000 ||
+          Date.now() - Date.parse(last.publishedAt) >= ORIGINAL_EVERY_H * 3_600_000 ||
           // Written under older rules: replace it now.
-          !last.model.endsWith(`#${ORIGINAL_FORMAT}`);
+          !last.model.endsWith(`#${ORIGINAL_FORMAT}`) ||
+          // The site hides it (excluded topic): replace it now.
+          originalExclusions([last.title, last.dek, last.bodyMd].join("\n")).length > 0;
         if (due) {
           const articleById = new Map(recent.map((a) => [a.id, a]));
           const picks = ranked
