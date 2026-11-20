@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 /**
@@ -13,12 +14,19 @@ export function PlaylistCard({
   name,
   listId,
   hue,
+  latest = null,
 }: {
   name: string;
   /** YouTube playlist id — a channel's uploads playlist is "UU" + its id. */
   listId: string;
   /** Muted accent for the drawn card (section-tint discipline, §12). */
   hue: string;
+  /**
+   * The channel's newest upload, when known (stored by the macro job via
+   * oEmbed): the card then shows that video's picture and title, and play
+   * starts from it (owner request, 2026-11-20: no blank cards).
+   */
+  latest?: { videoId: string; title: string; thumbnailUrl: string } | null;
 }) {
   const [playing, setPlaying] = useState(false);
   return (
@@ -26,13 +34,53 @@ export function PlaylistCard({
       <div className="border-line bg-surface relative aspect-video w-full overflow-hidden rounded-[8px] border">
         {playing ? (
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&autoplay=1&rel=0`}
+            src={
+              latest
+                ? `https://www.youtube-nocookie.com/embed/${latest.videoId}?list=${listId}&autoplay=1&rel=0`
+                : `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&autoplay=1&rel=0`
+            }
             title={`${name} — latest videos`}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             className="absolute inset-0 h-full w-full"
           />
+        ) : latest ? (
+          <button
+            type="button"
+            onClick={() => setPlaying(true)}
+            className="group absolute inset-0 h-full w-full text-left"
+            aria-label={`Play ${latest.title} — latest from ${name}`}
+          >
+            <Image
+              src={latest.thumbnailUrl}
+              alt=""
+              fill
+              unoptimized
+              loading="lazy"
+              sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition duration-500 group-hover:scale-[1.02]"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-1/2"
+              style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.6))" }}
+            />
+            <span className="absolute bottom-[7%] left-[6%] inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2 py-0.5 text-[11px] text-white/90 backdrop-blur-sm">
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ background: hue }}
+              />
+              {name}
+            </span>
+            <span
+              aria-hidden
+              className="bg-ink/75 text-surface absolute top-1/2 left-1/2 inline-flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[18px] transition group-hover:scale-110"
+            >
+              ▶
+            </span>
+          </button>
         ) : (
           <button
             type="button"
@@ -66,9 +114,11 @@ export function PlaylistCard({
         )}
       </div>
       <figcaption className="mt-2">
-        <span className="text-ink-3 text-[11px]">YouTube · {name}</span>
-        <span className="font-editorial text-ink mt-0.5 block text-[15px] leading-snug">
-          Latest videos from the {name}
+        <span className="text-ink-3 text-[11px]">
+          {latest ? `Latest from the ${name} · YouTube` : `YouTube · ${name}`}
+        </span>
+        <span className="font-editorial text-ink mt-0.5 line-clamp-2 block text-[15px] leading-snug">
+          {latest ? latest.title : `Latest videos from the ${name}`}
         </span>
       </figcaption>
     </figure>

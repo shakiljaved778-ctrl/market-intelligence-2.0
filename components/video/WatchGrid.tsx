@@ -28,6 +28,7 @@ export function WatchGrid({
             key={p.id}
             name={p.name}
             listId={p.listId}
+            latest={p.latest ?? null}
             hue={sectionMeta(TINTS[i % TINTS.length]!).hue}
           />
         ))}

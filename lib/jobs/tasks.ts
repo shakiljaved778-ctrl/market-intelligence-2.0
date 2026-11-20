@@ -160,11 +160,21 @@ export async function macroTask(): Promise<JobSummary> {
   } catch (err) {
     console.error("[macro] video refresh failed:", err);
   }
+  let latestUploads = "";
+  try {
+    latestUploads = await refreshPlaylistLatest();
+  } catch (err) {
+    console.error("[macro] latest-upload refresh failed:", err);
+  }
 
   return {
     itemsIn: SERIES.length + FX_QUOTE_CURRENCIES.length,
     itemsOut: out + (fxStored > 0 ? FX_QUOTE_CURRENCIES.length : 0) + videos.stored,
-    detail: { videosStored: videos.stored, videosPerChannel: videos.perChannel },
+    detail: {
+      videosStored: videos.stored,
+      videosPerChannel: videos.perChannel,
+      latestUploads,
+    },
   };
 }
 
@@ -174,6 +184,41 @@ export async function macroTask(): Promise<JobSummary> {
  * editorial exclusions, store the references, and delete any not refreshed in
  * 30 days (YouTube API Services policy).
  */
+/**
+ * Each official channel's newest upload, keyless via YouTube oEmbed (owner
+ * request, 2026-11-20: a picture on every channel card). Kept only when the
+ * video's channel is the expected institution and its title passes the
+ * editorial exclusions. Returns "federal-reserve:ok,imf:none,…" for the log.
+ */
+async function refreshPlaylistLatest(): Promise<string> {
+  const { officialPlaylists } = await import("@/lib/videos/playlists");
+  const { loadVideoChannels } = await import("@/lib/videos/channels");
+  const { latestUpload } = await import("@/lib/providers/youtube-oembed");
+  const { persistPlaylistLatest } = await import("@/lib/db/queries/videos");
+  const { checkExclusion } = await import("@/lib/curation/exclusions");
+  const titles = new Map(loadVideoChannels().map((c) => [c.id, c.expect_titles]));
+  const playlists = officialPlaylists();
+  const found = await Promise.all(
+    playlists.map((p) => latestUpload(p.listId, titles.get(p.id) ?? [p.name])),
+  );
+  const rows = playlists.flatMap((p, i) => {
+    const v = found[i];
+    if (!v || checkExclusion({ texts: [v.title] }).excluded) return [];
+    return [
+      {
+        channel: p.id,
+        listId: p.listId,
+        latestVideoId: v.videoId,
+        latestTitle: v.title,
+        thumbnailUrl: v.thumbnailUrl,
+      },
+    ];
+  });
+  await persistPlaylistLatest(rows);
+  const ok = new Set(rows.map((r) => r.channel));
+  return playlists.map((p) => `${p.id}:${ok.has(p.id) ? "ok" : "none"}`).join(",");
+}
+
 async function refreshVideos(): Promise<{ stored: number; perChannel: string }> {
   const { loadVideoChannels } = await import("@/lib/videos/channels");
   const { channelVideos } = await import("@/lib/providers/youtube");

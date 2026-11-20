@@ -1,6 +1,6 @@
 import { WatchGrid } from "@/components/video/WatchGrid";
 import { NoData } from "@/components/market/Provenance";
-import { officialPlaylists } from "@/lib/videos/playlists";
+import { readOfficialPlaylists } from "@/lib/videos/playlists";
 import { pageMeta } from "@/lib/seo";
 import { readVideos } from "@/lib/videos/read";
 
@@ -12,7 +12,7 @@ export const metadata = pageMeta(
 
 export default async function VideosPage() {
   const videos = await readVideos(24);
-  const playlists = officialPlaylists();
+  const playlists = await readOfficialPlaylists();
   return (
     <div className="py-8">
       <p className="t-micro text-ink-3">Watch</p>

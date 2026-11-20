@@ -16,7 +16,7 @@ import { pickFeatured } from "@/lib/news/featured";
 import { liveTicker } from "@/lib/news/live";
 import { LiveTicker } from "@/components/news/LiveTicker";
 import { WatchGrid } from "@/components/video/WatchGrid";
-import { officialPlaylists } from "@/lib/videos/playlists";
+import { readOfficialPlaylists } from "@/lib/videos/playlists";
 import { pickVideoStrip, readVideos } from "@/lib/videos/read";
 import { liveEditorialIds } from "@/content/editorial";
 import { buildHomepage, photoFirst, withUniqueCovers } from "@/lib/news/homepage";
@@ -118,7 +118,7 @@ export default async function BoardPage() {
   ]);
   // Official-institution videos: each channel's newest first, four in all.
   const videos = pickVideoStrip(allVideos, 4);
-  const playlists = officialPlaylists();
+  const playlists = await readOfficialPlaylists();
   // Homepage counters — each is a plain count of what is on the wire now.
   const now = new Date();
   const ageMs = (c: WireCluster) => now.getTime() - new Date(c.eventTime).getTime();
