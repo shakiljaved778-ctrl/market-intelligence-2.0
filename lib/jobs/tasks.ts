@@ -76,6 +76,14 @@ export const BRIEF_REWRITES_PER_RUN = 8;
  * about five minutes; stories left over are written on the next run.
  */
 export const BRIEF_CALLS_PER_RUN = 15;
+/**
+ * A story whose AI article was not written (it failed the grounding checks, or
+ * the free tier refused) is retried at most this often. With the pipeline
+ * running the cluster job every half hour (2026-11-20), retrying every run
+ * would spend the Groq free tier on the same few stuck stories.
+ */
+export const BRIEF_RETRY_AFTER_S = 6 * 60 * 60;
+export const briefFailedKey = (slug: string) => `brief:failed:${slug}`;
 
 export async function quotesTask(): Promise<JobSummary> {
   const registry = getRegistry();
@@ -541,7 +549,12 @@ export async function clusterTask(): Promise<JobSummary> {
           !stored.model?.endsWith(`#${BRIEF_FORMAT}`) ||
           stored.mentionsExcluded);
       const needsRewrite = outdated && rewritesLeft > 0;
-      if (isGroqConfigured() && (needsBrief || needsRewrite) && callsLeft > 0) {
+      if (
+        isGroqConfigured() &&
+        (needsBrief || needsRewrite) &&
+        callsLeft > 0 &&
+        !(await cacheGet<boolean>(briefFailedKey(c.slug)))
+      ) {
         callsLeft -= 1;
         if (needsRewrite) rewritesLeft -= 1;
         const moves: Record<string, number> = {};
@@ -569,6 +582,8 @@ export async function clusterTask(): Promise<JobSummary> {
         if (brief) {
           await setClusterBrief(c.slug, brief.body, `${brief.model}#${BRIEF_FORMAT}`);
           briefsWritten += 1;
+        } else {
+          await cachePut(briefFailedKey(c.slug), BRIEF_RETRY_AFTER_S, true);
         }
       }
 
@@ -680,6 +695,7 @@ export async function clusterTask(): Promise<JobSummary> {
           })
         )
           continue;
+        if (await cacheGet<boolean>(briefFailedKey(b.slug))) continue;
         callsLeft -= 1;
         const brief = await generateBrief(String(b.primaryArticleId), {
           title: b.title,
@@ -693,6 +709,8 @@ export async function clusterTask(): Promise<JobSummary> {
         if (brief) {
           await setClusterBrief(b.slug, brief.body, `${brief.model}#${BRIEF_FORMAT}`);
           backfilled += 1;
+        } else {
+          await cachePut(briefFailedKey(b.slug), BRIEF_RETRY_AFTER_S, true);
         }
       }
     }

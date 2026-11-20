@@ -1,0 +1,65 @@
+name: pipeline
+
+# Reliable refresh (owner approval, 2026-11-20). GitHub delays and drops
+# scheduled starts: on 2026-11-19/20 the */10 ingest ran 4 times in 24 hours and
+# the */20 cluster job 3 times, and the US market-hours quote loop started only
+# after the close. A workflow_dispatch start is immediate, so this workflow runs
+# the pipeline for ~5 hours (scripts/pipeline-loop.sh) and then dispatches its
+# own next run. The schedule below is only a backup restart if the chain breaks.
+#
+# - news ingest + cluster/rank/AI every PIPELINE_INTERVAL_MIN (default 30) min;
+# - /api/cron/quotes every 15 min in the US session, hourly otherwise;
+# - /api/cron/macro once per run (~every 5 h).
+#
+# Kill switch: set the repository variable PIPELINE_ENABLED to "false" (or
+# disable this workflow in the Actions tab). Tune the cadence with the
+# repository variable PIPELINE_INTERVAL_MIN.
+#
+# One run at a time: the shared concurrency group queues the next start (self-
+# dispatched or scheduled) behind the current one, and keeps at most one queued.
+on:
+  schedule:
+    - cron: "41 */3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write # to dispatch the next run
+
+jobs:
+  run:
+    if: vars.PIPELINE_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run the pipeline loop
+        id: loop
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ secrets.GROQ_MODEL }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PIPELINE_INTERVAL_MIN: ${{ vars.PIPELINE_INTERVAL_MIN }}
+        run: bash scripts/pipeline-loop.sh
+      - name: Start the next run
+        if: always() && steps.loop.outputs.chain == 'true' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pipeline.yml --ref main --repo "${GITHUB_REPOSITORY}"

@@ -11,12 +11,8 @@ name: quotes-session
 # The repository is public, so runner minutes are free; each call is one
 # Vercel function invocation (~27 a trading day).
 on:
-  schedule:
-    # 13:20 UTC is before the 09:30 New York open in both EST and EDT.
-    - cron: "20 13 * * 1-5"
-    - cron: "20 15 * * 1-5"
-    - cron: "20 17 * * 1-5"
-    - cron: "20 19 * * 1-5"
+  # Superseded by pipeline.yml (2026-11-20): these scheduled starts arrived after
+  # the US close. Kept for a manual session refresh.
   workflow_dispatch:
 
 concurrency:

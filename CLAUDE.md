@@ -79,19 +79,27 @@ Vercel Hobby caps cron at once-per-day. **Split trigger from compute:**
 - Keep **one** daily job in `vercel.json` (EOD/retention) so the Vercel path stays
   exercised. Every workflow gets `workflow_dispatch` + a concurrency group.
 
-```
-ingest.yml  */10 * * * *   cluster.yml */20 * * * *   quotes.yml */5 * * * *
-macro.yml   0 */6 * * *    eod.yml     0 22 * * *      (all UTC)
-```
+**The pipeline (owner approval, 2026-11-20).** GitHub delays and drops scheduled
+starts (on 2026-11-19/20 the */10 ingest ran 4 times in 24 h, the */20 cluster
+job 3 times, and the market-hours quote loop started after the US close), but a
+`workflow_dispatch` start is immediate. So `pipeline.yml` runs
+`scripts/pipeline-loop.sh` for ~5 hours and then **dispatches its own next run**
+(GITHUB_TOKEN may trigger `workflow_dispatch`):
 
-GitHub delays scheduled starts by hours, so `quotes.yml` does not really run every
-5 minutes. For a real intraday refresh (owner request, 2026-11-19),
-`quotes-session.yml` starts four times on weekdays (13:20, 15:20, 17:20, 19:20
-UTC) and, once running, **loops** — calling `/api/cron/quotes` every 15 minutes
-while the US market is open (09:25–16:15 New York time, EST/EDT handled by TZ).
-It stops at once on HTTP 402 (deployment disabled) and fails after 3 failures in
-a row. The repo is public, so runner minutes are free; it costs ~27 Vercel
-invocations a trading day.
+- ingest + cluster/rank/AI every `PIPELINE_INTERVAL_MIN` (repo variable, default
+  30) minutes, in the runner, writing to Postgres;
+- `/api/cron/quotes` every 15 min in the US session (09:25–16:15 New York), hourly
+  otherwise; `/api/cron/macro` once per run.
+
+It stops on HTTP 402 (deployment disabled), ends a run after 3 failing cycles, and
+restarts itself only after a run of 30+ minutes, so a broken pipeline cannot spin;
+`41 */3 * * *` is the backup restart. Kill switch: repo variable
+`PIPELINE_ENABLED=false`. A story whose AI summary failed is retried at most every
+6 h (`BRIEF_RETRY_AFTER_S`, KV) so the frequent runs don't drain the Groq free tier.
+`ingest.yml`, `cluster.yml` and `quotes-session.yml` are now manual-only;
+`quotes.yml` (*/5), `macro.yml` (0 */6) and `eod.yml` (0 22) keep their schedules as
+idempotent extras. The repo is public, so runner minutes are free; Vercel sees
+~45–50 quote calls a day plus macro.
 
 ## Stack (exact — §4)
 
