@@ -44,7 +44,25 @@ export async function persistOriginal(
 ): Promise<void> {
   const db = getDb();
   if (!db) return;
-  await db.insert(originals).values(o).onConflictDoNothing();
+  // Same slug = the same hour's piece written again (e.g. under newer rules):
+  // replace its content rather than silently keeping the old draft.
+  await db
+    .insert(originals)
+    .values(o)
+    .onConflictDoUpdate({
+      target: originals.slug,
+      set: {
+        kind: o.kind,
+        title: o.title,
+        dek: o.dek,
+        bodyMd: o.bodyMd,
+        sources: o.sources,
+        model: o.model,
+        coverUrl: o.coverUrl,
+        coverCredit: o.coverCredit,
+        coverCreditUrl: o.coverCreditUrl,
+      },
+    });
 }
 
 /** The newest Original of a kind: when it was published and by which model/format. */
