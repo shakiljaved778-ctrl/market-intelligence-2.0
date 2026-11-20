@@ -3,7 +3,7 @@ import { fredSeries } from "@/lib/providers/fred";
 import { referenceRates } from "@/lib/providers/frankfurter";
 import { worldBankSeries } from "@/lib/providers/worldbank";
 import { getRegistry } from "@/lib/providers";
-import { cachePut } from "@/lib/cache/swr";
+import { cacheGet, cachePut } from "@/lib/cache/swr";
 import { TTL } from "@/lib/cache/ttl";
 import { dbLatestQuotesForJob, persistQuote } from "@/lib/db/queries/quotes";
 import { persistFundamentals } from "@/lib/db/queries/fundamentals";
@@ -239,6 +239,15 @@ async function refreshPlaylistLatest(): Promise<string> {
     ];
   });
   await persistPlaylistLatest(rows);
+  // A KV copy too, so the cards keep their pictures when a page's database
+  // read is slow (owner report, 2026-11-20: thumbnails briefly vanished).
+  // Channels not found this time keep their previous entry.
+  const { playlistLatestKey } = await import("@/lib/videos/playlists");
+  const previous =
+    (await cacheGet<typeof rows>(playlistLatestKey)) ?? ([] as typeof rows);
+  const merged = new Map(previous.map((r) => [r.channel, r]));
+  for (const r of rows) merged.set(r.channel, r);
+  await cachePut(playlistLatestKey, TTL.playlistLatest, [...merged.values()]);
   const ok = new Set(rows.map((r) => r.channel));
   return playlists.map((p) => `${p.id}:${ok.has(p.id) ? "ok" : "none"}`).join(",");
 }
@@ -716,6 +725,32 @@ export async function clusterTask(): Promise<JobSummary> {
               b.primaryTopic?.replace(/_/g, " ") ??
               "",
           );
+        }
+      }
+    }
+    // Filler pools (owner request, 2026-11-20): ~30 stock photos per section
+    // (and a Gulf pool) so no card is ever left on the drawn cover. Filled
+    // once and kept a week; searches are cached, so this costs a few calls.
+    if (isPexelsConfigured()) {
+      const { FILLER_POOL_SIZE, FILLER_QUERIES, fillerKey } = await import(
+        "@/lib/news/filler"
+      );
+      for (const [pool, queries] of Object.entries(FILLER_QUERIES)) {
+        const have = await cacheGet<unknown[]>(fillerKey(pool));
+        if (have && have.length > 0) continue;
+        const photos: { url: string; credit: string; creditUrl: string }[] = [];
+        const seen = new Set<string>();
+        for (const q of queries) {
+          if (photos.length >= FILLER_POOL_SIZE) break;
+          for (const p of await searchPexelsPhotos(q, pool, seen, 15)) {
+            if (photos.length >= FILLER_POOL_SIZE) break;
+            seen.add(p.url);
+            photos.push({ url: p.url, credit: p.credit, creditUrl: p.creditUrl });
+          }
+        }
+        if (photos.length > 0) {
+          await cachePut(fillerKey(pool), TTL.fillerPool, photos);
+          console.log(`[cluster] filler pool ${pool}: ${photos.length} photos`);
         }
       }
     }

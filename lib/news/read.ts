@@ -2,6 +2,12 @@ import { cache } from "react";
 import { EDITORIAL_ARTICLES, isEditorialCurrent } from "@/content/editorial";
 import { cacheGet } from "@/lib/cache/swr";
 import {
+  assignFillers,
+  fillerKey,
+  fillerPoolFor,
+  type FillerPhoto,
+} from "@/lib/news/filler";
+import {
   eurekaArticles,
   eurekaBody,
   eurekaCoverKey,
@@ -447,15 +453,46 @@ const loadAll = cache(async (): Promise<LoadedCluster[]> => {
   // Real news leads; the evergreen explainers + curated editorial fall to their
   // natural rank by importance. Stub stories (no brief, no real dek) are hidden
   // so readers never get a two-line "article".
-  return [
-    ...live,
-    ...editorial.filter((l) => !liveSlugs.has(l.cluster.slug)),
-    ...eureka.filter((l) => !liveSlugs.has(l.cluster.slug)),
-  ]
-    .filter(isSubstantive)
-    .filter(isAllowedStory)
-    .sort(byImportance);
+  return withFillers(
+    [
+      ...live,
+      ...editorial.filter((l) => !liveSlugs.has(l.cluster.slug)),
+      ...eureka.filter((l) => !liveSlugs.has(l.cluster.slug)),
+    ]
+      .filter(isSubstantive)
+      .filter(isAllowedStory)
+      .sort(byImportance),
+  );
 });
+
+/**
+ * Every story without its own photo gets a filler from its section's pool
+ * (lib/news/filler.ts; KV read only). Any failure keeps the drawn covers.
+ */
+async function withFillers(list: LoadedCluster[]): Promise<LoadedCluster[]> {
+  try {
+    const needed = new Set(
+      list
+        .filter((l) => !l.cluster.imageUrl)
+        .map((l) => fillerPoolFor(l.cluster.section, l.cluster.region)),
+    );
+    if (needed.size === 0) return list;
+    const entries = await Promise.all(
+      [...needed].map(
+        async (pool) =>
+          [pool, (await cacheGet<FillerPhoto[]>(fillerKey(pool))) ?? []] as const,
+      ),
+    );
+    const filled = assignFillers(
+      list.map((l) => l.cluster),
+      new Map(entries),
+    );
+    return list.map((l, i) => ({ ...l, cluster: filled[i]! }));
+  } catch (err) {
+    console.error("[wire] filler photos unavailable:", err);
+    return list;
+  }
+}
 
 async function allClusters(): Promise<WireCluster[]> {
   return (await loadAll()).map((l) => l.cluster);
