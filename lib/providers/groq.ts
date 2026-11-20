@@ -353,6 +353,8 @@ export interface OriginalReport {
 export interface OriginalInput {
   /** The day's top global-markets reports (headline, summary, outlet). */
   reports: OriginalReport[];
+  /** The day's top Gulf (GCC) market and economy reports, for the Gulf section. */
+  gulfReports?: OriginalReport[];
   /** ticker -> latest % move, for the instruments the reports name. */
   moves?: Record<string, number>;
   /** ISO date the piece is written for. */
@@ -367,6 +369,12 @@ export interface Original {
 }
 
 export const ORIGINAL_TARGET_WORDS = { min: 600, max: 850 } as const;
+/**
+ * Version of the Original's rules, stored with its model name. A piece written
+ * under older rules is replaced on the next run (o2, 2026-11-20: Gulf reports
+ * feed the Gulf section; forecast wording is rejected).
+ */
+export const ORIGINAL_FORMAT = "o2";
 
 const ORIGINAL_SYSTEM = [
   "You are the lead markets writer of a GCC and global market intelligence site.",
@@ -374,13 +382,14 @@ const ORIGINAL_SYSTEM = [
   "Output format, exactly: first line '# ' followed by a headline of at most 12 words;",
   "second line 'Dek: ' followed by one sentence of at most 30 words;",
   "then an opening of two or three paragraphs with no heading, then sections each starting '## Heading' with one or two paragraphs:",
-  "'## What moved' , '## The threads that connect them' , '## What it means for the Gulf' (only what the reports themselves support; otherwise say plainly that the reports do not address the Gulf), '## What to watch' (only next steps the reports mention).",
+  "'## What moved' , '## The threads that connect them' , '## What it means for the Gulf' (built from the Gulf reports given: what is happening in Gulf markets and economies, and where the global reports touch them; if no Gulf reports are given, say so in one sentence), '## What to watch' (only scheduled events or next steps the reports themselves mention).",
   "End with a final line starting '**The bottom line:**' (one sentence).",
   "Accuracy rules, which outrank length and style: every name, number, date, quote and event must come from the reports given.",
   "Use no number that is not in the reports or the moves; never compute new figures; give moves exactly as listed.",
   "Attribute facts to the outlets named in the reports.",
   "Do NOT copy or closely paraphrase any report; synthesise in your own words.",
-  "No investment advice, no buy/sell/hold language, no predictions, no hype, no first person, no bullet lists.",
+  "Describe only what has happened or what the reports say is scheduled; never forecast. Do not write phrases such as 'will likely', 'is likely to', 'is expected to', 'may well', 'set the tone', 'in the weeks ahead', 'in the coming months' or 'going forward' unless a report itself says it, attributed.",
+  "No investment advice, no buy/sell/hold language, no hype, no first person, no bullet lists.",
 ].join(" ");
 
 function originalPrompt(input: OriginalInput): string {
@@ -393,6 +402,10 @@ function originalPrompt(input: OriginalInput): string {
     ...input.reports.map(
       (r, i) => `${i + 1}. ${r.title}${r.dek ? ` — ${r.dek}` : ""} (${r.source})`,
     ),
+    input.gulfReports?.length ? "Gulf reports (for the Gulf section):" : "",
+    ...(input.gulfReports ?? []).map(
+      (r, i) => `G${i + 1}. ${r.title}${r.dek ? ` — ${r.dek}` : ""} (${r.source})`,
+    ),
     moves ? `Latest moves: ${moves}` : "",
   ]
     .filter(Boolean)
@@ -401,14 +414,39 @@ function originalPrompt(input: OriginalInput): string {
 
 /** The reports as a BriefInput, so the brief's grounding checks apply unchanged. */
 function originalFacts(input: OriginalInput): BriefInput {
+  const all = [...input.reports, ...(input.gulfReports ?? [])];
   return {
-    title: input.reports.map((r) => r.title).join(" | "),
+    title: all.map((r) => r.title).join(" | "),
     section: "markets",
-    sourceDeks: input.reports.map((r) => r.dek ?? "").filter(Boolean),
-    sources: [...new Set(input.reports.map((r) => r.source))],
+    sourceDeks: all.map((r) => r.dek ?? "").filter(Boolean),
+    sources: [...new Set(all.map((r) => r.source))],
     moves: input.moves,
     publishedAt: input.date,
   };
+}
+
+/** Forecast-style phrases an Original must not use unless a report itself does. */
+const SPECULATIVE = [
+  "will likely",
+  "is likely to",
+  "are likely to",
+  "is expected to",
+  "are expected to",
+  "may well",
+  "set the tone",
+  "sets the tone",
+  "in the weeks ahead",
+  "in the coming weeks",
+  "in the coming months",
+  "going forward",
+  "poised to",
+];
+
+/** PURE: forecast phrases in `text` that the facts never use (case-insensitive). */
+export function speculativePhrases(text: string, facts: string): string[] {
+  const t = text.toLowerCase();
+  const f = facts.toLowerCase();
+  return SPECULATIVE.filter((p) => t.includes(p) && !f.includes(p));
 }
 
 /** PURE: split the model's output into headline, dek and body; null if malformed. */
@@ -440,6 +478,7 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
     ...ungroundedFigures(text, facts).map((f) => `figure ${f}`),
     ...ungroundedInstitutions(text, facts).map((n) => `name "${n}"`),
     ...excludedTermsIn(text).map((t) => `excluded topic "${t}"`),
+    ...speculativePhrases(text, factsText(facts)).map((p) => `forecast wording "${p}"`),
   ];
   const models = resolvedModel ? [resolvedModel] : candidateModels();
   for (const model of models) {
