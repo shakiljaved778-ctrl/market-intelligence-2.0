@@ -118,6 +118,21 @@ async function probe(c: Candidate): Promise<string[]> {
       lines.push(`  head: ${body.slice(0, 1200).replace(/\s+/g, " ")}`);
     }
   } else {
+    // Embedded YouTube videos (official institutions' pages, for the video strip).
+    const yt = [
+      ...new Set(
+        [
+          ...body.matchAll(
+            /(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/g,
+          ),
+        ].map((m) => m[1] as string),
+      ),
+    ];
+    if (yt.length)
+      lines.push(
+        `youtube: ${yt.length} embedded video ids: ${yt.slice(0, 12).join(", ")}`,
+      );
+    if (/oembed/.test(c.url)) lines.push(`  body: ${body.slice(0, 400)}`);
     const links = feedLinks(body, res.url);
     lines.push(
       links.length
