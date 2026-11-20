@@ -78,6 +78,42 @@ describe("clustering a multi-source event (§9 gate)", () => {
     );
     expect(clusters).toHaveLength(2);
   });
+
+  it("does not merge two stories that only share a broad theme (AI)", async () => {
+    // Live over-merge, 20 Nov: a shared "artificial_intelligence" topic lifted
+    // cosine 0.44 over the bar, and the export story inherited Anthropic's ticker.
+    const story = (id: number, sourceId: string, headline: string, dek: string) =>
+      toClusterInput({
+        id,
+        sourceId,
+        trustScore: 80,
+        tier: "outlet",
+        headline,
+        dek,
+        publishedAt: "2026-11-19T12:00:00.000Z",
+        url: `https://example.org/${id}`,
+      } as (typeof FIXTURE_ARTICLES)[number]);
+    const clusters = await clusterArticles(
+      [
+        story(
+          9201,
+          "qna-economy-world",
+          "S. Korea's Exports Top $1 Trillion for First Time on AI-Driven Chip Boom",
+          "Seoul, November 19 (QNA) - South Korea's annual exports topped $1 trillion for the first time, propelled by surging semiconductor shipments as global companies ramped up investment in artificial intelligence infrastructure.",
+        ),
+        story(
+          9202,
+          "the-conversation",
+          "Was Anthropic's record US$81 billion listing a vote of confidence in AI – and what's next?",
+          "Anthropic, the artificial intelligence giant behind Claude, has just pulled off the biggest initial public offering in history.",
+        ),
+      ],
+      embedder,
+    );
+    expect(clusters).toHaveLength(2);
+    const exports = clusters.find((c) => c.articleIds.includes(9201));
+    expect(exports?.tickers).not.toContain("ANT");
+  });
 });
 
 describe("runPipeline ranking + slugs", () => {

@@ -186,7 +186,10 @@ country is not a shared event (same test file). Three more guards (2026-11-19, f
 QNA headlines: 29 clusters before, 63 after): the wire-agency dateline ("Doha,
 <date> (QNA) -") is stripped before embedding; a Gulf-region report never
 merges with a report about a different region; and two reports from the SAME
-feed must clear `SAME_SOURCE_THRESHOLD=0.70`. With `EMBEDDER=minilm`, lower boosts
+feed must clear `SAME_SOURCE_THRESHOLD=0.70`. The topic boost counts only alongside a shared ticker or
+specific entity (2026-11-20): a shared theme such as AI merged "S. Korea's
+exports top $1 trillion on AI chip boom" with "Anthropic's record listing"
+(cosine 0.44 + topic 0.10), giving the export story Anthropic's ticker. With `EMBEDDER=minilm`, lower boosts
 to ≈0.12 and raise `SIM_THRESHOLD` toward ~0.68 pure cosine.
 
 **Ranking** (`lib/curation/rank.ts`), weights sum to 1, one place, tunable:
