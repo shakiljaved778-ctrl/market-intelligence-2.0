@@ -110,12 +110,20 @@ function differentGulfRegion(a: ClusterInput, b: ClusterInput): boolean {
   return ra !== rb && (isGccRegion(ra) || isGccRegion(rb));
 }
 
+/**
+ * Overlap boost. A shared TOPIC ("artificial_intelligence", "technology") is a
+ * theme, not an event: it only adds weight when the reports also share a
+ * ticker or a specific entity. On its own it merged "S. Korea's exports top
+ * $1 trillion on AI chip boom" with "Anthropic's record listing" (owner report,
+ * 2026-11-20): cosine 0.44 + topic 0.10 cleared the 0.50 bar with nothing
+ * specific in common, and the merged story carried Anthropic's ticker.
+ */
 function boost(a: ClusterInput, b: ClusterInput): number {
   let s = 0;
   if (overlap(a.tickers, b.tickers) > 0) s += BOOST_TICKER;
   const specific = (e: string[]) => e.filter((x) => !isBroadEntity(x));
   if (overlap(specific(a.entities), specific(b.entities)) > 0) s += BOOST_ENTITY;
-  if (overlap(a.topics, b.topics) > 0) s += BOOST_TOPIC;
+  if (s > 0 && overlap(a.topics, b.topics) > 0) s += BOOST_TOPIC;
   return Math.min(s, BOOST_CAP);
 }
 
