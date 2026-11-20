@@ -735,18 +735,24 @@ export async function clusterTask(): Promise<JobSummary> {
       }
     }
     // Filler pools (owner request, 2026-11-20): ~30 stock photos per section
-    // (and a Gulf pool) so no card is ever left on the drawn cover. Filled
-    // once and kept a week; searches are cached, so this costs a few calls.
+    // (and a Gulf pool) so no card is ever left on the drawn cover; and one
+    // photo per authored Eureka explainer, by prize field. Stored in Postgres
+    // (photo_sets), which the pages read; refreshed weekly / monthly. Pexels
+    // searches are cached, so this costs a few calls.
     if (isPexelsConfigured()) {
+      const { freshPhotoSetKeys, persistPhotoSet } = await import(
+        "@/lib/db/queries/photos"
+      );
       const { FILLER_POOL_SIZE, FILLER_QUERIES, fillerKey } = await import(
         "@/lib/news/filler"
       );
-      for (const [pool, queries] of Object.entries(FILLER_QUERIES)) {
-        const have = await cacheGet<unknown[]>(fillerKey(pool));
-        if (have && have.length > 0) continue;
+      const pools = Object.keys(FILLER_QUERIES);
+      const freshPools = await freshPhotoSetKeys(pools.map(fillerKey), TTL.fillerPool);
+      for (const pool of pools) {
+        if (freshPools.has(fillerKey(pool))) continue;
         const photos: { url: string; credit: string; creditUrl: string }[] = [];
         const seen = new Set<string>();
-        for (const q of queries) {
+        for (const q of FILLER_QUERIES[pool] ?? []) {
           if (photos.length >= FILLER_POOL_SIZE) break;
           for (const p of await searchPexelsPhotos(q, pool, seen, 15)) {
             if (photos.length >= FILLER_POOL_SIZE) break;
@@ -755,23 +761,27 @@ export async function clusterTask(): Promise<JobSummary> {
           }
         }
         if (photos.length > 0) {
-          await cachePut(fillerKey(pool), TTL.fillerPool, photos);
+          await persistPhotoSet(fillerKey(pool), photos);
           console.log(`[cluster] filler pool ${pool}: ${photos.length} photos`);
         }
       }
-    }
-    // Eureka explainers are authored content, not stored stories: each gets
-    // one photo by prize field, kept in KV for the pages to read.
-    if (isPexelsConfigured()) {
+
       const { eurekaArticles, eurekaCoverKey, eurekaCoverQueries } = await import(
         "@/lib/content/authored"
       );
-      for (const a of eurekaArticles()) {
-        if (await cacheGet(eurekaCoverKey(a.id))) continue;
+      const eureka = eurekaArticles();
+      const freshEureka = await freshPhotoSetKeys(
+        eureka.map((a) => eurekaCoverKey(a.id)),
+        TTL.eurekaCover,
+      );
+      for (const a of eureka) {
+        if (freshEureka.has(eurekaCoverKey(a.id))) continue;
         for (const q of eurekaCoverQueries(a.url)) {
           const [photo] = await searchPexelsPhotos(q, String(a.id), usedCovers, 1);
           if (!photo) continue;
-          await cachePut(eurekaCoverKey(a.id), TTL.eurekaCover, photo);
+          await persistPhotoSet(eurekaCoverKey(a.id), [
+            { url: photo.url, credit: photo.credit, creditUrl: photo.creditUrl },
+          ]);
           usedCovers.add(photo.url);
           coversWritten += 1;
           break;

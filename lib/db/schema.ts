@@ -343,6 +343,20 @@ export const videoPlaylists = pgTable("video_playlists", {
 });
 
 /**
+ * Stock photo sets the pages draw on (owner request, 2026-11-20: no blank
+ * cards): a filler pool per section ("filler:markets", "filler:gcc", …) and
+ * one cover per authored Eureka explainer ("eureka:<id>"). Written by the
+ * cluster job from Pexels; pages only read. References only (URL + credit).
+ */
+export const photoSets = pgTable("photo_sets", {
+  key: text("key").primaryKey(),
+  photos: jsonb("photos")
+    .$type<{ url: string; credit: string; creditUrl: string }[]>()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Mizaan Originals — broad, AI-written overview pieces that lead the homepage
  * (owner request, 2026-11-20). ORIGINAL prose synthesised by the cluster job
  * from cited reports (never source text, §10); labelled AI-written in the UI.
