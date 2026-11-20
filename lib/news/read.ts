@@ -526,7 +526,11 @@ export async function readSectionSummaries(): Promise<{
   const clusters = await allClusters();
   const sections = loadSections().map((section) => {
     const inSection = clusters.filter((c) => c.section === section.id);
-    return { section, count: inSection.length, lead: inSection[0] ?? null };
+    // The card leads with the highest-ranked story that has a photo, so the
+    // section card shows a real image whenever one exists (owner request,
+    // 2026-11-20); otherwise the top story and its drawn cover.
+    const lead = inSection.find((c) => c.imageUrl) ?? inSection[0] ?? null;
+    return { section, count: inSection.length, lead };
   });
   const total = clusters.length;
   const nonFinancial = clusters.filter((c) => !sectionMeta(c.section).financial).length;

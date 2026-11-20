@@ -117,6 +117,13 @@ export const MACRO_SERIES_BUDGET_MS = 35_000;
 
 /** Extra cover photos per cluster run for Gulf stories outside the top slice. */
 export const GCC_COVERS_PER_RUN = 12;
+/**
+ * Cover photos per cluster run for the remaining ranked stories (outside the
+ * top slice and the Gulf band) that still show the drawn fallback — section
+ * pages and lists use these (owner request, 2026-11-20: no blank cards).
+ * Pexels searches are cached for 7 days, so repeats cost no quota.
+ */
+export const COVER_BACKFILL_PER_RUN = 16;
 /** Extra illustrative photos on a story page, beside its cover (owner request, 2026-11-19). */
 export const GALLERY_SIZE = 2;
 /** Stories that already have a cover get their gallery a few per run. */
@@ -633,6 +640,36 @@ export async function clusterTask(): Promise<JobSummary> {
           )
         )
           coversWritten += 1;
+      }
+    }
+    // Every other ranked story still on the drawn fallback gets a photo too,
+    // newest first, a few per run (owner request, 2026-11-20).
+    if (isPexelsConfigured()) {
+      const rest = ranked
+        .slice(top.length)
+        .sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime));
+      const haveRestCover = await existingClusterCovers(rest.map((c) => c.slug));
+      let left = COVER_BACKFILL_PER_RUN;
+      for (const c of rest) {
+        if (left <= 0) break;
+        if (haveRestCover.has(c.slug)) continue;
+        const dek = dekById.get(c.primaryId) ?? null;
+        const section = classifySection({
+          title: c.title,
+          dek,
+          topics: c.topics,
+          tickers: c.tickers,
+          sourceId: sourceById.get(c.primaryId) ?? null,
+        });
+        if (!shown(section)) continue;
+        left -= 1;
+        const extra =
+          gccPlace(regionOfCluster(c, dek)) ??
+          c.entities[0] ??
+          c.tickers[0] ??
+          c.topics[0]?.replace(/_/g, " ") ??
+          "";
+        if (await writeCover(c.slug, coverQueries(section, extra))) coversWritten += 1;
       }
     }
     // Stories that already had a cover before galleries existed get their extra
