@@ -4,8 +4,9 @@ name: cluster
 # all-MiniLM-L6-v2, clusters within a rolling window, ranks, and generates
 # computed recaps — all writing directly to Postgres.
 on:
-  schedule:
-    - cron: "*/20 * * * *"
+  # Scheduling moved to pipeline.yml (2026-11-20): GitHub dropped most of these
+  # scheduled starts. Kept for manual runs; avoid starting one while pipeline.yml
+  # is mid-cycle.
   workflow_dispatch:
 
 concurrency:
