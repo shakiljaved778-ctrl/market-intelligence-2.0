@@ -518,3 +518,175 @@ sources:
     trust_score: 52
     license_note: Headline + dek + link only under RSS syndication; body never stored; link-out to source. Verify terms before enabling.
     active: false # placeholder — set a real, terms-checked feed before enabling (§6, §10)
+
+  # --- Probe round 6 (2026-11-25, owner request "add more contents"; probe run
+  # 45690600999): robots allow, HTTP 200, all items dated, newest within days. ---
+  - id: conversation-us-health
+    name: The Conversation — Health
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/us/health/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: health
+    allowed_sections: [health, science]
+  - id: conversation-us-environment
+    name: The Conversation — Environment + Energy
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/us/environment/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: science
+    allowed_sections: [science, economy, health]
+  - id: conversation-us-arts
+    name: The Conversation — Arts + Culture
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/us/arts/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: entertainment
+    allowed_sections: [entertainment]
+  - id: conversation-ca-business
+    name: The Conversation — Canada Business + Economy
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/ca/business/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate, crypto, technology]
+  - id: conversation-africa-business
+    name: The Conversation — Africa Business + Economy
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/africa/business/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate, crypto, technology]
+  - id: boc-press
+    name: Bank of Canada — Press releases
+    homepage: https://www.bankofcanada.ca
+    feed_url: https://www.bankofcanada.ca/content_type/press-releases/feed/
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 97
+    license_note: Official central-bank press releases (primary source); headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 6, 2026-11-25
+    default_section: economy
+    allowed_sections: [economy, markets]
+  - id: rbi-press
+    name: Reserve Bank of India — Press releases
+    homepage: https://www.rbi.org.in
+    feed_url: https://www.rbi.org.in/pressreleases_rss.xml
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 96
+    license_note: Official central-bank press releases (primary source); headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets]
+  - id: snb-press
+    name: Swiss National Bank — Press releases
+    homepage: https://www.snb.ch
+    feed_url: https://www.snb.ch/public/rss/en/pressrel
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 97
+    license_note: Official central-bank press releases (primary source); headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 6, 2026-11-25
+    default_section: economy
+    allowed_sections: [economy, markets]
+  - id: wto-news
+    name: World Trade Organization — News
+    homepage: https://www.wto.org
+    feed_url: https://www.wto.org/library/rss/latest_news_e.xml
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 95
+    license_note: International-organisation news releases (primary source); headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 6, 2026-11-25
+    default_section: economy
+    allowed_sections: [economy, markets, world]
+  - id: un-news-economy
+    name: UN News — Economic development
+    homepage: https://news.un.org
+    feed_url: https://news.un.org/feed/subscribe/en/news/topic/economic-development/feed/rss.xml
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 92
+    license_note: United Nations public-information news; headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, world, technology, health, science]
+  - id: un-news-climate
+    name: UN News — Climate and environment
+    homepage: https://news.un.org
+    feed_url: https://news.un.org/feed/subscribe/en/news/topic/climate-change/feed/rss.xml
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 92
+    license_note: United Nations public-information news; headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 6, 2026-11-25
+    max_items_per_run: 6
+    default_section: science
+    allowed_sections: [science, world, economy]
+  - id: qna-sport-international
+    name: Qatar News Agency — Sport (international)
+    homepage: https://www.qna.org.qa
+    feed_url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-International
+    kind: rss
+    region: QA
+    tier: wire
+    trust_score: 90
+    license_note: State news agency RSS published for syndication; headline + dek + link only, attributed.
+    active: true # probe round 6, 2026-11-25 (0 of 50 items excluded)
+    max_items_per_run: 12
+    default_section: sports
+    allowed_sections: [sports]
+
+  # Feed works (probe round 6) but COMMERCIAL: listed OFF until the owner has
+  # read and approved the publisher's terms for headline + dek + link use.
+  - id: the-national-business
+    name: The National (UAE) — Business
+    homepage: https://www.thenationalnews.com
+    feed_url: https://www.thenationalnews.com/arc/outboundfeeds/rss/category/business/?outputType=xml
+    kind: rss
+    region: AE
+    tier: outlet
+    trust_score: 80
+    license_note: Commercial publisher; headline + dek + link only. Terms must be confirmed by the owner before enabling.
+    active: false
+    max_items_per_run: 8
+    default_section: markets
+    allowed_sections: [markets, economy, realestate, technology]
