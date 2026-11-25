@@ -84,8 +84,9 @@
 #   conversation-us-science, esa-space-science, fdic-press   HTTP 404.
 #   qatar-tribune-business             robots.txt DISALLOWS the RSS path.
 #   boj-whatsnew                       mostly statistical notices — skipped.
-#   the-national-business              feed OK; commercial, listed OFF pending
-#                                      the owner's terms approval.
+#   the-national-business              feed OK but its RSS terms allow PERSONAL
+#                                      use only — kept OFF (needs written
+#                                      permission for a public site).
 #   aawsat-english                     feed OK but commercial and mostly
 #                                      regional politics — not listed.
 # None of the skipped sources is scraped: without a feed or a published API, a

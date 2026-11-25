@@ -685,8 +685,8 @@ sources:
     region: AE
     tier: outlet
     trust_score: 80
-    license_note: Commercial publisher; headline + dek + link only. Terms must be confirmed by the owner before enabling.
-    active: false
+    license_note: Commercial publisher. Its RSS page limits the feeds to PERSONAL use; commercial use needs written permission from The National (contact on its RSS-feeds page). Do not enable without that permission.
+    active: false # decided 2026-11-25 (owner delegated): RSS terms are personal-use only
     max_items_per_run: 8
     default_section: markets
     allowed_sections: [markets, economy, realestate, technology]
