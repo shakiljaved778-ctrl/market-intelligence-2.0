@@ -529,3 +529,64 @@ candidates:
     name: Qatar Tribune — Business (commercial)
     url: https://www.qatar-tribune.com/rss
     region: QA
+  # --- Round 7 (2026-11-25, owner: "continue" adding content): more
+  # same-terms Conversation editions, Asia-Pacific and European central banks,
+  # US financial regulators, and open economics blogs. Gulf commercial outlets
+  # are not probed: their RSS terms (The National; Arab News group) restrict
+  # feeds to personal use. ---
+  - id: conversation-uk-health
+    name: The Conversation — Health (UK)
+    url: https://theconversation.com/uk/health/articles.atom
+    region: GLOBAL
+  - id: conversation-uk-environment
+    name: The Conversation — Environment (UK)
+    url: https://theconversation.com/uk/environment/articles.atom
+    region: GLOBAL
+  - id: conversation-uk-arts
+    name: The Conversation — Arts + Culture (UK)
+    url: https://theconversation.com/uk/arts/articles.atom
+    region: GLOBAL
+  - id: conversation-uk-technology
+    name: The Conversation — Science + Technology (UK)
+    url: https://theconversation.com/uk/technology/articles.atom
+    region: GLOBAL
+  - id: conversation-au-health
+    name: The Conversation — Health (Australia)
+    url: https://theconversation.com/au/health/articles.atom
+    region: GLOBAL
+  - id: conversation-au-environment
+    name: The Conversation — Environment (Australia)
+    url: https://theconversation.com/au/environment/articles.atom
+    region: GLOBAL
+  - id: hkma-press
+    name: Hong Kong Monetary Authority — Press releases
+    url: https://www.hkma.gov.hk/eng/other-information/rss/rss_press-release.xml
+    region: GLOBAL
+  - id: rbnz-news
+    name: Reserve Bank of New Zealand — News
+    url: https://www.rbnz.govt.nz/feeds/news
+    region: GLOBAL
+  - id: bundesbank-press
+    name: Deutsche Bundesbank — Press releases
+    url: https://www.bundesbank.de/service/rss/en/633306/feed.rss
+    region: GLOBAL
+  - id: cfpb-newsroom
+    name: U.S. CFPB — Newsroom
+    url: https://www.consumerfinance.gov/about-us/newsroom/feed/
+    region: US
+  - id: finra-news
+    name: FINRA — News releases
+    url: https://www.finra.org/rss/news-releases
+    region: US
+  - id: fred-blog
+    name: St. Louis Fed — FRED Blog
+    url: https://fredblog.stlouisfed.org/feed/
+    region: US
+  - id: worldbank-blogs
+    name: World Bank — Blogs
+    url: https://blogs.worldbank.org/en/rss.xml
+    region: GLOBAL
+  - id: newyorkfed-press
+    name: Federal Reserve Bank of New York — Press releases
+    url: https://www.newyorkfed.org/medialibrary/media/rss/press-releases.xml
+    region: US
