@@ -434,3 +434,84 @@ candidates:
     name: Federal Reserve — videos feed
     url: https://www.federalreserve.gov/feeds/videos.xml
     region: US
+  # --- Round 6 (2026-11-25, owner request "add more contents"): more free,
+  # dated feeds — same-terms Conversation sections for the non-finance
+  # verticals, more central banks and global institutions, more QNA
+  # non-political categories, and Gulf business outlets (commercial: probed
+  # only; they stay OFF until the owner approves their terms). ---
+  - id: conversation-us-health
+    name: The Conversation — Health (US)
+    url: https://theconversation.com/us/health/articles.atom
+    region: GLOBAL
+  - id: conversation-us-environment
+    name: The Conversation — Environment (US)
+    url: https://theconversation.com/us/environment/articles.atom
+    region: GLOBAL
+  - id: conversation-us-arts
+    name: The Conversation — Arts + Culture (US)
+    url: https://theconversation.com/us/arts/articles.atom
+    region: GLOBAL
+  - id: conversation-us-science
+    name: The Conversation — Science (US)
+    url: https://theconversation.com/us/science/articles.atom
+    region: GLOBAL
+  - id: conversation-ca-business
+    name: The Conversation — Canada Business + Economy
+    url: https://theconversation.com/ca/business/articles.atom
+    region: GLOBAL
+  - id: conversation-africa-business
+    name: The Conversation — Africa Business + Economy
+    url: https://theconversation.com/africa/business/articles.atom
+    region: GLOBAL
+  - id: boc-press
+    name: Bank of Canada — Press releases
+    url: https://www.bankofcanada.ca/content_type/press-releases/feed/
+    region: GLOBAL
+  - id: rbi-press
+    name: Reserve Bank of India — Press releases
+    url: https://www.rbi.org.in/pressreleases_rss.xml
+    region: GLOBAL
+  - id: snb-press
+    name: Swiss National Bank — Press releases
+    url: https://www.snb.ch/public/en/rss/pressrel
+    region: GLOBAL
+  - id: boj-whatsnew
+    name: Bank of Japan — What's new
+    url: https://www.boj.or.jp/en/rss/whatsnew.xml
+    region: GLOBAL
+  - id: wto-news
+    name: World Trade Organization — Latest news
+    url: https://www.wto.org/library/rss/latest_news_e.xml
+    region: GLOBAL
+  - id: un-news-economy
+    name: UN News — Economic development
+    url: https://news.un.org/feed/subscribe/en/news/topic/economic-development/feed/rss.xml
+    region: GLOBAL
+  - id: un-news-climate
+    name: UN News — Climate and environment
+    url: https://news.un.org/feed/subscribe/en/news/topic/climate-change/feed/rss.xml
+    region: GLOBAL
+  - id: esa-space-science
+    name: European Space Agency — Space science
+    url: https://www.esa.int/rssfeed/Our_Activities/Space_Science
+    region: GLOBAL
+  - id: fdic-press
+    name: U.S. FDIC — Press releases
+    url: https://www.fdic.gov/news/press-releases/rss.xml
+    region: US
+  - id: qna-sport-international
+    name: Qatar News Agency — Sport (international)
+    url: https://www.qna.org.qa/en/Pages/RSS-Feeds/Sport-International
+    region: QA
+  - id: the-national-business
+    name: The National (UAE) — Business (commercial)
+    url: https://www.thenationalnews.com/arc/outboundfeeds/rss/category/business/?outputType=xml
+    region: AE
+  - id: aawsat-english
+    name: Asharq Al-Awsat (English) (commercial)
+    url: https://english.aawsat.com/feed
+    region: SA
+  - id: qatar-tribune-business
+    name: Qatar Tribune — Business (commercial)
+    url: https://www.qatar-tribune.com/rss
+    region: QA
