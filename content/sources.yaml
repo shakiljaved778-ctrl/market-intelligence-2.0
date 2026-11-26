@@ -675,6 +675,126 @@ sources:
     default_section: sports
     allowed_sections: [sports]
 
+  # --- Probe round 7 (2026-11-25, run 45700040358): robots allow, HTTP 200,
+  # all items dated, fresh. ---
+  - id: conversation-uk-health
+    name: The Conversation — Health (UK)
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/uk/health/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: health
+    allowed_sections: [health, science]
+  - id: conversation-uk-environment
+    name: The Conversation — Environment (UK)
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/uk/environment/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: science
+    allowed_sections: [science, economy, health]
+  - id: conversation-uk-arts
+    name: The Conversation — Arts + Culture (UK)
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/uk/arts/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: entertainment
+    allowed_sections: [entertainment]
+  - id: conversation-uk-technology
+    name: The Conversation — Science + Technology (UK)
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/uk/technology/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: technology
+    allowed_sections: [technology, science]
+  - id: conversation-au-health
+    name: The Conversation — Health (Australia)
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/au/health/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: health
+    allowed_sections: [health, science]
+  - id: conversation-au-environment
+    name: The Conversation — Environment + Energy (Australia)
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/au/environment/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: science
+    allowed_sections: [science, economy, health]
+  - id: rbnz-news
+    name: Reserve Bank of New Zealand — News
+    homepage: https://www.rbnz.govt.nz
+    feed_url: https://www.rbnz.govt.nz/feeds/news
+    kind: rss
+    region: GLOBAL
+    tier: primary
+    trust_score: 96
+    license_note: Official central-bank news releases (primary source); headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets]
+  - id: cfpb-newsroom
+    name: U.S. CFPB — Newsroom
+    homepage: https://www.consumerfinance.gov
+    feed_url: https://www.consumerfinance.gov/about-us/newsroom/feed/
+    kind: rss
+    region: US
+    tier: regulator
+    trust_score: 95
+    license_note: U.S. government work, public domain; headline + dek + link only, attributed and linked.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 6
+    default_section: economy
+    allowed_sections: [economy, markets, realestate]
+  - id: fred-blog
+    name: St. Louis Fed — FRED Blog
+    homepage: https://fred.stlouisfed.org
+    feed_url: https://fred.stlouisfed.org/blog/rss/
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 94
+    license_note: Federal Reserve Bank of St. Louis publication (primary source); headline + dek + link only, attributed and linked; no body stored.
+    active: true # probe round 7, 2026-11-25
+    max_items_per_run: 4
+    default_section: economy
+    allowed_sections: [economy, markets]
+
   # Feed works (probe round 6) but COMMERCIAL: listed OFF until the owner has
   # read and approved the publisher's terms for headline + dek + link use.
   - id: the-national-business

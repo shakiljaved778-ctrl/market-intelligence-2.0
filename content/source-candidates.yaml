@@ -89,6 +89,13 @@
 #                                      permission for a public site).
 #   aawsat-english                     feed OK but commercial and mostly
 #                                      regional politics — not listed.
+# Probe round 7, 2026-11-25 (run 45700040358):
+#   conversation-uk-health / -environment / -arts / -technology,
+#   conversation-au-health / -environment, rbnz-news, cfpb-newsroom, fred-blog
+#                                      ADDED — robots allow, HTTP 200, dated, fresh.
+#   hkma-press, bundesbank-press       feeds OK but mostly bond tender / auction
+#                                      notices — skipped (like boj-whatsnew).
+#   finra-news, worldbank-blogs, newyorkfed-press   HTTP 404.
 # None of the skipped sources is scraped: without a feed or a published API, a
 # source needs either a licence or a terms-of-use check for HTML collection,
 # which is the owner's decision.
