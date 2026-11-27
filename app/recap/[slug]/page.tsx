@@ -40,7 +40,7 @@ export default async function RecapPage({ params }: Params) {
         ) : null}
         <p className="text-text-low mt-1 text-[11px]">
           Template {recap.output.templateVersion} · reproducible from stored inputs ·{" "}
-          <Link href="/methodology" className="ours">
+          <Link href="/methodology" className="ours underline underline-offset-2">
             methodology
           </Link>
         </p>

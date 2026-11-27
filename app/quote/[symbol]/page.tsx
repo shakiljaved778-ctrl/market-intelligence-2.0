@@ -322,7 +322,7 @@ export default async function QuotePage({ params }: Params) {
               </p>
               <p className="text-text-low relative mt-3 text-[11px]">
                 Computed from stored daily closes ·{" "}
-                <a href="/methodology" className="ours">
+                <a href="/methodology" className="ours underline underline-offset-2">
                   methodology
                 </a>
               </p>
