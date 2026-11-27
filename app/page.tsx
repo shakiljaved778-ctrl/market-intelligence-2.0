@@ -15,7 +15,6 @@ import { getDisplayCurrency } from "@/lib/currency/server";
 import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/read";
 import { pickFeatured } from "@/lib/news/featured";
 import { liveTicker } from "@/lib/news/live";
-import { HeadlineStack } from "@/components/news/HeadlineStack";
 import { LiveTicker } from "@/components/news/LiveTicker";
 import { OriginalCard } from "@/components/news/OriginalCard";
 import { readLatestOriginal } from "@/lib/news/originals";
@@ -161,11 +160,7 @@ export default async function BoardPage() {
       top.finance?.imageUrl,
     ].filter((u): u is string => Boolean(u)),
   );
-  // Top headlines (owner request, 2026-11-27): the next five ranked stories
-  // after the top three, as a bold stacked list; the rest of the page skips them.
-  const ranked = clusters.filter((c) => !topSlugs.has(c.slug));
-  const headlineStack = ranked.slice(0, 5);
-  const rest = ranked.slice(headlineStack.length);
+  const rest = clusters.filter((c) => !topSlugs.has(c.slug));
   const pick = pickFeatured(clusters);
   const featured = pick && topSlugs.has(pick.cluster.slug) ? null : pick;
   // Live news ticker: the editor-flagged live story, then the newest headlines.
@@ -217,8 +212,6 @@ export default async function BoardPage() {
         </div>
 
         <LiveTicker items={live} now={now} />
-
-        <HeadlineStack stories={headlineStack} />
 
         {/* Top stories: three broad headlines in the card format. */}
         {original || top.global || top.gcc || top.finance ? (
