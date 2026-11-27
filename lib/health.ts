@@ -117,39 +117,62 @@ async function readLatest(): Promise<Record<string, string | null> | null> {
   return { news, equities, crypto, fx, energy, video };
 }
 
+/**
+ * The last run of each job, from the newest 200 rows only. A DISTINCT ON over
+ * the whole job log has no index to use and took over 4 s in production
+ * (2026-11-27), timing out every health check.
+ */
 async function readJobs(): Promise<HealthReport["jobs"]> {
   const db = getDb();
   if (!db) return [];
   const rows = await db
-    .selectDistinctOn([jobRuns.job], {
+    .select({
       job: jobRuns.job,
       finishedAt: jobRuns.finishedAt,
       outcome: jobRuns.outcome,
     })
     .from(jobRuns)
-    .orderBy(jobRuns.job, desc(jobRuns.startedAt));
-  return rows.map((r) => ({
-    job: r.job,
-    finishedAt: iso(r.finishedAt),
-    outcome: r.outcome ?? null,
-  }));
+    .orderBy(desc(jobRuns.id))
+    .limit(200);
+  const seen = new Set<string>();
+  const out: HealthReport["jobs"] = [];
+  for (const r of rows) {
+    if (seen.has(r.job)) continue;
+    seen.add(r.job);
+    out.push({ job: r.job, finishedAt: iso(r.finishedAt), outcome: r.outcome ?? null });
+  }
+  return out;
 }
 
-/** Health with a hard time limit, so a slow database cannot hang a page. */
-export async function readHealth(now: Date = new Date()): Promise<HealthReport> {
+/** A promise's value, or `fallback` once `ms` has passed. */
+function within<T>(p: Promise<T>, ms: number, fallback: T, label: string): Promise<T> {
+  return Promise.race([
+    p.catch((err: unknown) => {
+      console.error(`[health] ${label} failed:`, err);
+      return fallback;
+    }),
+    new Promise<T>((resolve) =>
+      setTimeout(() => {
+        console.error(`[health] ${label} timed out after ${ms} ms`);
+        resolve(fallback);
+      }, ms),
+    ),
+  ]);
+}
+
+/**
+ * Health with hard time limits, so a slow database cannot hang a page. The
+ * job log is read only for the protected detail view (`withJobs`).
+ */
+export async function readHealth(
+  now: Date = new Date(),
+  opts: { withJobs?: boolean } = {},
+): Promise<HealthReport> {
   const checkedAt = now.toISOString();
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000));
-  let latest: Record<string, string | null> | null = null;
-  let jobs: HealthReport["jobs"] = [];
-  try {
-    const result = await Promise.race([
-      Promise.all([readLatest(), readJobs().catch(() => [])]),
-      timeout,
-    ]);
-    if (result) [latest, jobs] = result;
-  } catch {
-    latest = null;
-  }
+  const [latest, jobs] = await Promise.all([
+    within(readLatest(), 5000, null, "latest data"),
+    opts.withJobs ? within(readJobs(), 3000, [], "job log") : Promise.resolve([]),
+  ]);
   if (!latest) {
     return { status: "down", checkedAt, db: false, pipelines: [], jobs: [] };
   }

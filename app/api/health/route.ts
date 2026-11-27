@@ -14,10 +14,10 @@ export const dynamic = "force-dynamic";
  * alerts on a real outage.
  */
 export async function GET(request: Request): Promise<NextResponse> {
-  const report = await readHealth();
+  const authed = request.headers.has("authorization") && checkCronAuth(request).ok;
+  const report = await readHealth(new Date(), { withJobs: authed });
   const httpStatus = report.status === "down" ? 503 : 200;
   const headers = { "Cache-Control": "no-store" };
-  const authed = request.headers.has("authorization") && checkCronAuth(request).ok;
   if (authed) return NextResponse.json(report, { status: httpStatus, headers });
   return NextResponse.json(
     { status: report.status, checkedAt: report.checkedAt },
