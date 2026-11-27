@@ -267,7 +267,9 @@ export function CoverArt({
   const photo = imageUrl ?? null;
 
   return (
-    <div className={`relative overflow-hidden ${className ?? ""}`}>
+    // Decorative: the card beside it already names the story and section, so
+    // screen readers skip the cover's own label text.
+    <div aria-hidden className={`relative overflow-hidden ${className ?? ""}`}>
       {/* Base layer: on-brand generative art (shows if the photo fails). */}
       <GenerativeArt
         meta={meta}

@@ -62,6 +62,7 @@ export default async function SectionsPage() {
                 section={s.section.id}
                 seed={s.lead?.slug ?? s.section.id}
                 imageUrl={s.lead?.imageUrl ?? null}
+                label={false}
                 className="h-full w-full"
               />
             </div>
