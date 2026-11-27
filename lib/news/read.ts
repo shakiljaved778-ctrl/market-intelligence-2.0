@@ -26,7 +26,7 @@ import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
 import { computeImportance, type RankContext } from "@/lib/curation/rank";
 import { loadSources } from "@/lib/curation/config";
 import { excludedTermsIn, isExcluded } from "@/lib/curation/exclusions";
-import { classifyRegion, type Region } from "@/lib/curation/region";
+import { classifyRegion, isGccRegion, type Region } from "@/lib/curation/region";
 import { getQuotes } from "@/lib/market/service";
 import {
   classifySection,
@@ -511,12 +511,15 @@ export interface WireFilters {
   topic?: string;
   ticker?: string;
   section?: string;
+  /** "gcc": stories about a Gulf country or the GCC as a whole. */
+  region?: "gcc";
 }
 
 export async function readWire(filters: WireFilters = {}): Promise<WireCluster[]> {
   const clusters = await allClusters();
   return clusters.filter((c) => {
     if (filters.section && c.section !== filters.section) return false;
+    if (filters.region === "gcc" && !isGccRegion(c.region)) return false;
     if (filters.topic && !c.topics.includes(filters.topic)) return false;
     if (filters.ticker && !c.tickers.includes(filters.ticker.toUpperCase()))
       return false;
