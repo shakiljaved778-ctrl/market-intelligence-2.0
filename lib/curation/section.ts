@@ -161,6 +161,13 @@ export function scoreSections(input: SectionInput): Map<string, number> {
   return scores;
 }
 
+/** True when Markets scores only because the story names a listed company. */
+function tickerOnlyMarkets(input: SectionInput): boolean {
+  if ((input.tickers ?? []).length === 0) return false;
+  const withoutTickers = scoreSections({ ...input, tickers: [] });
+  return (withoutTickers.get("markets") ?? 0) <= 0;
+}
+
 /**
  * Deterministic section assignment — see the file header for the rules.
  * Ties are broken in favour of the non-financial section (a genuine tech or
@@ -188,6 +195,14 @@ export function classifySection(input: SectionInput): string {
       best = s;
       bestScore = score;
     }
+  }
+  // A named company alone does not make a story market news (owner review,
+  // 2026-11-27): "Amazon workers … union contract", "What is Instagram poetry?"
+  // and an essay on Nvidia's board landed in Markets on the ticker match alone.
+  // When Markets wins only because of a ticker, and the source has no section
+  // rule of its own (financial feeds do), the story goes to the general bucket.
+  if (best?.id === "markets" && !rule && tickerOnlyMarkets(input)) {
+    return UNPLACED_SECTION;
   }
   if (best) return best.id;
   if (rule?.defaultSection) return rule.defaultSection;

@@ -8,7 +8,7 @@ import Link from "next/link";
  * `score` is the cluster importanceScore (0–100). Segments fill in fifths.
  */
 const TOOLTIP =
-  "Signal score (0–100), computed deterministically from distinct sources, source tier, the biggest bound-instrument move and whether a primary source is present. Higher = more corroborated, market-moving coverage.";
+  "Importance score (0–100), computed deterministically from distinct sources, source tier, the biggest bound-instrument move and whether a primary source is present. Higher = more corroborated, market-moving coverage.";
 
 export function SignalScore({
   score,
@@ -33,7 +33,12 @@ export function SignalScore({
         ◆
       </span>
       {showValue ? (
-        <span className="tnum text-[13px] leading-none font-medium">{clamped}</span>
+        // Labelled on screen (owner review, 2026-11-27): a bare "◆ 78" read as
+        // noise; "Importance 78/100" says what the number is.
+        <span className="text-[12px] leading-none">
+          Importance <span className="tnum text-[13px] font-medium">{clamped}</span>
+          <span className="tnum opacity-70">/100</span>
+        </span>
       ) : null}
       <span
         aria-hidden
@@ -59,7 +64,7 @@ export function SignalScore({
       <Link
         href="/methodology"
         title={TOOLTIP}
-        aria-label={`Signal score ${clamped} of 100. How it's computed`}
+        aria-label={`Importance ${clamped} of 100. How it's computed`}
         className="focus-visible:outline-brand rounded-[2px]"
       >
         {body}

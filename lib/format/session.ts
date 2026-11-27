@@ -2,7 +2,8 @@
  * Per-exchange trading session logic. Uses IANA time zones via Intl so DST is
  * handled correctly. The state describes the EXCHANGE's regular hours — whether
  * it is open right now — independently of how delayed our own feed for it is
- * (`delayed` carries that). Public holidays are not modelled; the UI says so.
+ * (`delayed` carries that). Exchange holidays and early closes are modelled
+ * from HOLIDAYS below (2026-11-27).
  */
 export type SessionState = "open" | "pre" | "post" | "closed";
 
@@ -67,6 +68,69 @@ const EXCHANGES: Record<string, ExchangeHours> = {
   CRYPTO: { tz: "UTC", open: [0, 0], close: [23, 59], weekend: [], alwaysOpen: true },
 };
 
+/**
+ * Exchange holidays and early closes, by the exchange's LOCAL date.
+ *
+ * Only dates fixed in advance are listed: the published NYSE/Nasdaq calendar
+ * and fixed-date national days. Eid al-Fitr and Eid al-Adha closures depend on
+ * the moon sighting and each exchange announces them by circular — add them
+ * here when the circular is out; never estimate them.
+ */
+export interface ExchangeHoliday {
+  /** Local date, YYYY-MM-DD. */
+  date: string;
+  name: string;
+  /** Early close (half day) at this local time; absent = closed all day. */
+  closeAt?: [number, number];
+}
+
+const US_HOLIDAYS: ExchangeHoliday[] = [
+  { date: "2026-11-26", name: "Thanksgiving" },
+  { date: "2026-11-27", name: "Day after Thanksgiving", closeAt: [13, 0] },
+  { date: "2026-12-24", name: "Christmas Eve", closeAt: [13, 0] },
+  { date: "2026-12-25", name: "Christmas Day" },
+  { date: "2027-01-01", name: "New Year's Day" },
+  { date: "2027-01-18", name: "Martin Luther King Jr. Day" },
+  { date: "2027-02-15", name: "Washington's Birthday" },
+  { date: "2027-03-26", name: "Good Friday" },
+  { date: "2027-05-31", name: "Memorial Day" },
+  { date: "2027-06-18", name: "Juneteenth" },
+  { date: "2027-07-05", name: "Independence Day (observed)" },
+  { date: "2027-09-06", name: "Labor Day" },
+  { date: "2027-11-25", name: "Thanksgiving" },
+  { date: "2027-11-26", name: "Day after Thanksgiving", closeAt: [13, 0] },
+  { date: "2027-12-24", name: "Christmas (observed)" },
+];
+
+const UAE_HOLIDAYS: ExchangeHoliday[] = [
+  { date: "2026-12-02", name: "UAE National Day" },
+  { date: "2026-12-03", name: "UAE National Day" },
+  { date: "2027-01-01", name: "New Year's Day" },
+  { date: "2027-12-02", name: "UAE National Day" },
+  { date: "2027-12-03", name: "UAE National Day" },
+];
+
+export const HOLIDAYS: Record<string, ExchangeHoliday[]> = {
+  NASDAQ: US_HOLIDAYS,
+  NYSE: US_HOLIDAYS,
+  QSE: [
+    { date: "2026-12-18", name: "Qatar National Day" },
+    { date: "2027-12-18", name: "Qatar National Day" },
+  ],
+  TADAWUL: [
+    { date: "2027-02-22", name: "Founding Day" },
+    { date: "2027-09-23", name: "Saudi National Day" },
+  ],
+  DFM: UAE_HOLIDAYS,
+  ADX: UAE_HOLIDAYS,
+};
+
+function holidayOn(exchange: string, local: Local): ExchangeHoliday | null {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const date = `${local.year}-${pad(local.month)}-${pad(local.day)}`;
+  return HOLIDAYS[exchange]?.find((h) => h.date === date) ?? null;
+}
+
 interface Local {
   year: number;
   month: number;
@@ -112,13 +176,20 @@ export function sessionFor(
     return { state: "open", label: "Open 24/7", delayed: false };
   }
 
-  const { minutes, weekday } = localParts(hours.tz, now);
+  const local = localParts(hours.tz, now);
+  const { minutes, weekday } = local;
   const delayed = Boolean(hours.eodOnly);
   const openMin = hours.open[0] * 60 + hours.open[1];
-  const closeMin = hours.close[0] * 60 + hours.close[1];
+  const holiday = holidayOn(key, local);
+  const close = holiday?.closeAt ?? hours.close;
+  const closeMin = close[0] * 60 + close[1];
 
   if (hours.weekend.includes(weekday))
     return { state: "closed", label: "Closed · weekend", delayed };
+  if (holiday && !holiday.closeAt)
+    return { state: "closed", label: `Closed · ${holiday.name}`, delayed };
+  if (holiday && minutes >= openMin && minutes < closeMin)
+    return { state: "open", label: "Open · early close", delayed };
   if (minutes < openMin) return { state: "pre", label: "Before the open", delayed };
   if (minutes >= closeMin)
     return { state: "post", label: "Closed for the day", delayed };
@@ -139,9 +210,12 @@ export function marketCountdown(
   if (!hours || hours.alwaysOpen) {
     return { state: info.state, label: info.label, etaMin: null };
   }
-  const { minutes } = localParts(hours.tz, now);
+  const local = localParts(hours.tz, now);
+  const { minutes } = local;
   const openMin = hours.open[0] * 60 + hours.open[1];
-  const closeMin = hours.close[0] * 60 + hours.close[1];
+  const close =
+    holidayOn((exchange ?? "").toUpperCase(), local)?.closeAt ?? hours.close;
+  const closeMin = close[0] * 60 + close[1];
   if (info.state === "open")
     return { state: info.state, label: info.label, etaMin: closeMin - minutes };
   if (info.state === "pre")
@@ -192,7 +266,9 @@ export function sessionTimes(
   if (!hours || hours.alwaysOpen) return null;
   const l = localParts(hours.tz, now);
   const openMin = hours.open[0] * 60 + hours.open[1];
-  const closeMin = hours.close[0] * 60 + hours.close[1];
+  // An early close (half day) moves today's close.
+  const close = holidayOn((exchange ?? "").toUpperCase(), l)?.closeAt ?? hours.close;
+  const closeMin = close[0] * 60 + close[1];
   return {
     open: zonedToUtc(hours.tz, l.year, l.month, l.day, openMin),
     close: zonedToUtc(hours.tz, l.year, l.month, l.day, closeMin),

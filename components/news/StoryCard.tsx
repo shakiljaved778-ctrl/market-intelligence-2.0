@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { storyAgeLabel } from "@/lib/curation/freshness";
 import type { WireCluster } from "@/lib/news/read";
-import { relativeTime } from "@/lib/format/relative-time";
 import { CoverArt } from "./CoverArt";
 import { isGccRegion, regionLabel, type Region } from "@/lib/curation/region";
 
@@ -40,7 +40,7 @@ export function StoryCard({
 }) {
   const time = (
     <span className="text-ink-3" title={absolute(cluster.eventTime)}>
-      {relativeTime(cluster.eventTime)}
+      {storyAgeLabel(cluster.section, cluster.eventTime)}
     </span>
   );
   const sources = (

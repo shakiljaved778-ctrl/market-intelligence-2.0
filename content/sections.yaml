@@ -173,8 +173,7 @@ sections:
     financial: false
     hue: "#9c8f7a"
     glyph: wave
-    keywords:
-      [
+    keywords: [
         election,
         parliament,
         diplomatic,
@@ -187,6 +186,11 @@ sections:
         united nations,
         peace deal,
         coup,
+        # 2026-11-27: inter-government talks ("Turkiye and Russia Discuss Energy
+        # Cooperation", "Russia, Pakistan Sign Protocol on Trade, Economic
+        # Cooperation") were filed under Markets by their feed's default.
+        bilateral,
+        cooperation,
       ]
 
   - id: eureka

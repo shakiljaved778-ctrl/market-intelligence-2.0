@@ -29,15 +29,13 @@ export function InlineVideo({ playlist }: { playlist: OfficialPlaylist }) {
 
 /**
  * PURE: the playlists to place between stories — those with a known latest
- * video (a picture to show), starting after the ones the page already shows
- * elsewhere, so the first inline videos are not repeats.
+ * video (a picture to show), leaving out the first `alreadyShown` channels the
+ * page already shows elsewhere. It never wraps round to them (owner review,
+ * 2026-11-27: the Federal Reserve video appeared in both Watch and World).
  */
 export function inlinePlaylists(
   all: OfficialPlaylist[],
   alreadyShown = 0,
 ): OfficialPlaylist[] {
-  const withPicture = (p: OfficialPlaylist) => Boolean(p.latest);
-  return [...all.slice(alreadyShown), ...all.slice(0, alreadyShown)].filter(
-    withPicture,
-  );
+  return all.slice(alreadyShown).filter((p) => Boolean(p.latest));
 }

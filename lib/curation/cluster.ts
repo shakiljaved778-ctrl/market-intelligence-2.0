@@ -29,6 +29,17 @@ export const BOOST_TICKER = 0.3;
 export const BOOST_ENTITY = 0.3;
 export const BOOST_TOPIC = 0.1;
 export const BOOST_CAP = 0.45;
+/**
+ * Two reports that share NO ticker and NO specific entity merge only on a
+ * near-identical text (2026-11-27). The HashEmbedder's character trigrams give
+ * any two long English paragraphs a cosine of ~0.45–0.6 (common trigrams such
+ * as "the", "ing", "ion" dominate), so at 0.50 unrelated reports chained into
+ * one cluster: a Bank of England notice absorbed 13 unrelated reports (a
+ * Victorian election piece, raw milk, a Netflix review, French GDP, …) and led
+ * the homepage. Same-event coverage almost always shares a ticker or a named
+ * entity; without one, only a near-copy of the text counts.
+ */
+export const NO_EVIDENCE_THRESHOLD = 0.75;
 
 export interface ClusterInput {
   id: number;
@@ -159,7 +170,11 @@ export async function clusterArticles(
       cluster.embeddings.forEach((ce, j) => {
         const member = cluster.members[j] as ClusterInput;
         if (differentGulfRegion(article, member)) return;
-        const c = cosine(emb, ce) + boost(article, member);
+        const cos = cosine(emb, ce);
+        const b = boost(article, member);
+        // No shared ticker or specific entity: only a near-copy counts.
+        if (b === 0 && cos < NO_EVIDENCE_THRESHOLD) return;
+        const c = cos + b;
         // Same feed: count the pair only if it clears the higher bar.
         if (member.sourceId === article.sourceId && c < SAME_SOURCE_THRESHOLD) return;
         if (c > sim) sim = c;

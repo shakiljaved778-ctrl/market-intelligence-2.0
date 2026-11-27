@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { storyAgeLabel } from "@/lib/curation/freshness";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { dbSupersedingSlug } from "@/lib/db/queries/wire";
@@ -172,7 +173,9 @@ export default async function ClusterPage({ params }: Params) {
         <span className="text-signal-strong tnum">
           {cluster.sourceCount} {cluster.sourceCount === 1 ? "source" : "sources"}
         </span>
-        <span className="text-ink-3">{relativeTime(cluster.eventTime)}</span>
+        <span className="text-ink-3">
+          {storyAgeLabel(cluster.section, cluster.eventTime)}
+        </span>
         <div className="ml-auto">
           <ShareButtons title={cluster.title} />
         </div>

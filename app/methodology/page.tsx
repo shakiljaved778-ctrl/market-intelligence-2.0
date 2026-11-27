@@ -13,12 +13,14 @@ export const metadata = {
 
 export default function MethodologyPage() {
   return (
-    <Prose eyebrow="how mizaan works" title="Methodology" updated="12 November 2026">
+    <Prose eyebrow="how mizaan works" title="Methodology" updated="27 November 2026">
       <p>
         Mizaan is <strong>algorithmically curated market intelligence</strong>. The
         signal — clustering, ranking, entity extraction and the session recaps — is
-        computed <strong>deterministically</strong> from data we hold, with no model in
-        the loop. On top of that, each story carries an{" "}
+        computed <strong>deterministically</strong> from data we hold. No generative AI
+        model is involved: clustering compares headlines with a small text-similarity
+        function computed on our own servers (no outside model or service), and ranking
+        is the fixed formula below. On top of that, each story carries an{" "}
         <strong>AI-written summary</strong>: original prose synthesised from the
         story&rsquo;s facts and its cited sources, clearly labelled and never copied
         from source articles. Rankings are facts about coverage; summaries are AI
@@ -49,37 +51,68 @@ export default function MethodologyPage() {
         Every incoming headline is classified against committed dictionaries (tickers,
         entities, topics) and embedded locally. We then group headlines that describe
         the same event within a rolling 48-hour window, using semantic similarity plus a
-        boost when stories share the same tickers or entities. One central-bank decision
-        covered by nine outlets becomes <strong>one</strong> cluster, not nine. A
-        cluster&rsquo;s title is always the headline of its highest-trust source — we
-        never synthesise a title.
+        boost when stories share the same tickers or entities. Two reports merge only
+        when they share a ticker or a named entity, or their wording is nearly
+        identical. One central-bank decision covered by nine outlets becomes{" "}
+        <strong>one</strong> cluster, not nine. A cluster&rsquo;s title is always the
+        headline of its highest-trust source — we never synthesise a title.
       </p>
 
       <h2>How the importance score is calculated</h2>
-      <p>The 0–100 score is a documented, weighted formula:</p>
+      <p>The 0–100 score is a fixed, weighted formula. The weights are:</p>
       <ul>
         <li>
-          <strong>Distinct source count</strong> — how many independent outlets cover
-          the story. This is the single strongest signal, and we show it on every
-          cluster.
+          <strong>Distinct source count (40%)</strong> — how many independent outlets
+          cover the story, on a log scale. This is the single strongest signal, and we
+          show it on every cluster.
         </li>
         <li>
-          <strong>Source tier</strong> — regulators, central banks and primary sources
-          count for more than secondary outlets.
+          <strong>Source tier (20%)</strong> — regulators, central banks and primary
+          sources count 1.0, news wires 0.7 and other outlets 0.55.
         </li>
         <li>
-          <strong>Market impact</strong> — the size of the move in the instruments the
-          story concerns.
+          <strong>Market impact (25%)</strong> — the largest move among the instruments
+          the story concerns, scaled so that a 5% move counts in full.
         </li>
         <li>
-          <strong>Primary-source presence</strong> — a bonus when a regulator or central
-          bank is among the sources.
+          <strong>Primary-source presence (15%)</strong> — a bonus when a regulator or
+          central bank is among the sources.
         </li>
       </ul>
       <p>
-        The result is multiplied by a recency factor that decays with age but never
-        falls to zero, so heavily covered news doesn&rsquo;t vanish the moment it ages.
+        The result is multiplied by a recency factor that halves every 18 hours but
+        never falls below 18%, so heavily covered news doesn&rsquo;t vanish the moment
+        it ages.
       </p>
+
+      <h2>How often it updates</h2>
+      <ul>
+        <li>
+          <strong>News:</strong> every 30 minutes, around the clock — new headlines are
+          fetched, clustered and ranked in the same run.
+        </li>
+        <li>
+          <strong>US shares, index funds and crypto:</strong> every 15 minutes during
+          the US session (09:25–16:15 New York time), hourly otherwise. Prices are
+          delayed or end-of-day, as stated beside each one; they are not real-time.
+        </li>
+        <li>
+          <strong>Currencies:</strong> the European Central Bank&rsquo;s daily reference
+          rates, shown with their fixing date.
+        </li>
+        <li>
+          <strong>Economic series and energy prices:</strong> checked every 6 hours;
+          each shows the date of its latest official observation.
+        </li>
+        <li>
+          <strong>Official videos:</strong> each channel&rsquo;s newest upload, checked
+          every 6 hours.
+        </li>
+        <li>
+          <strong>Qatar Stock Exchange:</strong> prices come from TradingView&rsquo;s
+          widget, delayed by at least 15 minutes, and load in your browser.
+        </li>
+      </ul>
 
       <h2>What &ldquo;computed&rdquo; means</h2>
       <p>

@@ -5,6 +5,7 @@ import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BOARD_HEIGHT_CLASS, IndexBoard } from "@/components/market/IndexBoard";
+import { DataDelayedBanner } from "@/components/layout/DataDelayedBanner";
 import { TickerTape } from "@/components/market/TickerTape";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { getDisplayCurrency } from "@/lib/currency/server";
@@ -125,6 +126,10 @@ export default async function RootLayout({
             a slow read can never hold the whole page. */}
         <Suspense fallback={null}>
           <TickerTape />
+        </Suspense>
+        {/* Admits a stalled pipeline (lib/health.ts); absent when data is fresh. */}
+        <Suspense fallback={null}>
+          <DataDelayedBanner />
         </Suspense>
         <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
           {children}

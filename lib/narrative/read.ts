@@ -99,6 +99,7 @@ function demoRecaps(currency: DisplayCurrency): NamedRecap[] {
         breadth: {
           advancers: universe.filter((r) => r.changePct > 0).length,
           decliners: universe.filter((r) => r.changePct < 0).length,
+          unchanged: universe.filter((r) => r.changePct === 0).length,
         },
         topMover,
         weakestSector: worst?.sector ?? undefined,
