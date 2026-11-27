@@ -597,3 +597,33 @@ candidates:
     name: Federal Reserve Bank of New York — Press releases
     url: https://www.newyorkfed.org/medialibrary/media/rss/press-releases.xml
     region: US
+  # --- Round 8 (2026-11-27, pre-launch: the Crypto section had 2 stories).
+  # Regulators and open-licence feeds only: the Gulf virtual-asset regulators
+  # (Dubai VARA, ADGM's FSRA), the Central Bank of Bahrain, the IMF, and The
+  # Conversation's crypto topic (same CC BY-ND terms as its other feeds).
+  # Commercial crypto outlets (CoinDesk, Decrypt, The Block) are NOT probed:
+  # their terms need the owner's decision first. ---
+  - id: vara-news
+    name: Dubai Virtual Assets Regulatory Authority — News
+    url: https://www.vara.ae/en/news/
+    region: AE
+  - id: adgm-announcements
+    name: ADGM — Announcements (incl. FSRA)
+    url: https://www.adgm.com/media/announcements
+    region: AE
+  - id: cbb-press
+    name: Central Bank of Bahrain — Press releases
+    url: https://www.cbb.gov.bh/media-center/
+    region: BH
+  - id: imf-news
+    name: IMF — News
+    url: https://www.imf.org/en/News/rss?language=eng
+    region: GLOBAL
+  - id: conversation-crypto
+    name: The Conversation — Cryptocurrency topic
+    url: https://theconversation.com/topics/cryptocurrency-1574/articles.atom
+    region: GLOBAL
+  - id: conversation-bitcoin
+    name: The Conversation — Bitcoin topic
+    url: https://theconversation.com/topics/bitcoin-7349/articles.atom
+    region: GLOBAL
