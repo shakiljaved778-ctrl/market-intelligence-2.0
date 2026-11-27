@@ -89,6 +89,14 @@
 #                                      permission for a public site).
 #   aawsat-english                     feed OK but commercial and mostly
 #                                      regional politics — not listed.
+# Probe round 8, 2026-11-27 (run 46077183327) — crypto and Gulf regulators:
+#   vara-news, adgm-announcements   page loads, no feed (VARA: sitemap only).
+#   cbb-press                        HTTP 403 to automated requests — skipped.
+#   imf-news                         feed URL returns 404.
+#   conversation-crypto / -bitcoin   the numeric topic ids were wrong (they
+#                                    resolve to other topics) — replaced by
+#                                    the topic pages, so the probe lists the
+#                                    real feed links.
 # Probe round 7, 2026-11-25 (run 45700040358):
 #   conversation-uk-health / -environment / -arts / -technology,
 #   conversation-au-health / -environment, rbnz-news, cfpb-newsroom, fred-blog
@@ -621,9 +629,9 @@ candidates:
     region: GLOBAL
   - id: conversation-crypto
     name: The Conversation — Cryptocurrency topic
-    url: https://theconversation.com/topics/cryptocurrency-1574/articles.atom
+    url: https://theconversation.com/topics/cryptocurrency
     region: GLOBAL
   - id: conversation-bitcoin
     name: The Conversation — Bitcoin topic
-    url: https://theconversation.com/topics/bitcoin-7349/articles.atom
+    url: https://theconversation.com/topics/bitcoin
     region: GLOBAL
