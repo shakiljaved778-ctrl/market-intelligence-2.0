@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { canonical } from "@/lib/seo";
 import { isGccRegion, regionLabel } from "@/lib/curation/region";
@@ -14,11 +15,13 @@ import { getDisplayCurrency } from "@/lib/currency/server";
 import { readSectionSummaries, readWire, type WireCluster } from "@/lib/news/read";
 import { pickFeatured } from "@/lib/news/featured";
 import { liveTicker } from "@/lib/news/live";
+import { HeadlineStack } from "@/components/news/HeadlineStack";
 import { LiveTicker } from "@/components/news/LiveTicker";
 import { OriginalCard } from "@/components/news/OriginalCard";
 import { readLatestOriginal } from "@/lib/news/originals";
 import { topStories } from "@/lib/news/top-stories";
 import { WatchGrid } from "@/components/video/WatchGrid";
+import { InlineVideo, inlinePlaylists } from "@/components/video/InlineVideo";
 import { readOfficialPlaylists } from "@/lib/videos/playlists";
 import { pickVideoStrip, readVideos } from "@/lib/videos/read";
 import { liveEditorialIds } from "@/content/editorial";
@@ -56,7 +59,7 @@ function LatestRow({ c }: { c: WireCluster }) {
         <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
         <SectionTag section={c.section} region={c.region} />
       </div>
-      <h3 className="font-editorial text-ink mt-1 text-[15px] leading-snug underline-offset-2 group-hover:underline">
+      <h3 className="text-ink mt-1 font-sans text-[15px] leading-snug font-bold tracking-tight underline-offset-2 group-hover:underline">
         {c.title}
       </h3>
     </Link>
@@ -122,7 +125,12 @@ export default async function BoardPage() {
   // Official-institution videos: each channel's newest first, four in all.
   const videos = pickVideoStrip(allVideos, 4);
   // Six channel cards on the homepage (two rows); /videos shows them all.
-  const playlists = (await readOfficialPlaylists()).slice(0, 6);
+  const allPlaylists = await readOfficialPlaylists();
+  const playlists = allPlaylists.slice(0, 6);
+  // Videos between the section blocks (owner request, 2026-11-27), starting
+  // with the channels the Watch strip does not show.
+  const betweenVideos = inlinePlaylists(allPlaylists, playlists.length);
+  const MAX_BETWEEN_VIDEOS = 4;
   // Homepage counters — each is a plain count of what is on the wire now.
   const now = new Date();
   const ageMs = (c: WireCluster) => now.getTime() - new Date(c.eventTime).getTime();
@@ -153,7 +161,11 @@ export default async function BoardPage() {
       top.finance?.imageUrl,
     ].filter((u): u is string => Boolean(u)),
   );
-  const rest = clusters.filter((c) => !topSlugs.has(c.slug));
+  // Top headlines (owner request, 2026-11-27): the next five ranked stories
+  // after the top three, as a bold stacked list; the rest of the page skips them.
+  const ranked = clusters.filter((c) => !topSlugs.has(c.slug));
+  const headlineStack = ranked.slice(0, 5);
+  const rest = ranked.slice(headlineStack.length);
   const pick = pickFeatured(clusters);
   const featured = pick && topSlugs.has(pick.cluster.slug) ? null : pick;
   // Live news ticker: the editor-flagged live story, then the newest headlines.
@@ -205,6 +217,8 @@ export default async function BoardPage() {
         </div>
 
         <LiveTicker items={live} now={now} />
+
+        <HeadlineStack stories={headlineStack} />
 
         {/* Top stories: three broad headlines in the card format. */}
         {original || top.global || top.gcc || top.finance ? (
@@ -284,7 +298,7 @@ export default async function BoardPage() {
                       {relativeTime(lead.eventTime)}
                     </span>
                   </div>
-                  <h1 className="t-h1 font-editorial text-ink mt-2 underline-offset-2 group-hover:underline">
+                  <h1 className="text-ink mt-2 font-sans text-3xl leading-tight font-extrabold tracking-tight underline-offset-2 group-hover:underline sm:text-4xl">
                     {lead.title}
                   </h1>
                   {lead.dek ? (
@@ -420,13 +434,58 @@ export default async function BoardPage() {
 
       {/* ============ Section blocks ============ */}
       <div className="mt-12">
-        {blocks.map(({ section, stories, row }) => {
+        {blocks.map(({ section, stories, row }, blockIndex) => {
           const blockLead = stories[0]!;
           const rest = stories.slice(1);
+          // One video after each block of 3–5 stories, up to MAX_BETWEEN_VIDEOS.
+          const video =
+            blockIndex < MAX_BETWEEN_VIDEOS && blockIndex < blocks.length - 1
+              ? betweenVideos[blockIndex % Math.max(betweenVideos.length, 1)]
+              : undefined;
+          const after = video ? (
+            <div className="pb-8">
+              <InlineVideo playlist={video} />
+            </div>
+          ) : null;
           if (row) {
             // Non-finance sections: one row of cards, with a link to the rest.
             return (
-              <section key={section.id} className="border-hairline border-t py-8">
+              <Fragment key={section.id}>
+                <section className="border-hairline border-t py-8">
+                  <div className="mb-5 flex items-baseline justify-between">
+                    <Link
+                      href={`/news?section=${section.id}`}
+                      className="group inline-flex items-center gap-2.5"
+                    >
+                      <span
+                        aria-hidden
+                        className="inline-block h-5 w-[3px] rounded-[2px]"
+                        style={{ background: section.hue }}
+                      />
+                      <span className="t-h3 font-editorial text-ink group-hover:underline">
+                        {section.label}
+                      </span>
+                    </Link>
+                    <Link
+                      href={`/news?section=${section.id}`}
+                      className="text-ink-3 hover:text-brand text-[12px]"
+                    >
+                      View all <span aria-hidden>→</span>
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {stories.map((c) => (
+                      <StoryCard key={c.slug} cluster={c} variant="card" />
+                    ))}
+                  </div>
+                </section>
+                {after}
+              </Fragment>
+            );
+          }
+          return (
+            <Fragment key={section.id}>
+              <section className="border-hairline border-t py-8">
                 <div className="mb-5 flex items-baseline justify-between">
                   <Link
                     href={`/news?section=${section.id}`}
@@ -448,64 +507,35 @@ export default async function BoardPage() {
                     View all <span aria-hidden>→</span>
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {stories.map((c) => (
-                    <StoryCard key={c.slug} cluster={c} variant="card" />
-                  ))}
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                  <div className="lg:col-span-5">
+                    <StoryCard cluster={blockLead} variant="card" />
+                  </div>
+                  {rest.length > 0 ? (
+                    <div className="border-hairline bg-surface divide-hairline rounded-[8px] border px-4 lg:col-span-7">
+                      {rest.map((c) => (
+                        <div
+                          key={c.slug}
+                          className="divide-hairline [&:not(:last-child)]:border-hairline [&:not(:last-child)]:border-b"
+                        >
+                          <StoryCard cluster={c} variant="compact" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/news?section=${section.id}`}
+                      className="border-hairline text-ink-2 hover:text-ink flex items-center justify-center gap-2 rounded-[8px] border px-4 py-10 text-[13px] lg:col-span-7"
+                    >
+                      More in{" "}
+                      <span className="text-ink font-medium">{section.label}</span>
+                      <span aria-hidden>→</span>
+                    </Link>
+                  )}
                 </div>
               </section>
-            );
-          }
-          return (
-            <section key={section.id} className="border-hairline border-t py-8">
-              <div className="mb-5 flex items-baseline justify-between">
-                <Link
-                  href={`/news?section=${section.id}`}
-                  className="group inline-flex items-center gap-2.5"
-                >
-                  <span
-                    aria-hidden
-                    className="inline-block h-5 w-[3px] rounded-[2px]"
-                    style={{ background: section.hue }}
-                  />
-                  <span className="t-h3 font-editorial text-ink group-hover:underline">
-                    {section.label}
-                  </span>
-                </Link>
-                <Link
-                  href={`/news?section=${section.id}`}
-                  className="text-ink-3 hover:text-brand text-[12px]"
-                >
-                  View all <span aria-hidden>→</span>
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-                <div className="lg:col-span-5">
-                  <StoryCard cluster={blockLead} variant="card" />
-                </div>
-                {rest.length > 0 ? (
-                  <div className="border-hairline bg-surface divide-hairline rounded-[8px] border px-4 lg:col-span-7">
-                    {rest.map((c) => (
-                      <div
-                        key={c.slug}
-                        className="divide-hairline [&:not(:last-child)]:border-hairline [&:not(:last-child)]:border-b"
-                      >
-                        <StoryCard cluster={c} variant="compact" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Link
-                    href={`/news?section=${section.id}`}
-                    className="border-hairline text-ink-2 hover:text-ink flex items-center justify-center gap-2 rounded-[8px] border px-4 py-10 text-[13px] lg:col-span-7"
-                  >
-                    More in{" "}
-                    <span className="text-ink font-medium">{section.label}</span>
-                    <span aria-hidden>→</span>
-                  </Link>
-                )}
-              </div>
-            </section>
+              {after}
+            </Fragment>
           );
         })}
       </div>

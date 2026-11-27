@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { inlinePlaylists } from "@/components/video/InlineVideo";
+import { readOfficialPlaylists } from "@/lib/videos/playlists";
 import Link from "next/link";
 import { Wire } from "@/components/news/Wire";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -49,6 +51,8 @@ export default async function NewsPage({ searchParams }: SearchParams) {
     section: section || undefined,
   });
   const paged = pageOf(clusters, one(sp.page));
+  // Official-channel videos between stories (owner request, 2026-11-27).
+  const videos = inlinePlaylists(await readOfficialPlaylists());
   const sections = allSections();
   const activeSection = section
     ? (sections.find((s) => s.id === section) ?? null)
@@ -182,7 +186,7 @@ export default async function NewsPage({ searchParams }: SearchParams) {
       </div>
 
       <div className="fade-up mt-6" style={{ "--d": "140ms" } as React.CSSProperties}>
-        <Wire clusters={paged.items} />
+        <Wire clusters={paged.items} videos={videos} />
         {paged.pages > 1 ? (
           <nav
             aria-label="Pages"

@@ -69,7 +69,7 @@ export function StoryCard({
             <SectionTag section={cluster.section} region={cluster.region} />
             <SignalScore score={cluster.importanceScore} showValue={false} />
           </div>
-          <h3 className="font-editorial text-ink mt-1.5 line-clamp-2 text-[15px] leading-snug underline-offset-2 group-hover:underline">
+          <h3 className="text-ink mt-1.5 line-clamp-2 font-sans text-[15px] leading-snug font-bold tracking-tight underline-offset-2 group-hover:underline">
             {cluster.title}
           </h3>
         </div>
@@ -103,10 +103,10 @@ export function StoryCard({
           {time}
         </div>
         <h3
-          className={`font-editorial text-ink underline-offset-2 group-hover:underline ${
+          className={`text-ink font-sans font-bold tracking-tight underline-offset-2 group-hover:underline ${
             isLead
-              ? "t-h2 leading-[1.15]"
-              : "line-clamp-3 text-[18px] leading-snug font-semibold"
+              ? "text-2xl leading-tight sm:text-3xl"
+              : "line-clamp-3 text-[18px] leading-snug"
           }`}
         >
           {cluster.title}

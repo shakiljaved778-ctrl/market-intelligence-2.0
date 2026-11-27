@@ -13,6 +13,7 @@ import { relativeTime } from "@/lib/format/relative-time";
 import { formatMoney } from "@/lib/format/currency";
 import type { Quote } from "@/lib/providers/types";
 import { ArticleBody } from "@/components/news/ArticleBody";
+import { KeyTakeaways } from "@/components/news/KeyTakeaways";
 import { CoverArt } from "@/components/news/CoverArt";
 import { StoryGallery } from "@/components/news/StoryGallery";
 import { isGccRegion, regionLabel } from "@/lib/curation/region";
@@ -218,6 +219,7 @@ export default async function ClusterPage({ params }: Params) {
                 AI-written · from {cluster.sourceCount}{" "}
                 {cluster.sourceCount === 1 ? "cited source" : "cited sources"}
               </div>
+              <KeyTakeaways md={body.md} />
               <ArticleBody md={body.md} />
               <p className="text-ink-3 mt-5 text-[11px] leading-relaxed">
                 Written by AI from the cited reports below — original text, not copied
