@@ -7,6 +7,7 @@ import { CommandPalette } from "./CommandPalette";
 import { MarketStatus } from "./MarketStatus";
 import { HeaderShrink } from "./HeaderShrink";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { flag } from "@/lib/flags";
 
 const NAV = [
   { href: "/markets", label: "Markets" },
@@ -15,6 +16,26 @@ const NAV = [
   { href: "/economy", label: "Economy" },
   { href: "/methodology", label: "Methodology" },
 ];
+
+/**
+ * Navigation v2 (pre-launch brief §6.5; behind NEXT_PUBLIC_FLAG_NAV_V2). Every
+ * existing URL keeps working: Sections lives on as "More", Methodology stays
+ * in the footer. "Deals" appears only when the Deals flag is also on.
+ */
+function navItems(): { href: string; label: string; wide?: boolean }[] {
+  if (!flag("navV2")) return NAV;
+  return [
+    { href: "/markets", label: "Markets" },
+    { href: "/news", label: "Wire" },
+    { href: "/economy", label: "Economy" },
+    ...(flag("deals") ? [{ href: "/deals", label: "Deals" }] : []),
+    // Shown from 1280 px; below that "More" (/sections) reaches them.
+    { href: "/news/section/technology", label: "Tech & AI", wide: true },
+    { href: "/news?region=gcc", label: "GCC", wide: true },
+    { href: "/news/section/sports", label: "Sports", wide: true },
+    { href: "/sections", label: "More" },
+  ];
+}
 
 /**
  * Site header. The colour-blind-safe control used to sit here as an unlabelled
@@ -43,11 +64,11 @@ export function Header({
           aria-label="Primary"
           className="pill border-line bg-surface ml-2 hidden items-center border p-1 md:flex"
         >
-          {NAV.map((item) => (
+          {navItems().map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="pill text-text-mid hover:bg-raised hover:text-text-hi px-3 py-1.5 font-mono text-[12px] font-semibold transition-colors"
+              className={`pill text-text-mid hover:bg-raised hover:text-text-hi px-3 py-1.5 font-mono text-[12px] font-semibold whitespace-nowrap transition-colors ${"wide" in item && item.wide ? "hidden xl:inline-block" : ""}`}
             >
               {item.label}
             </Link>

@@ -336,3 +336,29 @@ describe("a named company alone does not make market news (2026-11-27)", () => {
     ).toBe("world");
   });
 });
+
+describe("Gulf sport and the business of sport (2026-11-27)", () => {
+  const place = (title: string) => {
+    const c = classify(title, null);
+    return classifySection({
+      title,
+      topics: c.topics,
+      tickers: c.tickers,
+      sourceId: null,
+    });
+  };
+  it("files Gulf competitions and venues under Sports", () => {
+    expect(place("Al Sadd top the Stars League after win over Al Duhail")).toBe(
+      "sports",
+    );
+    expect(place("Lusail to host the MotoGP season opener")).toBe("sports");
+    expect(place("Historic 250th Race Awaits Formula 2 at Lusail Circuit")).toBe(
+      "sports",
+    );
+  });
+  it("files sports media-rights deals under Sports", () => {
+    expect(place("League signs new broadcast rights agreement through 2030")).toBe(
+      "sports",
+    );
+  });
+});

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import { z } from "zod";
+import { flag, type FlagName } from "@/lib/flags";
 import { loadSources } from "./config";
 
 /**
@@ -37,6 +38,11 @@ const SectionSchema = z.object({
   hue: z.string(),
   glyph: z.string(),
   keywords: z.array(z.string()).default([]),
+  /**
+   * A feature flag (lib/flags.ts). While it is off the section does not exist:
+   * no story is filed under it and it appears nowhere.
+   */
+  flag: z.enum(["deals", "navV2", "gccPegs"]).optional(),
 });
 export type SectionConfig = z.infer<typeof SectionSchema>;
 
@@ -47,7 +53,10 @@ export function loadSections(): SectionConfig[] {
   const raw = parse(readFileSync(join(CONTENT_DIR, "sections.yaml"), "utf8")) as {
     sections?: unknown;
   };
-  cache = z.array(SectionSchema).parse(raw.sections ?? []);
+  cache = z
+    .array(SectionSchema)
+    .parse(raw.sections ?? [])
+    .filter((s) => !s.flag || flag(s.flag as FlagName));
   return cache;
 }
 

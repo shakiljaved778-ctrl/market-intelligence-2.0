@@ -12,6 +12,7 @@ const ALLOW = [
   "app/globals.css",
   "app/api/og/route.tsx",
   "app/icon.svg",
+  "app/brand-preview/page.tsx", // shows proposals on BOTH themes side by side (noindex)
   "app/global-error.tsx", // renders outside the app tree; no CSS/tokens available
   "app/layout.tsx", // theme-color <meta> values must be literal
   "components/chart/PriceChart.tsx", // reads tokens; hex only as empty-var fallback

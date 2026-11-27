@@ -45,10 +45,13 @@ export default async function NewsPage({ searchParams }: SearchParams) {
   const topic = one(sp.topic);
   const ticker = one(sp.ticker);
   const section = one(sp.section);
+  // GCC view (/news?region=gcc): Gulf stories from every section.
+  const region = one(sp.region) === "gcc" ? "gcc" : undefined;
   const clusters = await readWire({
     topic: topic || undefined,
     ticker: ticker || undefined,
     section: section || undefined,
+    region,
   });
   const paged = pageOf(clusters, one(sp.page));
   // Official-channel videos between stories (owner request, 2026-11-27).
@@ -69,6 +72,7 @@ export default async function NewsPage({ searchParams }: SearchParams) {
     const params = new URLSearchParams();
     if (section) params.set("section", section);
     if (topic) params.set("topic", topic);
+    if (region) params.set("region", region);
     for (const [k, v] of Object.entries(extra)) {
       if (v) params.set(k, v);
       else params.delete(k);
@@ -109,6 +113,21 @@ export default async function NewsPage({ searchParams }: SearchParams) {
                 <span className="ours tnum border-iris/25 bg-iris/10 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px]">
                   ◆ {clusters.length} {clusters.length === 1 ? "story" : "stories"}
                 </span>
+              }
+            />
+          ) : region ? (
+            <PageHeader
+              live
+              kicker="the wire · Gulf stories"
+              title="GCC"
+              subtitle={
+                <>
+                  Stories about Qatar, Saudi Arabia, the UAE, Kuwait, Bahrain, Oman and
+                  the GCC as a whole, from every section.{" "}
+                  <span className="text-text-low">
+                    Ranking computed; summaries AI-written.
+                  </span>
+                </>
               }
             />
           ) : (

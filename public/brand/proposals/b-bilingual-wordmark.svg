@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 64" width="360" height="64" role="img" aria-label="Mizaan proposal B: bilingual wordmark MIZAAN ميزان">
+  <!-- Proposal B — bilingual wordmark. Latin in the editorial serif with wide
+       tracking; Arabic set to match in a Naskh face (Amiri or Noto Naskh
+       Arabic, both SIL Open Font Licence — the chosen face must be self-hosted
+       before use). A hairline divides the two scripts; the ◆ sits on it. -->
+  <text x="8" y="41" font-family="Newsreader, Georgia, serif" font-size="30" font-weight="600" letter-spacing="5" fill="#12151a">MIZAAN</text>
+  <path d="M196 14 V50" stroke="#cfc3b0" stroke-width="1"/>
+  <rect x="192.6" y="28.6" width="6.8" height="6.8" rx="0.8" transform="rotate(45 196 32)" fill="#b5781c"/>
+  <text x="300" y="42" font-family="Amiri, 'Noto Naskh Arabic', serif" font-size="32" fill="#12151a" text-anchor="middle" direction="rtl">ميزان</text>
+</svg>
