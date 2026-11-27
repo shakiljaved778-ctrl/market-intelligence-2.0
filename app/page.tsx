@@ -28,6 +28,7 @@ import { buildHomepage, photoFirst, withUniqueCovers } from "@/lib/news/homepage
 import { listRecaps } from "@/lib/narrative/read";
 import { relativeTime } from "@/lib/format/relative-time";
 import { readGccIndices, type IndexLevel } from "@/lib/market/indices";
+import { QseWidget } from "@/components/market/QseWidget";
 
 function StatTile({
   value,
@@ -551,7 +552,27 @@ export default async function BoardPage() {
             GCC indices · end of day, per exchange
           </p>
         </section>
-      ) : null}
+      ) : (
+        // No licensed GCC feed is stored yet: Qatar Stock Exchange prices come
+        // from TradingView's widget instead (owner decision, 2026-11-27).
+        <section
+          aria-labelledby="qse-widget-heading"
+          className="border-hairline border-t py-8"
+        >
+          <div className="mb-5 flex items-baseline justify-between">
+            <h2 id="qse-widget-heading" className="t-h3 font-editorial text-ink">
+              Qatar Stock Exchange
+            </h2>
+            <Link
+              href="/markets/qse"
+              className="text-ink-3 hover:text-brand text-[12px]"
+            >
+              QSE companies <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <QseWidget />
+        </section>
+      )}
 
       {/* ============ Latest (time-ordered, not already shown) ============ */}
       {latest.length ? (

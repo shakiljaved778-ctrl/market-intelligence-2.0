@@ -16,6 +16,7 @@ the provider's current terms before monetising (Phase 10).
 | **EODHD** | EOD candle backfill | Free | EOD | provider stamp | `[CHECK ON PROVIDER SITE]` |
 | **AlphaVantage** | last-resort fallback | Free | quote/daily | provider stamp | `[CHECK ON PROVIDER SITE]` |
 | **CoinGecko** | crypto quotes | Free (keyless) | simple price | provider stamp | `[CHECK ON PROVIDER SITE]` — attribution usually required |
+| **TradingView** (widget) | QSE prices on `/` and `/markets/qse` | Free embed | Market Quotes widget, loaded in the browser (not fetched by us) | "Prices by TradingView · delayed · not Mizaan data" + TradingView link | TradingView's embed terms; widget keeps its attribution |
 | **Frankfurter** | FX (USD conversion) | Free, ECB data | latest rates | n/a (internal) | ECB data, public |
 | **FRED** (St. Louis Fed) | US macro series | Free | series/observations | "Source: FRED" on `/economy` | Public domain (US gov) |
 | **World Bank** | macro indicators | Free | indicators API | "World Bank" | CC BY 4.0 — attribution required |

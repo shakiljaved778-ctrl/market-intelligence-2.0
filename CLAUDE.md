@@ -61,6 +61,14 @@ the AI content, and never imply the *rankings* are AI-written.
   `{ status, value, source, asOf, delayMinutes }`; render the stamp with
   `PriceStamp`. Draw a percentage move with `ChangePill` so glyph, sign and colour
   come from one number.
+- **One scoped exception: the QSE TradingView widget** (owner decision,
+  2026-11-27). Qatar Stock Exchange prices are shown in TradingView's own
+  "Market Quotes" embed (`components/market/QseWidget.tsx`, vendor details in
+  `lib/providers/tradingview.ts`), loaded in the reader's browser on scroll and
+  labelled "Prices by TradingView · delayed · not Mizaan data". Nothing from it is
+  fetched, cached or stored by us, and none of its figures feed rankings, charts
+  or any other page. Do not extend this exception to other data without the
+  owner's say-so; a licensed QSE feed replaces it when one is chosen.
 - Business details (operator, location, contact, editor) live in
   `content/site.config.ts`. A `null` field is hidden, never shown as a placeholder.
   Ask the owner for values; do not invent them.

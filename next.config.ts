@@ -8,13 +8,15 @@ import type { NextConfig } from "next";
 const CSP_REPORT_ONLY = [
   "default-src 'self'",
   // JSON-LD + Next's bootstrap use inline scripts; tighten with nonces when enforcing.
-  "script-src 'self' 'unsafe-inline'",
+  // TradingView's QSE widget script (owner decision, 2026-11-27).
+  "script-src 'self' 'unsafe-inline' https://s3.tradingview.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:", // Pexels/og:image references are remote
   "font-src 'self'",
   "connect-src 'self'",
   // Official videos play in YouTube's standard player, on click only.
-  "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+  // ...and TradingView's widget frame, for Qatar Stock Exchange prices.
+  "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.tradingview-widget.com https://s.tradingview.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
