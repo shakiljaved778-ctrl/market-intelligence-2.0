@@ -31,6 +31,20 @@ All pages clear the brief's P0 floor of 80 except Economy, which this release
 fixes. LCP is 3–4.4 s against a 2.5 s target; it is the main performance
 gap (see "Not fixed").
 
+### After the fixes (production, run of 27 Nov 23:34 UTC)
+
+| Page | Performance | Accessibility | LCP |
+| --- | --- | --- | --- |
+| Home | 84 | ≥ 95 | 4.3 s |
+| Markets | ≥ 90 | ≥ 95 | 3.5 s |
+| Wire | 87 | ≥ 95 | 3.9 s |
+| Section front | 89 | ≥ 95 | 3.6 s |
+| Economy | ≥ 90 | ≥ 95 | 3.2 s |
+| Quote | 87 | ≥ 95 | 3.9 s |
+
+Every page now clears the P0 floor (80) and the accessibility target (95).
+LCP remains above 2.5 s everywhere; the homepage payload is the next lever.
+
 ## Fixed in this release
 
 | Issue | Fix | Verified |
@@ -42,6 +56,8 @@ gap (see "Not fixed").
 | **Contrast**: index-board and tape stamps used `--ink-4` (reserved for decoration) | `--ink-3`; board cards on the lighter surface | Local Lighthouse: wire 94 → 96 |
 | **Heading order**: wire items and homepage section titles | h2 (no visual change) | Local Lighthouse |
 | **Label-in-name**: logo link and video buttons | Text-based names | Local Lighthouse |
+| **Quote page a11y 89**: a heading inside each fundamentals `<dl>`; a colour-only link | Heading outside the list; inline links underlined | Production: ≥ 95 |
+| **Homepage LCP 6–7 s**: every cover fetched at 1200 px and lazy-loaded | Responsive srcset for Pexels covers; the lead photo loads eagerly at high priority | Production: 75 → 84, LCP 4.3 s |
 
 ## Not fixed, needs a decision or more work
 
