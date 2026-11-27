@@ -22,6 +22,125 @@
 # gain-green / loss-red so it can never be confused with price direction (§12).
 
 sections:
+  # --- Deals (pre-launch brief §6, 2026-11-27) — behind NEXT_PUBLIC_FLAG_DEALS.
+  # Listed before Markets so that, while the flag is on, a story that scores the
+  # same for a deal section and Markets (an IPO, a sukuk) files under the deal.
+  - id: privateequity
+    label: Private Equity
+    blurb: Buyouts, fundraises, exits and sovereign and family-office deals.
+    financial: true
+    flag: deals
+    hue: "#8b7d9c"
+    glyph: bars
+    keywords:
+      [
+        private equity,
+        private-equity,
+        buyout,
+        buyout firm,
+        leveraged buyout,
+        take-private,
+        fundraise,
+        fund close,
+        final close,
+        secondaries,
+        limited partners,
+        general partner,
+        co-investment,
+        portfolio company,
+        sovereign wealth fund,
+        family office,
+        KKR,
+        Blackstone,
+        Carlyle,
+        Apollo Global,
+        Brookfield,
+        TPG,
+        CVC,
+        EQT,
+        Ardian,
+        Investcorp,
+        Gulf Capital,
+        QIA,
+        Qatar Investment Authority,
+        PIF,
+        Public Investment Fund,
+        Mubadala,
+        ADQ,
+        ADIA,
+      ]
+
+  - id: ibanking
+    label: Investment Banking
+    blurb: M&A, IPOs and follow-ons, sukuk and bonds, and bank mandates.
+    financial: true
+    flag: deals
+    hue: "#7d8f9c"
+    glyph: bars
+    keywords:
+      [
+        IPO,
+        initial public offering,
+        public offering,
+        market debut,
+        trading debut,
+        listing,
+        follow-on offering,
+        rights issue,
+        share sale,
+        bond issuance,
+        bonds issuance,
+        bond issue,
+        issuance,
+        sukuk,
+        senior unsecured,
+        bookrunner,
+        underwriter,
+        mandated,
+        merger,
+        mergers,
+        acquisition,
+        acquisitions,
+        acquires,
+        takeover,
+        m&a,
+        stake sale,
+        debt capital markets,
+        equity capital markets,
+      ]
+
+  - id: venture
+    label: Venture Capital
+    blurb: Funding rounds, fund launches and the Gulf startup programmes.
+    financial: true
+    flag: deals
+    hue: "#9c8a7d"
+    glyph: bars
+    keywords:
+      [
+        venture capital,
+        venture fund,
+        VC,
+        startup,
+        startups,
+        start-up,
+        funding round,
+        seed round,
+        pre-seed,
+        Series A,
+        Series B,
+        Series C,
+        unicorn,
+        accelerator,
+        incubator,
+        fund of funds,
+        QSTP,
+        QDB,
+        Hub71,
+        Sanabil,
+        STV,
+      ]
+
   - id: markets
     label: Markets
     blurb: Equities, rates, commodities and FX — the instruments and the moves.
