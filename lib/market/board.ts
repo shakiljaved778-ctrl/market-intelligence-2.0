@@ -3,6 +3,8 @@ import { readSeries } from "@/lib/economy/read";
 import { readCommodityRows, readCryptoRows, readFxRows } from "@/lib/market/levels";
 import { getQuotes } from "@/lib/market/service";
 import type { StampInput } from "@/lib/market/provenance";
+import type { DisplayCurrency } from "@/lib/currency/peg";
+import { formatMoney } from "@/lib/format/currency";
 
 /**
  * Cards for the index board (components/market/IndexBoard.tsx): US index
@@ -37,7 +39,13 @@ export function lastChangePct(obs: { value: number }[]): number | null {
   return ((last - prev) / prev) * 100;
 }
 
-export async function readIndexBoard(): Promise<BoardCard[]> {
+/**
+ * Prices follow the reader's USD/QAR choice (§7); yields, percentages and the
+ * EUR/USD rate are currency-neutral and are never converted.
+ */
+export async function readIndexBoard(
+  currency: DisplayCurrency = "USD",
+): Promise<BoardCard[]> {
   const [quotes, tenYear, commodities, crypto, fx] = await Promise.all([
     getQuotes(INDEX_TRACKERS.map((t) => t.symbol)),
     readSeries("FRED:DGS10").catch(() => null),
@@ -54,7 +62,7 @@ export async function readIndexBoard(): Promise<BoardCard[]> {
       key: t.symbol,
       label: t.label,
       via: t.via ?? `via ${t.symbol} ETF`,
-      value: `$${num(p.value.priceUsd, 2)}`,
+      value: formatMoney(p.value.priceUsd, currency),
       changePct: p.value.changePct,
       stamp: p,
       href: null,
@@ -86,7 +94,7 @@ export async function readIndexBoard(): Promise<BoardCard[]> {
       key: r.symbol,
       label: /brent/i.test(`${r.symbol} ${r.name}`) ? "Brent crude" : "WTI crude",
       via: null,
-      value: `$${num(r.value, 2)}`,
+      value: formatMoney(r.value, currency),
       changePct: r.changePct,
       stamp: { source: r.source, asOf: r.asOf, cadence: r.cadence, demo: r.demo },
       href: "/markets",
@@ -98,7 +106,9 @@ export async function readIndexBoard(): Promise<BoardCard[]> {
       key: r.symbol,
       label: r.name,
       via: null,
-      value: `$${num(r.value, r.value < 10 ? 4 : 2)}`,
+      value: formatMoney(r.value, currency, {
+        maximumFractionDigits: r.value < 10 ? 4 : 2,
+      }),
       changePct: r.changePct,
       stamp: { source: r.source, asOf: r.asOf, demo: r.demo },
       href: `/quote/${r.symbol}`,

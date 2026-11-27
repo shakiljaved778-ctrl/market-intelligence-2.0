@@ -4,6 +4,9 @@ import { compactStamp, stampText, type StampInput } from "@/lib/market/provenanc
 import { readCommodityRows, readCryptoRows, readFxRows } from "@/lib/market/levels";
 import { readGccIndices } from "@/lib/market/indices";
 import { readUniverse } from "@/lib/market/read";
+import { getDisplayCurrency } from "@/lib/currency/server";
+import type { DisplayCurrency } from "@/lib/currency/peg";
+import { formatMoney } from "@/lib/format/currency";
 
 /**
  * Market tape — a smooth CSS marquee of the instruments Mizaan holds a REAL
@@ -33,7 +36,8 @@ function num(v: number, dp: number): string {
   });
 }
 
-async function tapeItems(): Promise<TapeItem[]> {
+// Prices follow the USD/QAR toggle (§7); index levels and FX rates do not.
+async function tapeItems(currency: DisplayCurrency): Promise<TapeItem[]> {
   const [gcc, fx, commodities, crypto, universe] = await Promise.all([
     readGccIndices(),
     readFxRows(),
@@ -55,7 +59,7 @@ async function tapeItems(): Promise<TapeItem[]> {
     items.push({
       key: r.symbol,
       name: r.name,
-      value: `$${num(r.value, 2)}`,
+      value: formatMoney(r.value, currency),
       changePct: r.changePct,
       stamp: { source: r.source, asOf: r.asOf, cadence: r.cadence, demo: r.demo },
     });
@@ -73,7 +77,9 @@ async function tapeItems(): Promise<TapeItem[]> {
     items.push({
       key: r.symbol,
       name: r.name,
-      value: `$${num(r.value, r.value < 10 ? 4 : 2)}`,
+      value: formatMoney(r.value, currency, {
+        maximumFractionDigits: r.value < 10 ? 4 : 2,
+      }),
       changePct: r.changePct,
       stamp: { source: r.source, asOf: r.asOf, demo: r.demo },
     });
@@ -84,7 +90,7 @@ async function tapeItems(): Promise<TapeItem[]> {
     items.push({
       key: row.symbol,
       name: row.symbol,
-      value: `$${num(row.priceUsd, 2)}`,
+      value: formatMoney(row.priceUsd, currency),
       changePct: row.changePct,
       stamp: row.priced,
     });
@@ -107,7 +113,7 @@ function Item({ item }: { item: TapeItem }) {
 }
 
 export async function TickerTape() {
-  const items = await tapeItems();
+  const items = await tapeItems(await getDisplayCurrency());
   if (items.length === 0) return null;
   return (
     <div className="border-hairline bg-surface/80 border-b backdrop-blur">
