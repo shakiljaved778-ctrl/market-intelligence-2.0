@@ -131,7 +131,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <DataDelayedBanner />
         </Suspense>
-        <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
+        <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 lg:pb-0">
           {children}
         </main>
         <Footer colorblind={colorblind} />

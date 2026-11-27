@@ -62,7 +62,7 @@ export function Header({
         {/* Pill nav with mono labels — chrome, not data (desktop). */}
         <nav
           aria-label="Primary"
-          className="pill border-line bg-surface ml-2 hidden items-center border p-1 md:flex"
+          className="pill border-line bg-surface ml-2 hidden items-center border p-1 lg:flex"
         >
           {navItems().map((item) => (
             <Link
