@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { storyAgeLabel } from "@/lib/curation/freshness";
 import { Fragment } from "react";
 import { InlineVideo } from "@/components/video/InlineVideo";
 import type { OfficialPlaylist } from "@/lib/videos/playlists";
 import type { WireCluster } from "@/lib/news/read";
-import { relativeTime } from "@/lib/format/relative-time";
 import { CoverArt } from "./CoverArt";
 import { SectionTag } from "./SectionTag";
 
@@ -66,7 +66,7 @@ export function Wire({
                     {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
                   </span>
                   <span className="text-text-low ml-auto">
-                    {relativeTime(c.eventTime)}
+                    {storyAgeLabel(c.section, c.eventTime)}
                   </span>
                 </div>
                 <h3 className="text-text-hi group-hover:text-iris mt-2.5 max-w-[68ch] font-sans text-[20px] leading-snug font-bold tracking-tight transition-colors">

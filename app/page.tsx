@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { storyAgeLabel } from "@/lib/curation/freshness";
 import Link from "next/link";
 import { canonical } from "@/lib/seo";
 import { isGccRegion, regionLabel } from "@/lib/curation/region";
@@ -26,7 +27,6 @@ import { pickVideoStrip, readVideos } from "@/lib/videos/read";
 import { liveEditorialIds } from "@/content/editorial";
 import { buildHomepage, photoFirst, withUniqueCovers } from "@/lib/news/homepage";
 import { listRecaps } from "@/lib/narrative/read";
-import { relativeTime } from "@/lib/format/relative-time";
 import { readGccIndices, type IndexLevel } from "@/lib/market/indices";
 import { QseWidget } from "@/components/market/QseWidget";
 
@@ -56,7 +56,7 @@ function LatestRow({ c }: { c: WireCluster }) {
       className="group hover:bg-surface-2 -mx-2 block rounded-[6px] px-2 py-3 transition-colors"
     >
       <div className="flex items-center gap-2 text-[11px]">
-        <span className="text-ink-3 tnum">{relativeTime(c.eventTime)}</span>
+        <span className="text-ink-3 tnum">{storyAgeLabel(c.section, c.eventTime)}</span>
         <SectionTag section={c.section} region={c.region} />
       </div>
       <h3 className="text-ink mt-1 font-sans text-[15px] leading-snug font-bold tracking-tight underline-offset-2 group-hover:underline">
@@ -289,7 +289,7 @@ export default async function BoardPage() {
                       {lead.sourceCount} {lead.sourceCount === 1 ? "source" : "sources"}
                     </span>
                     <span className="text-ink-3 ml-auto">
-                      {relativeTime(lead.eventTime)}
+                      {storyAgeLabel(lead.section, lead.eventTime)}
                     </span>
                   </div>
                   <h1 className="text-ink mt-2 font-sans text-3xl leading-tight font-extrabold tracking-tight underline-offset-2 group-hover:underline sm:text-4xl">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isFresh, maxAgeHours, showsAgeStamp } from "./freshness";
+import { isFresh, maxAgeHours, showsAgeStamp, storyAgeLabel } from "./freshness";
 
 const NOW = Date.parse("2026-11-01T12:00:00.000Z");
 const hoursAgo = (h: number) => new Date(NOW - h * 3600 * 1000).toISOString();
@@ -27,5 +27,13 @@ describe("freshness windows", () => {
     expect(isFresh("eureka", hoursAgo(73 * 24), NOW)).toBe(true); // 73 days old, still shown
     expect(showsAgeStamp("eureka")).toBe(false);
     expect(showsAgeStamp("markets")).toBe(true);
+  });
+});
+
+describe("storyAgeLabel", () => {
+  it("labels evergreen pieces as explainers and dates news", () => {
+    const now = new Date("2026-11-27T12:00:00Z");
+    expect(storyAgeLabel("eureka", "2026-08-11T12:00:00Z", now)).toBe("Explainer");
+    expect(storyAgeLabel("markets", "2026-11-27T09:00:00Z", now)).toBe("3h ago");
   });
 });

@@ -1,3 +1,4 @@
+import { relativeTime } from "@/lib/format/relative-time";
 /**
  * Per-section freshness windows (Phase 2 §6). The homepage and section fronts
  * only show stories inside their section's window, so a stale item never leads.
@@ -46,4 +47,17 @@ export function isFresh(
 /** Evergreen sections are shown as features WITHOUT an age stamp (§6). */
 export function showsAgeStamp(section: string): boolean {
   return maxAgeHours(section) !== null;
+}
+
+/**
+ * The age shown on a story card (owner review, 2026-11-27): "3h ago" for news,
+ * "Explainer" for an evergreen piece — a 108-day-old Eureka feature stamped
+ * "108d ago" on the homepage read as an abandoned site.
+ */
+export function storyAgeLabel(
+  section: string,
+  iso: string,
+  now: Date = new Date(),
+): string {
+  return showsAgeStamp(section) ? relativeTime(iso, now) : "Explainer";
 }
