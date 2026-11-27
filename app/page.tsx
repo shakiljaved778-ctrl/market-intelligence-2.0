@@ -434,7 +434,7 @@ export default async function BoardPage() {
           // One video after each block of 3–5 stories, up to MAX_BETWEEN_VIDEOS.
           const video =
             blockIndex < MAX_BETWEEN_VIDEOS && blockIndex < blocks.length - 1
-              ? betweenVideos[blockIndex % Math.max(betweenVideos.length, 1)]
+              ? betweenVideos[blockIndex]
               : undefined;
           const after = video ? (
             <div className="pb-8">

@@ -10,8 +10,13 @@ const p = (id: string, withLatest = true): OfficialPlaylist => ({
 });
 
 describe("inline videos", () => {
-  it("starts after the channels already shown and skips those without a picture", () => {
+  it("leaves out channels already shown, never wraps, skips those without a picture", () => {
     const out = inlinePlaylists([p("a"), p("b"), p("c", false), p("d")], 2);
-    expect(out.map((x) => x.id)).toEqual(["d", "a", "b"]);
+    expect(out.map((x) => x.id)).toEqual(["d"]);
+  });
+
+  it("uses every channel with a picture when none is shown elsewhere", () => {
+    const out = inlinePlaylists([p("a"), p("b", false), p("c")]);
+    expect(out.map((x) => x.id)).toEqual(["a", "c"]);
   });
 });
