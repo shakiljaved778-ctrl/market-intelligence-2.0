@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { pageMeta } from "@/lib/seo";
 import { MacroChart } from "@/components/economy/MacroChart";
+import { MacroSpark } from "@/components/economy/MacroSpark";
 import { NoData } from "@/components/market/Provenance";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { readCalendar, readMacroSeries, readYieldCurve } from "@/lib/economy/read";
@@ -84,7 +85,7 @@ export default async function EconomyPage() {
                   </span>
                 </div>
                 <div className="relative mt-3">
-                  <MacroChart data={s.observations} variant="mini" unit={s.unit} />
+                  <MacroSpark data={s.observations} label={`${s.name}: recent trend`} />
                 </div>
               </Link>
             );
