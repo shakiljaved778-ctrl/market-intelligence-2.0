@@ -96,7 +96,8 @@ export function SessionClocks({ nowIso }: { nowIso: string }) {
         })}
       </div>
       <p className="text-text-low mt-2 text-[11px]">
-        Regular trading hours. Public holidays and half-days are not reflected.
+        Regular trading hours, with announced holidays and early closes. Eid closures
+        appear once each exchange announces them.
       </p>
     </div>
   );
