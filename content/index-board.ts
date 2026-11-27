@@ -7,6 +7,11 @@
  * price, never an invented index level. Its percentage move tracks the index
  * closely; the price does not equal the index level.
  *
+ * Japan, the UK and India (owner decision, 2026-11-27) have no US fund that
+ * tracks the Nikkei 225, FTSE 100 or BSE Sensex, so their cards use the
+ * iShares MSCI country funds and are labelled by COUNTRY with the MSCI index
+ * named — never as Nikkei, FTSE or Sensex, which they are not.
+ *
  * These symbols are refreshed by the quotes job (lib/jobs/tracked.ts) but are
  * deliberately NOT in content/instruments.ts, so funds never appear among the
  * stock movers, heatmap or screener.
@@ -16,6 +21,8 @@ export interface IndexTracker {
   symbol: string;
   /** The index (or asset) the fund tracks, as shown on the card. */
   label: string;
+  /** Qualifier under the label; defaults to "via <symbol> ETF". */
+  via?: string;
 }
 
 export const INDEX_TRACKERS: readonly IndexTracker[] = [
@@ -23,5 +30,8 @@ export const INDEX_TRACKERS: readonly IndexTracker[] = [
   { symbol: "QQQ", label: "Nasdaq 100" },
   { symbol: "DIA", label: "Dow Jones" },
   { symbol: "IWM", label: "Russell 2000" },
+  { symbol: "EWJ", label: "Japan", via: "MSCI Japan · via EWJ" },
+  { symbol: "EWU", label: "UK", via: "MSCI UK · via EWU" },
+  { symbol: "INDA", label: "India", via: "MSCI India · via INDA" },
   { symbol: "GLD", label: "Gold" },
 ];

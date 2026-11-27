@@ -19,4 +19,14 @@ describe("index board", () => {
     const universe = new Set(INSTRUMENTS.map((i) => i.symbol));
     for (const t of INDEX_TRACKERS) expect(universe.has(t.symbol)).toBe(false);
   });
+
+  it("never labels a country fund as the exchange index it does not track", () => {
+    for (const t of INDEX_TRACKERS) {
+      const text = `${t.label} ${t.via ?? ""}`;
+      if (["EWJ", "EWU", "INDA"].includes(t.symbol)) {
+        expect(text).not.toMatch(/nikkei|ftse|sensex|bse/i);
+        expect(t.via).toContain(t.symbol);
+      }
+    }
+  });
 });
