@@ -458,9 +458,9 @@ export default async function BoardPage() {
                         className="inline-block h-5 w-[3px] rounded-[2px]"
                         style={{ background: section.hue }}
                       />
-                      <span className="t-h3 font-editorial text-ink group-hover:underline">
+                      <h2 className="t-h3 font-editorial text-ink group-hover:underline">
                         {section.label}
-                      </span>
+                      </h2>
                     </Link>
                     <Link
                       href={`/news?section=${section.id}`}
@@ -492,9 +492,9 @@ export default async function BoardPage() {
                       className="inline-block h-5 w-[3px] rounded-[2px]"
                       style={{ background: section.hue }}
                     />
-                    <span className="t-h3 font-editorial text-ink group-hover:underline">
+                    <h2 className="t-h3 font-editorial text-ink group-hover:underline">
                       {section.label}
-                    </span>
+                    </h2>
                   </Link>
                   <Link
                     href={`/news?section=${section.id}`}

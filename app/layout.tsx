@@ -116,7 +116,7 @@ export default async function RootLayout({
           fallback={
             <div
               aria-hidden
-              className={`border-hairline bg-surface border-b ${BOARD_HEIGHT_CLASS}`}
+              className={`border-hairline bg-surface-2 border-b ${BOARD_HEIGHT_CLASS}`}
             />
           }
         >

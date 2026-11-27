@@ -24,6 +24,9 @@ export function Wordmark({
         >
           MIZAAN
         </span>
+        {/* A plain space keeps "MIZAAN Intelligence" one phrase for screen
+            readers (label-in-name); invisible inside the flex column. */}
+        {showTagline ? " " : null}
         {showTagline ? (
           <span
             className="text-ink-3 mt-[3px] text-[10px] leading-none tracking-[0.22em]"
