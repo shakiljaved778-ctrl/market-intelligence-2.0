@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128" role="img" aria-label="Mizaan proposal C: monogram tile">
+  <!-- Proposal C — monogram tile for the favicon, app icon and social avatar:
+       the beam M knocked out of an ink tile, ◆ in saffron. -->
+  <rect width="32" height="32" rx="7" fill="#12151a"/>
+  <g transform="translate(4,4)">
+    <path d="M2.6 5.2 H21.4" fill="none" stroke="#f6f1e9" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M5 20 V9.2 L12 15.4 L19 9.2 V20" fill="none" stroke="#f6f1e9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="10.3" y="3.5" width="3.4" height="3.4" rx="0.4" transform="rotate(45 12 5.2)" fill="#e8a93b"/>
+  </g>
+</svg>

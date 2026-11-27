@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96" role="img" aria-label="Mizaan proposal A: beam M">
+  <!-- Proposal A — "Beam M": a level beam with the ◆ pivot at its centre,
+       and the M hanging balanced beneath it. Mizaan (ميزان) = balance, scale. -->
+  <path d="M2.6 5.2 H21.4" fill="none" stroke="#12151a" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M5 20 V9.2 L12 15.4 L19 9.2 V20" fill="none" stroke="#12151a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="10.3" y="3.5" width="3.4" height="3.4" rx="0.4" transform="rotate(45 12 5.2)" fill="#b5781c"/>
+</svg>

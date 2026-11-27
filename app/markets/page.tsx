@@ -2,6 +2,8 @@ import Link from "next/link";
 import { GCC_EXCHANGES } from "@/content/gcc-companies";
 import { pageMeta } from "@/lib/seo";
 import { AssetTabs } from "@/components/market/AssetTabs";
+import { GccPegs } from "@/components/market/GccPegs";
+import { flag } from "@/lib/flags";
 import { Movers } from "@/components/market/Movers";
 import { SectorHeatmap } from "@/components/market/SectorHeatmap";
 import { SessionClocks } from "@/components/market/SessionClocks";
@@ -98,6 +100,8 @@ export default async function MarketsPage() {
           <AssetTabs fx={fx} commodities={commodities} crypto={crypto} />
         </div>
       </section>
+
+      {flag("gccPegs") ? <GccPegs /> : null}
     </div>
   );
 }

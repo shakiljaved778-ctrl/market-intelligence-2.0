@@ -35,9 +35,9 @@ Prettier and the production build.
 | --- | --- | --- |
 | Baseline preserved; nothing reverted | **Done** | Branch `baseline/pre-launch-2026-11-27` = `main` @ `cbf0009`. The git tag could not be pushed from this session (403); owner command in AUDIT.md |
 | All work on a branch; merged only after checks | **Done** | PR #109 into `prelaunch/hardening` |
-| `/api/health` = ok; pipelines within limits | **After deploy** | Check `https://www.mizaan.tech/api/health` once merged |
+| `/api/health` = ok; pipelines within limits | **Done** | 27 Nov 22:02 UTC: `ok`, no issues, 0.2–1 s (after hotfixes #111/#113) |
 | Crons firing (last 3 runs) | **Done** | pipeline 12:15 ✓, 13:06 (handover), 17:16 running; quotes 10:45 ✓ 10:53 ✓ 11:51 ✓; macro 07:46 ✓; eod 03:58 ✓ |
-| Smoke test green on preview | **Pending** | Run on the PR's preview URL |
+| Smoke test green | **Done (production)** | 37/38 after release; the one failure is the thin Crypto section (2 stories), a content gap. Preview URLs are unreachable from the build session |
 | Mobile walkthrough at 390 px | **Partial** | Cards checked at 390 px; full walkthrough on preview |
 | No fake or placeholder data | **Done** | CI fixture guard; demo data only under `DEMO_MODE` |
 | Rollback plan | **Done** | Vercel → Deployments → `market-intelligence-2-0-aftnhuzjp…` → Instant Rollback |
