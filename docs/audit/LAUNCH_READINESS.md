@@ -44,8 +44,8 @@ Prettier and the production build.
 | Code freeze 12 h before announcement | **Owner** | Only P0 hotfixes after the freeze |
 | 48 h post-launch watch | **Owner + Claude** | Health endpoint, CI-failure monitor (already scheduled), Vercel logs |
 | Lighthouse mobile ≥ 80 | **Not run** | Run on preview (`lighthouse.yml` or PageSpeed Insights) |
-| Newsletter signup end to end | **Owner** | Needs a real inbox |
-| `FRED_API_KEY` in production | **Owner** | Unlocks oil prices, the 10-year yield and US macro |
+| Newsletter signup end to end | **Done** | Owner tested with a real inbox (27 Nov) |
+| `FRED_API_KEY` in production | **Done** | Added in Vercel (27 Nov); data arrives with the next macro run |
 
 ## Not in P0 (P1, behind flags)
 
