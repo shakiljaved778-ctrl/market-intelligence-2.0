@@ -20,6 +20,13 @@ import { instrumentBySymbol } from "@/content/instruments";
  * price surfaces until a feed covers them.
  */
 export const TRACKED_SYMBOLS: readonly string[] = [
+  // Index trackers for the index board (content/index-board.ts) — first, so a
+  // run that is cut short still refreshes the top of every page.
+  "SPY",
+  "QQQ",
+  "DIA",
+  "IWM",
+  "GLD",
   // Mega-cap tech / communication services
   "AAPL",
   "MSFT",

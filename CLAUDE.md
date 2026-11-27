@@ -166,6 +166,8 @@ colour alone) and (b) the `--iris` accent, reserved **exclusively** for our own
 computed content (recaps, scores, source counts) — it *means* "this is ours". Type:
 Newsreader (headlines/recaps), Geist Sans (UI), Geist Mono `tabular-nums` (all
 figures). Hairline rules + surface elevation, not shadows.
+Story headlines are bold sans (Inter, `font-sans font-bold`) — owner decision,
+2026-11-27; Newsreader stays for section titles and recap prose.
 
 ## Curation engine tuning (§9) — recorded per the Phase 4 gate
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleBody } from "@/components/news/ArticleBody";
+import { KeyTakeaways } from "@/components/news/KeyTakeaways";
 import { CoverArt } from "@/components/news/CoverArt";
 import { readOriginal } from "@/lib/news/originals";
 import { relativeTime } from "@/lib/format/relative-time";
@@ -81,6 +82,7 @@ export default async function OriginalPage({ params }: Params) {
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
         <article className="lg:col-span-8">
+          <KeyTakeaways md={o.bodyMd} />
           <ArticleBody md={o.bodyMd} />
           <p className="text-ink-3 mt-6 text-[11px] leading-relaxed">
             Written by AI from the cited reports listed here — original text, not copied

@@ -4,6 +4,7 @@ import "./globals.css";
 import { inter, jetbrainsMono, newsreader, plexArabic } from "./fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { BOARD_HEIGHT_CLASS, IndexBoard } from "@/components/market/IndexBoard";
 import { TickerTape } from "@/components/market/TickerTape";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { getDisplayCurrency } from "@/lib/currency/server";
@@ -108,6 +109,18 @@ export default async function RootLayout({
           </p>
         ) : null}
         <Header currency={currency} themePref={themePref} />
+        {/* Index board: major indices (via their ETF trackers), yield, oil,
+            Bitcoin, EUR/USD. Streams in; the fallback reserves its height. */}
+        <Suspense
+          fallback={
+            <div
+              aria-hidden
+              className={`border-hairline bg-surface border-b ${BOARD_HEIGHT_CLASS}`}
+            />
+          }
+        >
+          <IndexBoard />
+        </Suspense>
         {/* The tape reads stored prices; it streams in after the page shell so
             a slow read can never hold the whole page. */}
         <Suspense fallback={null}>
