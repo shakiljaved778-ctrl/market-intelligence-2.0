@@ -78,20 +78,23 @@ export function FundamentalsPanel({ data }: { data: Fundamentals }) {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {groups.map((g) => (
-          <dl key={g.heading} className="list-card">
+          <div key={g.heading} className="list-card">
             <p className="text-text-low border-line border-b px-3.5 py-2 text-[12px]">
               {g.heading}
             </p>
-            {g.rows.map(([label, value]) => (
-              <div
-                key={label}
-                className="border-line flex items-baseline justify-between border-b px-3.5 py-2.5 last:border-b-0"
-              >
-                <dt className="text-text-low text-[12px]">{label}</dt>
-                <dd className="tnum text-text-hi text-[14px]">{value}</dd>
-              </div>
-            ))}
-          </dl>
+            {/* The heading sits outside the list: a <dl> may hold only dt/dd groups. */}
+            <dl>
+              {g.rows.map(([label, value]) => (
+                <div
+                  key={label}
+                  className="border-line flex items-baseline justify-between border-b px-3.5 py-2.5 last:border-b-0"
+                >
+                  <dt className="text-text-low text-[12px]">{label}</dt>
+                  <dd className="tnum text-text-hi text-[14px]">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         ))}
       </div>
     </section>
