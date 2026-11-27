@@ -53,7 +53,7 @@ export async function readIndexBoard(): Promise<BoardCard[]> {
     cards.push({
       key: t.symbol,
       label: t.label,
-      via: `via ${t.symbol} ETF`,
+      via: t.via ?? `via ${t.symbol} ETF`,
       value: `$${num(p.value.priceUsd, 2)}`,
       changePct: p.value.changePct,
       stamp: p,

@@ -26,6 +26,9 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "QQQ",
   "DIA",
   "IWM",
+  "EWJ",
+  "EWU",
+  "INDA",
   "GLD",
   // Mega-cap tech / communication services
   "AAPL",
