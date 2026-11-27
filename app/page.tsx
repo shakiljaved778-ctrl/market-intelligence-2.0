@@ -226,12 +226,12 @@ export default async function BoardPage() {
               {original ? (
                 <div className="flex flex-col">
                   <p className="t-micro text-ink-3 mb-2">Global markets</p>
-                  <OriginalCard original={original} />
+                  <OriginalCard original={original} priority />
                 </div>
               ) : top.global ? (
                 <div className="flex flex-col">
                   <p className="t-micro text-ink-3 mb-2">Global markets</p>
-                  <StoryCard cluster={top.global} variant="card" />
+                  <StoryCard cluster={top.global} variant="card" priority />
                 </div>
               ) : null}
               {top.gcc ? (
