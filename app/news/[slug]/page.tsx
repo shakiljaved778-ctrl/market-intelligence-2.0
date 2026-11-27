@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { COVER_SIZES } from "@/lib/news/images";
 import { storyAgeLabel } from "@/lib/curation/freshness";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -131,6 +132,8 @@ export default async function ClusterPage({ params }: Params) {
             feature={{
               place: isGccRegion(cluster.region) ? regionLabel(cluster.region) : null,
             }}
+            priority
+            sizes={COVER_SIZES.hero}
             className="h-full w-full"
           />
         </div>

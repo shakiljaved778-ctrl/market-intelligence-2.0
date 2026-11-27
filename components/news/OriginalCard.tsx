@@ -9,7 +9,14 @@ import type { StoredOriginal } from "@/lib/db/queries/originals";
  * carries the ◆ "ours" accent (§12) and says plainly that it is AI-written
  * from cited reports.
  */
-export function OriginalCard({ original }: { original: StoredOriginal }) {
+export function OriginalCard({
+  original,
+  priority = false,
+}: {
+  original: StoredOriginal;
+  /** Set on the homepage's first card, the page's largest image. */
+  priority?: boolean;
+}) {
   return (
     <Link
       href={`/analysis/${original.slug}`}
@@ -22,6 +29,7 @@ export function OriginalCard({ original }: { original: StoredOriginal }) {
           imageUrl={original.coverUrl}
           label={false}
           feature={{ place: "Global markets" }}
+          priority={priority}
           className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
         />
       </div>

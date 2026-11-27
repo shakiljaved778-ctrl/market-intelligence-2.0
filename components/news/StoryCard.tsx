@@ -2,6 +2,7 @@ import Link from "next/link";
 import { storyAgeLabel } from "@/lib/curation/freshness";
 import type { WireCluster } from "@/lib/news/read";
 import { CoverArt } from "./CoverArt";
+import { COVER_SIZES } from "@/lib/news/images";
 import { isGccRegion, regionLabel, type Region } from "@/lib/curation/region";
 
 /** The Gulf country (or "GCC") a story concerns, for its drawn cover. */
@@ -34,9 +35,12 @@ function absolute(iso: string): string {
 export function StoryCard({
   cluster,
   variant = "card",
+  priority = false,
 }: {
   cluster: WireCluster;
   variant?: "lead" | "card" | "compact";
+  /** The page's largest image (its LCP): its cover loads first. */
+  priority?: boolean;
 }) {
   const time = (
     <span className="text-ink-3" title={absolute(cluster.eventTime)}>
@@ -61,6 +65,7 @@ export function StoryCard({
             seed={cluster.slug}
             imageUrl={cluster.imageUrl}
             label={false}
+            sizes={COVER_SIZES.thumb}
             className="h-full w-full"
           />
         </div>
@@ -90,6 +95,7 @@ export function StoryCard({
           imageUrl={cluster.imageUrl}
           label={!cluster.imageUrl}
           feature={{ place: placeOf(cluster.region) }}
+          priority={priority}
           className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
         />
       </div>

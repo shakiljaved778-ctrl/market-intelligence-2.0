@@ -1,3 +1,4 @@
+import { COVER_SIZES, pexelsSrcSet } from "@/lib/news/images";
 import { sectionMeta } from "@/lib/curation/section";
 
 /**
@@ -243,6 +244,8 @@ export function CoverArt({
   className,
   label = true,
   feature,
+  priority = false,
+  sizes = COVER_SIZES.card,
 }: {
   section: string;
   seed: string;
@@ -257,6 +260,10 @@ export function CoverArt({
    * `place` is the story's Gulf country, if any.
    */
   feature?: { place?: string | null };
+  /** The page's largest image (its LCP): load it first, not lazily. */
+  priority?: boolean;
+  /** How wide the cover is drawn, so the browser fetches a fitting copy. */
+  sizes?: string;
 }) {
   const meta = sectionMeta(section);
   const n = seedNum(seed);
@@ -283,8 +290,12 @@ export function CoverArt({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={photo}
+          srcSet={pexelsSrcSet(photo) ?? undefined}
+          sizes={sizes}
           alt=""
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : null}
