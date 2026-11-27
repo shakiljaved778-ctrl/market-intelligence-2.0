@@ -93,10 +93,11 @@
 #   vara-news, adgm-announcements   page loads, no feed (VARA: sitemap only).
 #   cbb-press                        HTTP 403 to automated requests — skipped.
 #   imf-news                         feed URL returns 404.
-#   conversation-crypto / -bitcoin   the numeric topic ids were wrong (they
-#                                    resolve to other topics) — replaced by
-#                                    the topic pages, so the probe lists the
-#                                    real feed links.
+#   conversation-crypto / -bitcoin   topic pages lead to the real feeds,
+#                                    topics/cryptocurrency-8321 and
+#                                    topics/bitcoin-1358 (run 46077786401) —
+#                                    ADDED to sources.yaml (CC BY-ND, as the
+#                                    other Conversation feeds).
 # Probe round 7, 2026-11-25 (run 45700040358):
 #   conversation-uk-health / -environment / -arts / -technology,
 #   conversation-au-health / -environment, rbnz-news, cfpb-newsroom, fred-blog

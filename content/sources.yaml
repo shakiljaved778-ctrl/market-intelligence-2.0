@@ -239,6 +239,28 @@ sources:
     trust_score: 78
     license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
     active: true # owner-approved 2026-11-10; feed + robots verified (US technology edition)
+  - id: conversation-crypto
+    name: The Conversation — Cryptocurrency
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/topics/cryptocurrency-8321/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # 2026-11-27 pre-launch: Crypto had 2 stories; probe run 46077786401 found this topic feed (same terms as the other Conversation feeds)
+    default_section: crypto
+  - id: conversation-bitcoin
+    name: The Conversation — Bitcoin
+    homepage: https://theconversation.com
+    feed_url: https://theconversation.com/topics/bitcoin-1358/articles.atom
+    kind: rss
+    region: GLOBAL
+    tier: outlet
+    trust_score: 78
+    license_note: Creative Commons CC-BY-ND — commercial republication permitted with attribution; headline + dek + link, link-out to source; no body stored.
+    active: true # 2026-11-27 pre-launch, same probe run and terms as conversation-crypto
+    default_section: crypto
   - id: the-conversation-uk
     name: The Conversation — UK
     homepage: https://theconversation.com
