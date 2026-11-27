@@ -83,3 +83,34 @@ describe("sessionTimes", () => {
     expect(sessionTimes("NOPE", wed(3))).toBeNull();
   });
 });
+
+describe("exchange holidays (2026-11-27)", () => {
+  it("closes the US markets on Christmas Day", () => {
+    const xmas = new Date(Date.UTC(2026, 11, 25, 16, 0, 0)); // 11:00 ET
+    const s = sessionFor("NYSE", xmas);
+    expect(s.state).toBe("closed");
+    expect(s.label).toBe("Closed · Christmas Day");
+  });
+
+  it("closes early the day after Thanksgiving", () => {
+    // 17:00Z = 12:00 ET: open, early close; 18:30Z = 13:30 ET: closed for the day.
+    expect(sessionFor("NASDAQ", new Date(Date.UTC(2026, 10, 27, 17, 0))).label).toBe(
+      "Open · early close",
+    );
+    expect(sessionFor("NASDAQ", new Date(Date.UTC(2026, 10, 27, 18, 30))).state).toBe(
+      "post",
+    );
+    const times = sessionTimes("NASDAQ", new Date(Date.UTC(2026, 10, 27, 15, 0)));
+    expect(times?.close.toISOString()).toBe("2026-11-27T18:00:00.000Z");
+  });
+
+  it("closes the UAE exchanges on National Day, by Gulf local date", () => {
+    const dec2 = new Date(Date.UTC(2026, 11, 2, 8, 0, 0)); // 12:00 Dubai, Wednesday
+    expect(sessionFor("DFM", dec2).label).toBe("Closed · UAE National Day");
+    expect(sessionFor("ADX", dec2).state).toBe("closed");
+  });
+
+  it("leaves ordinary trading days alone", () => {
+    expect(sessionFor("NASDAQ", wed(15)).label).toBe("Open");
+  });
+});

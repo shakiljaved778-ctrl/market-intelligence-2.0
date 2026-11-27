@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { storyAgeLabel } from "@/lib/curation/freshness";
 import { Fragment } from "react";
 import { InlineVideo } from "@/components/video/InlineVideo";
 import type { OfficialPlaylist } from "@/lib/videos/playlists";
 import type { WireCluster } from "@/lib/news/read";
-import { relativeTime } from "@/lib/format/relative-time";
 import { CoverArt } from "./CoverArt";
 import { SectionTag } from "./SectionTag";
 
@@ -58,15 +58,16 @@ export function Wire({
                   </span>
                   <span
                     className="ours tnum border-iris/25 bg-iris/10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5"
-                    title="Importance score"
+                    title="Importance score (0–100): distinct sources, source tier, market move and primary sources. See Methodology."
                   >
-                    ◆ {c.importanceScore}
+                    <span aria-hidden>◆</span> Importance {c.importanceScore}
+                    <span className="opacity-70">/100</span>
                   </span>
                   <span className="ours tnum">
                     {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
                   </span>
                   <span className="text-text-low ml-auto">
-                    {relativeTime(c.eventTime)}
+                    {storyAgeLabel(c.section, c.eventTime)}
                   </span>
                 </div>
                 <h3 className="text-text-hi group-hover:text-iris mt-2.5 max-w-[68ch] font-sans text-[20px] leading-snug font-bold tracking-tight transition-colors">

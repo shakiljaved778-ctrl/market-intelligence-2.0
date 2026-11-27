@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChangePill } from "@/components/market/ChangePill";
 import { readIndexBoard, type BoardCard } from "@/lib/market/board";
+import { getDisplayCurrency } from "@/lib/currency/server";
 import { compactStamp, stampText } from "@/lib/market/provenance";
 
 /**
@@ -44,7 +45,7 @@ function Card({ card }: { card: BoardCard }) {
 }
 
 export async function IndexBoard() {
-  const cards = await readIndexBoard();
+  const cards = await readIndexBoard(await getDisplayCurrency());
   if (cards.length === 0) return null;
   return (
     <nav

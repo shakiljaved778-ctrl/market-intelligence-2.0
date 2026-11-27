@@ -21,13 +21,21 @@ export default function AiDisclosurePage() {
           Writes the short <strong>summary</strong> on each story — original prose
           synthesised from that story&rsquo;s facts and its cited sources.
         </li>
+        <li>
+          The model is <strong>gpt-oss-120b</strong> (OpenAI&rsquo;s open-weight model),
+          run on <strong>Groq</strong>. If it is unavailable, the job falls back to
+          gpt-oss-20b or Meta&rsquo;s Llama 3.3 70B or 3.1 8B. The model used is
+          recorded with each summary. Summaries are written in scheduled jobs, never
+          while you load a page.
+        </li>
       </ul>
 
       <h2>What AI does not do</h2>
       <ul>
         <li>
           It does <strong>not</strong> rank or cluster the news. Rankings and clustering
-          are computed deterministically, with no model in the loop.
+          are computed deterministically: a fixed formula, and a small text-similarity
+          function computed on our own servers — no generative model.
         </li>
         <li>
           It does <strong>not</strong> compute any market figure. Prices, changes and

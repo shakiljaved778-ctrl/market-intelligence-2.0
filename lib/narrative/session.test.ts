@@ -85,6 +85,13 @@ describe("buildSessionClose", () => {
     expect(r?.output.bodyMd).toContain("T3 Corp was the standout");
   });
 
+  it("states unchanged names so the breadth counts add up to the universe", () => {
+    const r = buildSessionClose(rows([2, 0, -1, 0, 3]), SESSION);
+    expect(r?.output.bodyMd).toContain(
+      "Among the 5 US large caps Mizaan tracks, 2 names rose, 1 fell and 2 were unchanged.",
+    );
+  });
+
   it("publishes NOTHING when closing-price coverage is below 80%", () => {
     const all = rows([1, 1, 1, 1, 1]);
     // Only 3 of 5 have a closing quote; the other two are stale mid-session.

@@ -92,7 +92,8 @@ export interface SessionRecapInput {
   currency: DisplayCurrency;
   date: string;
   indices: { name: string; changePct: number }[];
-  breadth?: { advancers: number; decliners: number };
+  /** Unchanged names are stated so the counts add up to the universe. */
+  breadth?: { advancers: number; decliners: number; unchanged?: number };
   topMover?: { name: string; changePct: number };
   weakestSector?: string;
   /**
@@ -144,10 +145,15 @@ export function sessionRecap(input: SessionRecapInput): RecapOutput {
 
   // Sentence 3 — breadth.
   if (input.breadth) {
-    const { advancers, decliners } = input.breadth;
+    const { advancers, decliners, unchanged = 0 } = input.breadth;
     if (input.universeLabel) {
+      // Owner review, 2026-11-27: "32 rose and 27 fell" of 60 did not add up.
+      const tail =
+        unchanged > 0
+          ? `, ${decliners} fell and ${unchanged} ${plural(unchanged, "was", "were")} unchanged.`
+          : ` and ${decliners} fell.`;
       sentences.push(
-        `Among ${input.universeLabel}, ${advancers} ${plural(advancers, "name", "names")} rose and ${decliners} fell.`,
+        `Among ${input.universeLabel}, ${advancers} ${plural(advancers, "name", "names")} rose${tail}`,
       );
     } else
       sentences.push(

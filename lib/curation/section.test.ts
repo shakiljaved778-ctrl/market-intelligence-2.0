@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { readSectionSummaries } from "@/lib/news/read";
+import { classify } from "./classify";
 import { __resetSectionCache, classifySection, isFinancialSection } from "./section";
 
 describe("section classifier (deterministic, dictionary-driven)", () => {
@@ -287,5 +288,51 @@ describe("section classifier — misfiled NASA stories (Phase 2)", () => {
         sourceId: "nasa-news",
       }),
     ).toBe("science");
+  });
+});
+
+describe("a named company alone does not make market news (2026-11-27)", () => {
+  const place = (title: string, sourceId: string | null) => {
+    const c = classify(title, null);
+    return classifySection({ title, topics: c.topics, tickers: c.tickers, sourceId });
+  };
+
+  it("files essays that merely name a listed company outside Markets", () => {
+    expect(
+      place(
+        "Amazon workers in B.C. won North America’s first union contract. Here’s how labour laws made it possible",
+        "the-conversation",
+      ),
+    ).not.toBe("markets");
+    expect(
+      place(
+        "What is Instagram poetry, and why are people arguing about who owns it?",
+        "the-conversation",
+      ),
+    ).not.toBe("markets");
+  });
+
+  it("keeps real market stories in Markets", () => {
+    expect(place("Nvidia shares jump 8% after record quarterly revenue", null)).toBe(
+      "markets",
+    );
+    expect(
+      place("Tesla stock falls as deliveries miss estimates", "the-conversation"),
+    ).toBe("markets");
+  });
+
+  it("files inter-government talks from a markets feed under World", () => {
+    expect(
+      place(
+        "Turkiye and Russia Discuss Energy Cooperation and Akkuyu Nuclear Plant",
+        "qna-economy-international",
+      ),
+    ).toBe("world");
+    expect(
+      place(
+        "Russia, Pakistan Sign Protocol on Trade, Economic Cooperation",
+        "qna-economy-international",
+      ),
+    ).toBe("world");
   });
 });

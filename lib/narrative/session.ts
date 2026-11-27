@@ -100,7 +100,11 @@ export function buildSessionClose(
     currency: "USD",
     date: sessionDate,
     indices: [],
-    breadth: { advancers, decliners },
+    breadth: {
+      advancers,
+      decliners,
+      unchanged: closed.length - advancers - decliners,
+    },
     topMover: top
       ? { name: top.instrument.name, changePct: top.quote.changePct }
       : undefined,

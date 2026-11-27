@@ -189,7 +189,8 @@ sources:
     active: true
     max_items_per_run: 30
     default_section: markets
-    allowed_sections: [economy, markets]
+    # world: this feed also carries inter-government talks (2026-11-27).
+    allowed_sections: [economy, markets, world]
 
   # Local sport (probe round 5, 2026-11-19: robots allow, HTTP 200, 50 dated
   # items; 4 of 50 matched the editorial exclusions). Same agency and terms.
