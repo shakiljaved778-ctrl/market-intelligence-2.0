@@ -397,8 +397,7 @@ sections:
     financial: false
     hue: "#e8863a"
     glyph: trophy
-    keywords:
-      [
+    keywords: [
         football,
         soccer,
         world cup,
@@ -417,6 +416,24 @@ sections:
         "Champions League",
         "Formula One",
         Olympics,
+        # Gulf sport (pre-launch brief §6.4, 2026-11-27).
+        "Stars League",
+        "Saudi Pro League",
+        AFC,
+        "Asian Cup",
+        Lusail,
+        MotoGP,
+        "Formula 2",
+        F1,
+        Aspire,
+        padel,
+        golf,
+        # The business of sport: ownership, rights and sponsorship.
+        "media rights",
+        "broadcast rights",
+        "broadcasting rights",
+        "sponsorship deal",
+        "club takeover",
       ]
 
   - id: entertainment
