@@ -107,7 +107,7 @@ function Item({ item }: { item: TapeItem }) {
       <span className="text-ink-2 text-[11px] font-medium">{item.name}</span>
       <span className="tnum text-ink text-[12px]">{item.value}</span>
       <ChangePill pct={item.changePct} className="text-[11px]" />
-      <span className="text-ink-4 text-[10px]">{compactStamp(item.stamp)}</span>
+      <span className="text-ink-3 text-[10px]">{compactStamp(item.stamp)}</span>
     </span>
   );
 }

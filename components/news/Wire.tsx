@@ -70,9 +70,9 @@ export function Wire({
                     {storyAgeLabel(c.section, c.eventTime)}
                   </span>
                 </div>
-                <h3 className="text-text-hi group-hover:text-iris mt-2.5 max-w-[68ch] font-sans text-[20px] leading-snug font-bold tracking-tight transition-colors">
+                <h2 className="text-text-hi group-hover:text-iris mt-2.5 max-w-[68ch] font-sans text-[20px] leading-snug font-bold tracking-tight transition-colors">
                   {c.title}
-                </h3>
+                </h2>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <SectionTag section={c.section} />
                   {c.tickers.map((t) => (

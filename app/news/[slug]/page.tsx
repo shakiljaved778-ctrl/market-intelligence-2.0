@@ -158,7 +158,8 @@ export default async function ClusterPage({ params }: Params) {
         {sectionMeta(cluster.section).label}
       </Link>
 
-      <h1 className="t-h1 font-editorial text-ink mt-1 max-w-[20ch]">
+      {/* Bold sans story headlines (owner decision, 2026-11-27). */}
+      <h1 className="text-ink mt-1 max-w-[24ch] font-sans text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl">
         {cluster.title}
       </h1>
 

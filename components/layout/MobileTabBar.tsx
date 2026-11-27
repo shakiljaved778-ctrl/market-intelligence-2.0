@@ -48,7 +48,7 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="Primary (mobile)"
-      className="border-hairline bg-surface/95 fixed inset-x-0 bottom-0 z-40 flex border-t backdrop-blur md:hidden"
+      className="border-hairline bg-surface/95 fixed inset-x-0 bottom-0 z-40 flex border-t backdrop-blur lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {TABS.map((t) => {

@@ -116,7 +116,7 @@ export default async function RootLayout({
           fallback={
             <div
               aria-hidden
-              className={`border-hairline bg-surface border-b ${BOARD_HEIGHT_CLASS}`}
+              className={`border-hairline bg-surface-2 border-b ${BOARD_HEIGHT_CLASS}`}
             />
           }
         >
@@ -131,7 +131,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <DataDelayedBanner />
         </Suspense>
-        <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 md:pb-0">
+        <main id="main" className="mx-auto max-w-[1320px] px-4 pb-20 lg:pb-0">
           {children}
         </main>
         <Footer colorblind={colorblind} />

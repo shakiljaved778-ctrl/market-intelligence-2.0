@@ -51,7 +51,6 @@ export function PlaylistCard({
             type="button"
             onClick={() => setPlaying(true)}
             className="group absolute inset-0 h-full w-full text-left"
-            aria-label={`Play ${latest.title} — latest from ${name}`}
           >
             <Image
               src={latest.thumbnailUrl}
@@ -75,6 +74,7 @@ export function PlaylistCard({
               />
               {name}
             </span>
+            <span className="sr-only"> — play the latest video: {latest.title}</span>
             <span
               aria-hidden
               className="bg-ink/75 text-surface absolute top-1/2 left-1/2 inline-flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[18px] transition group-hover:scale-110"
@@ -87,7 +87,6 @@ export function PlaylistCard({
             type="button"
             onClick={() => setPlaying(true)}
             className="group absolute inset-0 flex h-full w-full flex-col justify-between p-[7%] text-left"
-            aria-label={`Play the latest videos from ${name}`}
             style={{
               background: `radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, ${hue} 26%, transparent), transparent 60%), linear-gradient(135deg, var(--raised-2), var(--surface))`,
             }}
@@ -104,6 +103,7 @@ export function PlaylistCard({
               <span className="display text-ink block text-[clamp(1.5rem,3.2vw,2.1rem)] leading-none">
                 {name}
               </span>
+              <span className="sr-only"> — play the latest videos</span>
             </span>
             <span
               aria-hidden

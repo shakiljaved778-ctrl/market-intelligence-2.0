@@ -38,7 +38,7 @@ export function MarketStatus() {
 
   // Render a stable placeholder until mounted (avoids hydration mismatch).
   if (!now) {
-    return <div className="hidden h-8 w-[150px] lg:block" aria-hidden />;
+    return <div className="hidden h-8 w-[150px] xl:block" aria-hidden />;
   }
 
   const markets = [
@@ -48,7 +48,7 @@ export function MarketStatus() {
 
   return (
     <div
-      className="border-hairline bg-surface hidden items-center gap-3 rounded-[6px] border px-2.5 py-1.5 lg:flex"
+      className="border-hairline bg-surface hidden items-center gap-3 rounded-[6px] border px-2.5 py-1.5 xl:flex"
       aria-label="Market status"
       data-volatile
     >

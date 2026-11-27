@@ -205,9 +205,11 @@ export default async function BoardPage() {
         <div className="mb-5 flex items-baseline justify-between">
           <p className="t-micro text-ink-3 inline-flex items-center gap-2">
             <span className="live-dot inline-block align-middle" aria-hidden />
-            Today on Mizaan · <span data-volatile>{dohaToday(now)}</span>
+            {/* Phones show just the date, so the line never wraps. */}
+            <span className="hidden sm:inline">Today on Mizaan · </span>
+            <span data-volatile>{dohaToday(now)}</span>
           </p>
-          <Link href="/news" className="text-brand text-[12px]">
+          <Link href="/news" className="text-brand text-[12px] whitespace-nowrap">
             The wire <span aria-hidden>→</span>
           </Link>
         </div>
@@ -456,9 +458,9 @@ export default async function BoardPage() {
                         className="inline-block h-5 w-[3px] rounded-[2px]"
                         style={{ background: section.hue }}
                       />
-                      <span className="t-h3 font-editorial text-ink group-hover:underline">
+                      <h2 className="t-h3 font-editorial text-ink group-hover:underline">
                         {section.label}
-                      </span>
+                      </h2>
                     </Link>
                     <Link
                       href={`/news?section=${section.id}`}
@@ -490,9 +492,9 @@ export default async function BoardPage() {
                       className="inline-block h-5 w-[3px] rounded-[2px]"
                       style={{ background: section.hue }}
                     />
-                    <span className="t-h3 font-editorial text-ink group-hover:underline">
+                    <h2 className="t-h3 font-editorial text-ink group-hover:underline">
                       {section.label}
-                    </span>
+                    </h2>
                   </Link>
                   <Link
                     href={`/news?section=${section.id}`}
