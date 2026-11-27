@@ -19,8 +19,14 @@ export async function GET(request: Request): Promise<NextResponse> {
   const httpStatus = report.status === "down" ? 503 : 200;
   const headers = { "Cache-Control": "no-store" };
   if (authed) return NextResponse.json(report, { status: httpStatus, headers });
+  // Names only (no data): which checks are not ok, so a monitor's alert says why.
+  const issues = report.db
+    ? report.pipelines
+        .filter((p) => p.status !== "ok")
+        .map((p) => `${p.name}: ${p.status}`)
+    : ["database: no answer in time"];
   return NextResponse.json(
-    { status: report.status, checkedAt: report.checkedAt },
+    { status: report.status, checkedAt: report.checkedAt, issues },
     { status: httpStatus, headers },
   );
 }
