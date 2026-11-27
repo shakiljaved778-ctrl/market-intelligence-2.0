@@ -58,9 +58,10 @@ export function Wire({
                   </span>
                   <span
                     className="ours tnum border-iris/25 bg-iris/10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5"
-                    title="Importance score"
+                    title="Importance score (0–100): distinct sources, source tier, market move and primary sources. See Methodology."
                   >
-                    ◆ {c.importanceScore}
+                    <span aria-hidden>◆</span> Importance {c.importanceScore}
+                    <span className="opacity-70">/100</span>
                   </span>
                   <span className="ours tnum">
                     {c.sourceCount} {c.sourceCount === 1 ? "source" : "sources"}
