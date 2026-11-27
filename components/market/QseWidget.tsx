@@ -67,6 +67,15 @@ export function QseWidget() {
         className="tradingview-widget-container overflow-hidden"
         style={{ height: HEIGHT }}
       />
+      <noscript>
+        <p className="text-ink-3 text-[13px]">
+          QSE prices load in your browser from TradingView. View them on{" "}
+          <a href="https://www.qe.com.qa/" rel="noopener" className="underline">
+            the Qatar Stock Exchange website
+          </a>
+          .
+        </p>
+      </noscript>
       <p className="text-ink-4 t-micro mt-2">
         Prices by{" "}
         <a
