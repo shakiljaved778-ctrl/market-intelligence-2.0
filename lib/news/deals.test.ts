@@ -46,21 +46,25 @@ const c = (over: Partial<WireCluster>): WireCluster =>
 
 describe("buildTrackers", () => {
   it("sorts each tracker into its table, newest first", () => {
-    const t = buildTrackers([
-      c({
-        slug: "a",
-        title: "QIIB Issues $500 Million Sukuk",
-        eventTime: "2026-11-26T10:00:00Z",
-      }),
-      c({ slug: "b", title: "Co files for IPO", topics: ["ipo"] }),
-      c({
-        slug: "c",
-        title: "Bank issues green bonds",
-        eventTime: "2026-11-27T12:00:00Z",
-      }),
-      c({ slug: "d", section: "venture", title: "Startup raises $30m" }),
-      c({ slug: "e", section: "privateequity", title: "KKR buyout" }),
-    ]);
+    const t = buildTrackers(
+      [
+        c({
+          slug: "a",
+          title: "QIIB Issues $500 Million Sukuk",
+          eventTime: "2026-11-26T10:00:00Z",
+        }),
+        c({ slug: "b", title: "Co files for IPO", topics: ["ipo"] }),
+        c({
+          slug: "c",
+          title: "Bank issues green bonds",
+          eventTime: "2026-11-27T12:00:00Z",
+        }),
+        c({ slug: "d", section: "venture", title: "Startup raises $30m" }),
+        c({ slug: "e", section: "privateequity", title: "KKR buyout" }),
+        c({ slug: "old", title: "Old sukuk", eventTime: "2026-10-01T10:00:00Z" }),
+      ],
+      Date.parse("2026-11-28T00:00:00Z"),
+    );
     const byId = Object.fromEntries(t.map((x) => [x.id, x.rows.map((r) => r.slug)]));
     expect(byId["sukuk-bonds"]).toEqual(["c", "a"]);
     expect(byId.ipos).toEqual(["b"]);

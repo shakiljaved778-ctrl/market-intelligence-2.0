@@ -37,6 +37,8 @@ export function statedValue(...texts: (string | null | undefined)[]): string | n
 
 const SUKUK_OR_BOND = /\b(sukuk|bonds?|notes|debt issuance|issuance)\b/i;
 const MAX_ROWS = 15;
+/** The page promises "the last two weeks"; the trackers enforce it. */
+export const TRACKER_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
 function toRow(c: WireCluster): DealRow {
   return {
@@ -53,9 +55,15 @@ const newest = (a: WireCluster, b: WireCluster) =>
   Date.parse(b.eventTime) - Date.parse(a.eventTime);
 
 /** PURE: the five trackers on /deals, each newest first. */
-export function buildTrackers(clusters: WireCluster[]): Tracker[] {
+export function buildTrackers(
+  clusters: WireCluster[],
+  now: number = Date.now(),
+): Tracker[] {
+  const recent = clusters.filter(
+    (c) => now - Date.parse(c.eventTime) <= TRACKER_WINDOW_MS,
+  );
   const pick = (pred: (c: WireCluster) => boolean) =>
-    clusters.filter(pred).sort(newest).slice(0, MAX_ROWS).map(toRow);
+    recent.filter(pred).sort(newest).slice(0, MAX_ROWS).map(toRow);
   const ib = (c: WireCluster) => c.section === "ibanking";
   return [
     {
