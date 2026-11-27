@@ -18,9 +18,57 @@ export interface NormalizedArticle {
 
 export const DEK_WORD_LIMIT = 40;
 
-/** Collapse whitespace and trim. */
+// Zero-width and soft-hyphen characters ("FIBA \u200b\u200bBasketball").
+const INVISIBLE = /[\u200B-\u200D\u2060\uFEFF\u00AD]/g;
+/** C0 control characters other than tab/newline/CR, and DEL, become spaces. */
+function dropControls(s: string): string {
+  let out = "";
+  for (const ch of s) {
+    const c = ch.charCodeAt(0);
+    const control = (c < 32 && c !== 9 && c !== 10 && c !== 13) || c === 127;
+    out += control ? " " : ch;
+  }
+  return out;
+}
+/** A numeric character reference, or the original text when it is not valid. */
+function codePoint(original: string, n: number): string {
+  return Number.isInteger(n) && n > 0 && n <= 0x10ffff
+    ? String.fromCodePoint(n)
+    : original;
+}
+const NAMED_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+  "&nbsp;": " ",
+  "&lt;": "<",
+  "&gt;": ">",
+};
+
+/**
+ * Clean feed text for display (owner review, 2026-11-27): drop zero-width and
+ * control characters, decode the HTML entities feeds leave behind, remove a
+ * space before punctuation ("Tourism , Signs"), and collapse whitespace. Words
+ * and punctuation are otherwise kept exactly as the source wrote them.
+ */
+export function cleanText(s: string): string {
+  return (
+    dropControls(s.replace(INVISIBLE, ""))
+      // Numeric references first, so "&amp;#39;" is decoded only once.
+      .replace(/&#(\d{1,7});/g, (m, n: string) => codePoint(m, Number(n)))
+      .replace(/&#x([0-9a-f]{1,6});/gi, (m, h: string) => codePoint(m, parseInt(h, 16)))
+      .replace(/&(?:amp|quot|#39|apos|nbsp|lt|gt);/g, (m) => NAMED_ENTITIES[m] ?? m)
+      .replace(/\u00A0/g, " ")
+      .replace(/\s+([,.;:!?])(?=\s|$)/g, "$1")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+/** Clean and collapse whitespace (ingest). */
 export function normalizeText(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
+  return cleanText(s);
 }
 
 /** Truncate a dek to ≤40 words (§10). The formatter adds the ellipsis on render. */

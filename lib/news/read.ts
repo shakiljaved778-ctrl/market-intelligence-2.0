@@ -18,6 +18,7 @@ import { isDemoMode } from "@/lib/demo/mode";
 import { isDbConfigured } from "@/lib/db/client";
 import { dbReadWire, dbReadWireBySlug, type DbWireRow } from "@/lib/db/queries/wire";
 import { classify } from "@/lib/curation/classify";
+import { cleanText } from "@/lib/curation/normalize";
 import { HashEmbedder } from "@/lib/curation/embed";
 import { demoNow, shiftFixtureDate } from "@/lib/demo/clock";
 import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedupe";
@@ -170,9 +171,10 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
   const tickers = [
     ...new Set(row.members.flatMap((m) => classify(m.headline, m.dek).tickers)),
   ];
+  // Text stored before the sanitiser existed is cleaned on the way out too.
   const cluster: WireCluster = {
     slug: row.slug,
-    title: row.title,
+    title: cleanText(row.title),
     tickers,
     topics: row.topics,
     entities: row.entities,
@@ -194,13 +196,17 @@ function dbLoaded(row: DbWireRow): LoadedCluster {
       dek: row.primaryDek,
       sourceRegion: sourceRegion(row.primarySourceId),
     }),
-    dek: row.primaryDek,
+    dek: row.primaryDek === null ? null : cleanText(row.primaryDek),
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
   };
   return {
     cluster,
-    members: row.members,
+    members: row.members.map((m) => ({
+      ...m,
+      headline: cleanText(m.headline),
+      dek: m.dek === null ? null : cleanText(m.dek),
+    })),
     primaryId: row.primaryId,
     // An AI article that names an excluded term (content/exclusions.yaml — e.g.
     // a Qatar bank story whose background mentions the central bank) is not
