@@ -1,13 +1,6 @@
-import { desc, eq, max } from "drizzle-orm";
-import { getDb } from "@/lib/db/client";
-import {
-  articles,
-  fxRates,
-  jobRuns,
-  macroObs,
-  quotes,
-  videoPlaylists,
-} from "@/lib/db/schema";
+import { and, desc, eq, max } from "drizzle-orm";
+import { getDb, isDbConfigured, resetDb } from "@/lib/db/client";
+import { fxRates, jobRuns, macroObs, quotes, videoPlaylists } from "@/lib/db/schema";
 import { sessionFor } from "@/lib/format/session";
 
 /**
@@ -87,34 +80,63 @@ function iso(v: unknown): string | null {
   return null;
 }
 
+/**
+ * The newest stored data per pipeline, using only index lookups (2026-11-27):
+ * the first version took max(published_at) over the articles table, which ran
+ * past the time limit in production. Each instance has ONE database
+ * connection shared with page reads, so these must stay cheap.
+ * - news: the newest successful ingest run (job_runs, by primary key);
+ * - US prices / crypto: the newest quote for SPY / BTC (primary key symbol, ts);
+ * - FX: the newest USD→EUR fixing (primary key base, quote, date);
+ * - energy: the newest Brent observation (series/date index);
+ * - video: the newest playlist refresh (a dozen rows).
+ */
 async function readLatest(): Promise<Record<string, string | null> | null> {
   const db = getDb();
   if (!db) return null;
   const one = async (q: Promise<{ v: unknown }[]>) => iso((await q)[0]?.v);
-  const [news, equities, crypto, fx, energy, video] = await Promise.all([
-    one(db.select({ v: max(articles.publishedAt) }).from(articles)),
-    one(
-      db
-        .select({ v: max(quotes.ts) })
-        .from(quotes)
-        .where(eq(quotes.symbol, "SPY")),
-    ),
-    one(
-      db
-        .select({ v: max(quotes.ts) })
-        .from(quotes)
-        .where(eq(quotes.symbol, "BTC")),
-    ),
-    one(db.select({ v: max(fxRates.date) }).from(fxRates)),
-    one(
-      db
-        .select({ v: max(macroObs.date) })
-        .from(macroObs)
-        .where(eq(macroObs.seriesId, "FRED:DCOILBRENTEU")),
-    ),
-    one(db.select({ v: max(videoPlaylists.fetchedAt) }).from(videoPlaylists)),
-  ]);
-  return { news, equities, crypto, fx, energy, video };
+  const recentJobs = await db
+    .select({
+      job: jobRuns.job,
+      finishedAt: jobRuns.finishedAt,
+      outcome: jobRuns.outcome,
+    })
+    .from(jobRuns)
+    .orderBy(desc(jobRuns.id))
+    .limit(200);
+  const lastGood = (job: string) =>
+    iso(
+      recentJobs.find((r) => r.job === job && r.finishedAt && r.outcome !== "error")
+        ?.finishedAt,
+    );
+  const equities = await one(
+    db
+      .select({ v: max(quotes.ts) })
+      .from(quotes)
+      .where(eq(quotes.symbol, "SPY")),
+  );
+  const crypto = await one(
+    db
+      .select({ v: max(quotes.ts) })
+      .from(quotes)
+      .where(eq(quotes.symbol, "BTC")),
+  );
+  const fx = await one(
+    db
+      .select({ v: max(fxRates.date) })
+      .from(fxRates)
+      .where(and(eq(fxRates.base, "USD"), eq(fxRates.quote, "EUR"))),
+  );
+  const energy = await one(
+    db
+      .select({ v: max(macroObs.date) })
+      .from(macroObs)
+      .where(eq(macroObs.seriesId, "FRED:DCOILBRENTEU")),
+  );
+  const video = await one(
+    db.select({ v: max(videoPlaylists.fetchedAt) }).from(videoPlaylists),
+  );
+  return { news: lastGood("ingest"), equities, crypto, fx, energy, video };
 }
 
 /**
@@ -174,6 +196,10 @@ export async function readHealth(
     opts.withJobs ? within(readJobs(), 3000, [], "job log") : Promise.resolve([]),
   ]);
   if (!latest) {
+    // A configured database that did not answer in time: drop the (single,
+    // shared) connection so a stalled socket cannot hold page reads behind it,
+    // as page reads do themselves (lib/db/client.ts dbRead).
+    if (isDbConfigured()) resetDb();
     return { status: "down", checkedAt, db: false, pipelines: [], jobs: [] };
   }
   const limits = limitsAt(now);
