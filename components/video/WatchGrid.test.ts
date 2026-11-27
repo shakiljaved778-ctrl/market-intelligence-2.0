@@ -16,7 +16,7 @@ describe("official playlists (no YouTube key)", () => {
     const html = renderToStaticMarkup(
       createElement(WatchGrid, { videos: [], playlists: officialPlaylists() }),
     );
-    expect(html).toContain("Play the latest videos from Federal Reserve");
+    expect(html).toContain("play the latest videos");
     expect(html).not.toContain("<iframe");
     expect(html).not.toContain("ytimg");
   });

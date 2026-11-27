@@ -1,4 +1,5 @@
 import { INSTRUMENTS } from "@/content/instruments";
+import { flag } from "@/lib/flags";
 import { SERIES } from "@/lib/economy/series";
 import { allSections, readWire } from "@/lib/news/read";
 import { listRecaps } from "@/lib/narrative/read";
@@ -47,15 +48,20 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
       "/author/shakil-javed",
       "/terms",
       "/privacy",
+      // Listed only while its feature flag is on (it 404s otherwise).
+      ...(flag("deals") ? ["/deals"] : []),
     ].map((p) => ({ loc: `${SITE}${p}`, lastmod: now }));
     const series = SERIES.filter((s) => s.groups.includes("macro")).map((s) => ({
       loc: `${SITE}/economy/indicator/${encodeURIComponent(s.id)}`,
       lastmod: now,
     }));
-    const sections = allSections().map((s) => ({
-      loc: `${SITE}/news/section/${s.id}`,
-      lastmod: now,
-    }));
+    // The hidden "general" bucket is not a page worth indexing.
+    const sections = allSections()
+      .filter((s) => !s.hidden)
+      .map((s) => ({
+        loc: `${SITE}/news/section/${s.id}`,
+        lastmod: now,
+      }));
     const exchanges = GCC_EXCHANGES.map((e) => ({
       loc: `${SITE}/markets/${e.id}`,
       lastmod: now,

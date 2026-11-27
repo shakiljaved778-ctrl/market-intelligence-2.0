@@ -19,7 +19,7 @@ export const BOARD_HEIGHT_CLASS = "h-[76px]";
 function Card({ card }: { card: BoardCard }) {
   const body = (
     <span
-      className="border-hairline bg-surface-2 flex h-[60px] min-w-[150px] flex-col justify-center rounded-[10px] border px-3"
+      className="border-hairline bg-surface flex h-[60px] min-w-[150px] flex-col justify-center rounded-[10px] border px-3"
       title={stampText(card.stamp) ?? undefined}
     >
       <span className="flex items-baseline gap-1.5">
@@ -30,7 +30,7 @@ function Card({ card }: { card: BoardCard }) {
         <span className="tnum text-ink text-[15px] font-semibold">{card.value}</span>
         <ChangePill pct={card.changePct} className="text-[12px] font-medium" />
       </span>
-      <span className="text-ink-4 truncate text-[10px]">
+      <span className="text-ink-3 truncate text-[10px]">
         {compactStamp(card.stamp)}
       </span>
     </span>
@@ -50,7 +50,7 @@ export async function IndexBoard() {
   return (
     <nav
       aria-label="Markets at a glance"
-      className={`border-hairline bg-surface border-b ${BOARD_HEIGHT_CLASS}`}
+      className={`border-hairline bg-surface-2 border-b ${BOARD_HEIGHT_CLASS}`}
     >
       <ul className="mx-auto flex h-full max-w-[1320px] snap-x items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
         {cards.map((card) => (

@@ -89,6 +89,15 @@
 #                                      permission for a public site).
 #   aawsat-english                     feed OK but commercial and mostly
 #                                      regional politics — not listed.
+# Probe round 8, 2026-11-27 (run 46077183327) — crypto and Gulf regulators:
+#   vara-news, adgm-announcements   page loads, no feed (VARA: sitemap only).
+#   cbb-press                        HTTP 403 to automated requests — skipped.
+#   imf-news                         feed URL returns 404.
+#   conversation-crypto / -bitcoin   topic pages lead to the real feeds,
+#                                    topics/cryptocurrency-8321 and
+#                                    topics/bitcoin-1358 (run 46077786401) —
+#                                    ADDED to sources.yaml (CC BY-ND, as the
+#                                    other Conversation feeds).
 # Probe round 7, 2026-11-25 (run 45700040358):
 #   conversation-uk-health / -environment / -arts / -technology,
 #   conversation-au-health / -environment, rbnz-news, cfpb-newsroom, fred-blog
@@ -597,3 +606,33 @@ candidates:
     name: Federal Reserve Bank of New York — Press releases
     url: https://www.newyorkfed.org/medialibrary/media/rss/press-releases.xml
     region: US
+  # --- Round 8 (2026-11-27, pre-launch: the Crypto section had 2 stories).
+  # Regulators and open-licence feeds only: the Gulf virtual-asset regulators
+  # (Dubai VARA, ADGM's FSRA), the Central Bank of Bahrain, the IMF, and The
+  # Conversation's crypto topic (same CC BY-ND terms as its other feeds).
+  # Commercial crypto outlets (CoinDesk, Decrypt, The Block) are NOT probed:
+  # their terms need the owner's decision first. ---
+  - id: vara-news
+    name: Dubai Virtual Assets Regulatory Authority — News
+    url: https://www.vara.ae/en/news/
+    region: AE
+  - id: adgm-announcements
+    name: ADGM — Announcements (incl. FSRA)
+    url: https://www.adgm.com/media/announcements
+    region: AE
+  - id: cbb-press
+    name: Central Bank of Bahrain — Press releases
+    url: https://www.cbb.gov.bh/media-center/
+    region: BH
+  - id: imf-news
+    name: IMF — News
+    url: https://www.imf.org/en/News/rss?language=eng
+    region: GLOBAL
+  - id: conversation-crypto
+    name: The Conversation — Cryptocurrency topic
+    url: https://theconversation.com/topics/cryptocurrency
+    region: GLOBAL
+  - id: conversation-bitcoin
+    name: The Conversation — Bitcoin topic
+    url: https://theconversation.com/topics/bitcoin
+    region: GLOBAL
