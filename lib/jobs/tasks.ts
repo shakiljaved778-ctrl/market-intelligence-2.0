@@ -278,9 +278,24 @@ async function refreshPlaylistLatest(): Promise<string> {
   // Channels not found this time keep their previous entry.
   const { playlistLatestKey } = await import("@/lib/videos/playlists");
   const previous =
-    (await cacheGet<typeof rows>(playlistLatestKey)) ?? ([] as typeof rows);
-  const merged = new Map(previous.map((r) => [r.channel, r]));
-  for (const r of rows) merged.set(r.channel, r);
+    (await cacheGet<(typeof rows)[number][] & { seenAt?: string }[]>(
+      playlistLatestKey,
+    )) ?? [];
+  const merged = new Map<string, (typeof rows)[number] & { seenAt?: string }>(
+    previous.map((r) => [r.channel, r]),
+  );
+  // When we first saw each channel's current upload (2026-11-28), so the Watch
+  // cards can be ordered newest first: a new video gets "now", an unchanged
+  // one keeps its earlier time.
+  const nowIso = new Date().toISOString();
+  for (const r of rows) {
+    const before = merged.get(r.channel);
+    const seenAt =
+      before && before.latestVideoId === r.latestVideoId
+        ? (before.seenAt ?? nowIso)
+        : nowIso;
+    merged.set(r.channel, { ...r, seenAt });
+  }
   await cachePut(playlistLatestKey, TTL.playlistLatest, [...merged.values()]);
   const ok = new Set(rows.map((r) => r.channel));
   return playlists.map((p) => `${p.id}:${ok.has(p.id) ? "ok" : "none"}`).join(",");

@@ -1,0 +1,38 @@
+name: newsletter
+
+# Daily "Mizaan Morning" email (2026-11-28): the five strongest fresh stories,
+# sent to confirmed subscribers through Resend at about 06:30 Doha time. The
+# route refuses a second send on the same day. Kill switch: set the Vercel
+# variable NEWSLETTER_ENABLED=0; preview mode: NEWSLETTER_DRYRUN=1.
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: cron-newsletter
+  cancel-in-progress: false
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /api/cron/newsletter
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::APP_URL and CRON_SECRET secrets must be set (see DEPLOY.md §2c)."
+            exit 1
+          fi
+          code=$(curl --show-error --silent --retry 2 --retry-delay 8 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -o response.txt -w '%{http_code}' \
+            "${APP_URL%/}/api/cron/newsletter") || true
+          echo "HTTP ${code} from ${APP_URL%/}/api/cron/newsletter"
+          head -c 600 response.txt || true; echo
+          if [ "${code}" != "200" ]; then
+            echo "::error::Expected 200. 502 = Resend refused the send (see the response above)."
+            exit 1
+          fi

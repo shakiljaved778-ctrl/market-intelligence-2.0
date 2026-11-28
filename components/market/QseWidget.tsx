@@ -88,6 +88,21 @@ export function QseWidget() {
         </a>{" "}
         · delayed at least 15 minutes · not Mizaan data. Informational only.
       </p>
+      {/* TradingView sometimes withholds QSE symbols from embeds (each row then
+          shows a red "!" and no prices; seen 28 Nov), so the exchange's own
+          page is always one tap away. */}
+      <p className="text-ink-3 mt-1 text-[12px]">
+        Prices not showing?{" "}
+        <a
+          href="https://www.qe.com.qa/"
+          rel="noopener"
+          target="_blank"
+          className="hover:text-ink underline underline-offset-2"
+        >
+          See live prices on the Qatar Stock Exchange website
+        </a>
+        .
+      </p>
     </div>
   );
 }
