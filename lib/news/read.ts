@@ -24,7 +24,12 @@ import { HashEmbedder } from "@/lib/curation/embed";
 import { demoNow, shiftFixtureDate } from "@/lib/demo/clock";
 import { titleSimilarity, DEFAULT_JACCARD_THRESHOLD } from "@/lib/curation/dedupe";
 import { runPipeline, type SluggedCluster } from "@/lib/curation/pipeline";
-import { computeImportance, type RankContext } from "@/lib/curation/rank";
+import {
+  computeImportance,
+  explainImportance,
+  type ImportanceBreakdown,
+  type RankContext,
+} from "@/lib/curation/rank";
 import { loadSources } from "@/lib/curation/config";
 import { excludedTermsIn, isExcluded } from "@/lib/curation/exclusions";
 import { classifyRegion, isGccRegion, type Region } from "@/lib/curation/region";
@@ -365,18 +370,40 @@ async function computeEditorialClusters(): Promise<LoadedCluster[]> {
  * the score is simply computed again here, and the recency decay is always
  * measured from now.
  */
-async function rerankNow(list: LoadedCluster[]): Promise<LoadedCluster[]> {
-  if (list.length === 0) return list;
+async function rankContextFor(clusters: WireCluster[]): Promise<RankContext> {
   const tiers: Record<string, string> = {};
   for (const s of loadSources()) tiers[s.id] = s.tier;
-  const symbols = [...new Set(list.flatMap((l) => l.cluster.tickers))];
+  const symbols = [...new Set(clusters.flatMap((c) => c.tickers))];
   const tickerMovePct: Record<string, number> = {};
   if (symbols.length > 0) {
     for (const [symbol, p] of await getQuotes(symbols)) {
       if (p.value) tickerMovePct[symbol] = Math.abs(p.value.changePct);
     }
   }
-  const ctx: RankContext = { tiers, tickerMovePct, now: new Date() };
+  return { tiers, tickerMovePct, now: new Date() };
+}
+
+/**
+ * "Why this story is ranked here" (2026-11-27): the score's breakdown from the
+ * same inputs the wire is ranked with. Null when it does not reproduce the
+ * score shown (authored or editorial stories are scored differently), so the
+ * panel never explains a number it did not compute.
+ */
+export async function explainRanking(
+  cluster: WireCluster,
+): Promise<ImportanceBreakdown | null> {
+  if (cluster.sourceIds.length === 0) return null;
+  try {
+    const b = explainImportance(cluster, await rankContextFor([cluster]));
+    return Math.abs(b.total - cluster.importanceScore) <= 1 ? b : null;
+  } catch {
+    return null;
+  }
+}
+
+async function rerankNow(list: LoadedCluster[]): Promise<LoadedCluster[]> {
+  if (list.length === 0) return list;
+  const ctx = await rankContextFor(list.map((l) => l.cluster));
   for (const l of list) {
     l.cluster.importanceScore = computeImportance(l.cluster, ctx);
   }
