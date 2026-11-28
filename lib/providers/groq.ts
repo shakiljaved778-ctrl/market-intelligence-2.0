@@ -671,6 +671,16 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
         );
         continue;
       }
+      // A draft that failed the checks is never published; with another model
+      // left, let it try (2026-11-28: gpt-oss-20b drafts kept failing on
+      // invented figures while the 120b allowance was spent). Same checks.
+      const isLast = model === models[models.length - 1];
+      if (!isLast && /ungrounded details|malformed output/.test(msg)) {
+        console.warn(
+          `[groq] original: ${model} draft rejected (${msg}), trying next model`,
+        );
+        continue;
+      }
       console.warn("[groq] original failed:", msg);
       return null;
     }
