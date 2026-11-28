@@ -96,7 +96,7 @@ export const briefFailedKey = (slug: string) => `brief:failed:${slug}`;
 const QUOTES_CURSOR_KEY = "quotes:cursor:v1";
 
 /** Gap between equity quote calls: under Finnhub's 30-a-second burst limit. */
-export const QUOTE_PACE_MS = 200;
+export const QUOTE_PACE_MS = 300;
 
 export async function quotesTask(now: number = Date.now()): Promise<JobSummary> {
   const registry = getRegistry();

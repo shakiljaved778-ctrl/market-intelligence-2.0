@@ -61,7 +61,7 @@ function modelsToTry(now = Date.now()): string[] {
 
 /** An error that means "try the next model", not "give up". */
 const TRY_NEXT_MODEL =
-  /404|model_not_found|does not exist|decommission|deprecat|daily token limit/i;
+  /404|model_not_found|does not exist|decommission|deprecat|daily token limit|empty content/i;
 
 export interface BriefInput {
   title: string;
@@ -310,7 +310,22 @@ async function callGroq(
   }
   const parsed = Completion.parse(await res.json());
   const body = parsed.choices[0]!.message.content.trim();
-  if (!body) throw new Error(`Groq returned empty content (model=${model})`);
+  if (!body) {
+    // A reasoning model can spend the whole token budget thinking and return
+    // nothing (seen with gpt-oss-20b, 28 Nov): try once with a larger budget.
+    if (maxTokens < 8000) {
+      return callGroq(
+        model,
+        input,
+        retried,
+        correction,
+        system,
+        user,
+        Math.min(maxTokens * 2, 8000),
+      );
+    }
+    throw new Error(`Groq returned empty content (model=${model})`);
+  }
   return { body, model };
 }
 
@@ -511,6 +526,30 @@ const SPECULATIVE: RegExp[] = [
 ];
 
 /** PURE: forecast phrases in `text` that the facts never use (case-insensitive). */
+/**
+ * PURE: the text without any sentence that contains one of `phrases`
+ * (case-insensitive). Headings and the "Dek:" line are kept whole; an emptied
+ * paragraph is dropped.
+ */
+export function dropSentencesWith(text: string, phrases: string[]): string {
+  const lower = phrases.map((p) => p.toLowerCase());
+  const hit = (s: string) => lower.some((p) => s.toLowerCase().includes(p));
+  const out: string[] = [];
+  for (const line of text.split("\n")) {
+    if (/^\s*(#|Dek:)/.test(line) || line.trim() === "") {
+      out.push(line);
+      continue;
+    }
+    const kept = line
+      .split(/(?<=[.!?])\s+/)
+      .filter((s) => !hit(s))
+      .join(" ")
+      .trim();
+    if (kept) out.push(kept);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
 export function speculativePhrases(text: string, facts: string): string[] {
   const t = text.toLowerCase();
   const f = facts.toLowerCase();
@@ -609,6 +648,15 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
           4000,
         );
         bad = problems(out.body);
+        // Forecast wording left after the rewrite: drop just those sentences
+        // (removing text can add no fact), then check everything again.
+        const forecasts = bad
+          .filter((b) => b.startsWith("forecast wording "))
+          .map((b) => b.slice('forecast wording "'.length, -1));
+        if (forecasts.length > 0 && forecasts.length === bad.length) {
+          out = { ...out, body: dropSentencesWith(out.body, forecasts) };
+          bad = problems(out.body);
+        }
         if (bad.length)
           throw new Error(`ungrounded details after rewrite: ${bad.join(", ")}`);
       }
