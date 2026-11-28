@@ -45,10 +45,7 @@ export async function Movers({ currency }: { currency: DisplayCurrency }) {
                   <span className="hidden sm:inline-flex" title="30-day trend">
                     <Sparkline
                       values={trends[row.symbol] ?? []}
-                      up={
-                        (trends[row.symbol]?.at(-1) ?? 0) >=
-                        (trends[row.symbol]?.[0] ?? 0)
-                      }
+                      up={row.changePct >= 0}
                       width={56}
                       height={18}
                     />
