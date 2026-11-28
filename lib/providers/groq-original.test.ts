@@ -152,3 +152,52 @@ describe("Groq daily limit is per model (2026-11-28)", () => {
     delete process.env.GROQ_API_KEY;
   });
 });
+
+describe("forecast sentences are dropped, not published (2026-11-28)", () => {
+  it("removes only the sentences with forecast wording, keeping headline and dek", async () => {
+    const { dropSentencesWith, speculativePhrases } = await import("./groq");
+    const text = [
+      "# Markets steady as oil slips",
+      "Dek: Stocks held gains while crude fell, Reuters reported.",
+      "",
+      "Stocks held gains on Friday. Oil fell 1.2 percent. The move could support airlines next week.",
+      "Gold steadied. That is unlikely to last.",
+    ].join("\n");
+    const out = dropSentencesWith(text, ["could support", "is unlikely to"]);
+    expect(out).toContain("# Markets steady as oil slips");
+    expect(out).toContain("Dek: Stocks held gains");
+    expect(out).toContain("Oil fell 1.2 percent.");
+    expect(out).toContain("Gold steadied.");
+    expect(speculativePhrases(out, "")).toEqual([]);
+  });
+});
+
+describe("empty answers from a reasoning model are retried with a larger budget", () => {
+  it("retries once with more tokens, then succeeds", async () => {
+    const { vi } = await import("vitest");
+    process.env.GROQ_API_KEY = "test";
+    const groq = await import("./groq");
+    groq.__setGroqPacing(0);
+    groq.__setGroqDailyLimitUntil(0);
+    const budgets: number[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: { body: string }) => {
+        const body = JSON.parse(init.body) as { max_tokens: number };
+        budgets.push(body.max_tokens);
+        const content =
+          budgets.length === 1 ? "" : "Apple reported results, Reuters said.";
+        return Response.json({ choices: [{ message: { content } }] });
+      }),
+    );
+    const brief = await groq.generateBrief(`e-${Date.now()}`, {
+      title: "Apple reports results",
+      section: "markets",
+      sources: ["Reuters"],
+    });
+    expect(brief?.body).toContain("Apple");
+    expect(budgets[1]).toBe(budgets[0]! * 2);
+    vi.unstubAllGlobals();
+    delete process.env.GROQ_API_KEY;
+  });
+});
