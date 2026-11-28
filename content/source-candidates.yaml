@@ -697,3 +697,7 @@ candidates:
     name: Investcorp — RSS feed
     url: https://www.investcorp.com/feed/
     region: BH
+  - id: prnewswire-financial-check
+    name: PR Newswire — Financial Services feed (post-activation check)
+    url: https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss
+    region: GLOBAL
