@@ -40,6 +40,16 @@ const SourceSchema = z.object({
    * empty between releases. Stories keep their real dates and rank by them.
    */
   lookback_days: z.number().int().positive().max(14).optional(),
+  /**
+   * Store the headline and link only, never the feed's description, and write
+   * no AI article from it (owner decision for PR Newswire, 2026-11-28).
+   */
+  headline_only: z.boolean().optional(),
+  /**
+   * Keep only items that read as deals (IPO, M&A, private equity, venture,
+   * sukuk and bonds), so a general press-release wire cannot flood Markets.
+   */
+  deals_only: z.boolean().optional(),
 });
 export type SourceConfig = z.infer<typeof SourceSchema>;
 
