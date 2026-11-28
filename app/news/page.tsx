@@ -6,6 +6,8 @@ import { Wire } from "@/components/news/Wire";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { allSections, allTopics, readWire } from "@/lib/news/read";
 import { pageOf } from "@/lib/news/paginate";
+import { sectionFill } from "@/lib/news/section-fill";
+import { StoryCard } from "@/components/news/StoryCard";
 import { canonical } from "@/lib/seo";
 
 interface SearchParams {
@@ -54,6 +56,12 @@ export default async function NewsPage({ searchParams }: SearchParams) {
     region,
   });
   const paged = pageOf(clusters, one(sp.page));
+  // A thin section front gets a "More from …" row (brief §4.5), on page 1 of
+  // the plain section view only.
+  const fill =
+    section && !topic && !ticker && !region && paged.page === 1
+      ? sectionFill(section, await readWire())
+      : null;
   // Official-channel videos between stories (owner request, 2026-11-27).
   const videos = inlinePlaylists(await readOfficialPlaylists());
   const sections = allSections();
@@ -206,6 +214,26 @@ export default async function NewsPage({ searchParams }: SearchParams) {
 
       <div className="fade-up mt-6" style={{ "--d": "140ms" } as React.CSSProperties}>
         <Wire clusters={paged.items} videos={videos} />
+        {fill ? (
+          <section
+            aria-labelledby="more-from-heading"
+            className="border-hairline mt-10 border-t pt-6"
+          >
+            <h2 id="more-from-heading" className="t-h3 font-editorial text-ink">
+              More from{" "}
+              {sections.find((s) => s.id === fill.section)?.label ?? fill.section}
+            </h2>
+            <p className="text-ink-3 mt-1 text-[13px]">
+              Fewer than six stories in this section are under 72 hours old, so here is
+              the latest from a related section.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {fill.stories.map((c) => (
+                <StoryCard key={c.slug} cluster={c} variant="card" />
+              ))}
+            </div>
+          </section>
+        ) : null}
         {paged.pages > 1 ? (
           <nav
             aria-label="Pages"
