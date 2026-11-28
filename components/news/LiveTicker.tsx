@@ -32,7 +32,7 @@ function Item({
         </span>
       ) : null}
       <span className="font-editorial text-ink">{c.title}</span>
-      <span className="text-ink-4 text-[11px] whitespace-nowrap">
+      <span className="text-ink-3 text-[11px] whitespace-nowrap">
         {sources} {sources === 1 ? "source" : "sources"} ·{" "}
         <span data-volatile>{relativeTime(c.eventTime, now)}</span>
       </span>
