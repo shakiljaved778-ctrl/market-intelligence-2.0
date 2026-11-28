@@ -51,3 +51,42 @@ Prettier and the production build.
 
 The brief's new sections (PE / IB / VC), the commodities and crypto upgrades,
 brand proposals, OG images, the video facade and the editorial style guide.
+
+## Master brief coverage (checked 28 Nov 2026)
+
+Every section of the pre-launch brief, item by item. "Flag" means built and
+switched off until the owner turns it on in Vercel.
+
+| Brief | Item | State |
+| --- | --- | --- |
+| §1 | Snapshot, baseline, branch, atomic commits, nothing reverted | Done (tag push blocked; baseline branch instead) |
+| §2 | AUDIT.md, every §2.2 issue checked | Done; all real issues fixed |
+| §2.2 | Heatmap "as of" per tile, stale tiles flagged | Done 28 Nov (faded tile with its date) |
+| §2.2 | Heatmap sectors at least five names | Done 28 Nov (Utilities and Real Estate not tracked, so not shown) |
+| §3 | BACKEND_HEALTH.md, `/api/health`, delay banner, smoke test | Done |
+| §3.3 | Fetcher resilience; one structured summary per ingest run | Done 28 Nov |
+| §3.3 | Quotes refresh every tracked symbol (bug found 28 Nov: the end of the list was days old) | Fixed 28 Nov |
+| §3.4 | Freshness alert email | Done (needs Vercel KV for cross-instance state) |
+| §3.4 | Error tracking (Sentry) | **Owner**: needs a free Sentry account and DSN |
+| §3.4 | Uptime monitor | **Owner**: UptimeRobot on `/` and `/api/health` |
+| §4.3 | AI summaries: numbers must match the source | Done (existing `ungroundedFigures` guard) |
+| §4.4 | Homepage variety (source and section caps at the top) | Done 28 Nov |
+| §4.5 | Section freshness: "More from …" when fewer than six fresh | Done 28 Nov |
+| §4.6 | Drop sponsored and too-short items | Done 28 Nov; non-English items kept (owner decision pending, AUDIT.md) |
+| §5 | Commodities (EIA via FRED), crypto (CoinGecko), gold | Done |
+| §5 | Global indices | Done via country funds: US, Japan, UK, India, Germany, Hong Kong, dollar, gold |
+| §5 | GCC indices | TradingView QSE widget (owner-approved); licensed feed is roadmap #2 |
+| §5 | GCC pegs card | Flag `NEXT_PUBLIC_FLAG_GCC_PEGS` |
+| §5 | Sparklines on movers | Done 28 Nov (stored history only; index funds have none yet) |
+| §5 | Earnings and IPO calendar | Flag `NEXT_PUBLIC_FLAG_CALENDAR` (Finnhub; economic calendar needs a licensed source) |
+| §6 | PE / IB / VC sections and Deals trackers, nav v2 | Flags `NEXT_PUBLIC_FLAG_DEALS`, `NEXT_PUBLIC_FLAG_NAV_V2` |
+| §6.4 | Gulf sports; Sports Business | Done (Sports Business is a topic filter) |
+| §7 | UX.md, screenshots, Lighthouse, video facade, accessibility | Done; mobile performance 82–90, LCP 3.5–4.8 s (homepage weakest) |
+| §7 | Stock cover photos have empty alt | Intentional: illustrative stock images, not photos of the event |
+| §8 | Brand proposals and preview page | Done; logo and tagline unchanged (owner) |
+| §9 | STYLE_GUIDE.md; SEO (sitemaps, news sitemap, JSON-LD, RSS per section) | Done |
+| §9 | Chart of the Day | Flag `NEXT_PUBLIC_FLAG_CHART_OF_DAY` |
+| §9 | Mizaan Brief (newsletter), US close recap | Done (existing) |
+| §9 | Week in Deals, Gulf Markets Close, event hubs, human-reviewed explainers | Roadmap: need Deals switched on, a licensed GCC feed, or an editor |
+| §10 | Go/no-go table, rollback plan | Done (above) |
+| §11 | Roadmap ranked by impact and effort | ROADMAP.md; "Why this story is ranked here" shipped |
