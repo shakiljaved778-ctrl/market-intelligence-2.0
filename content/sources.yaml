@@ -20,6 +20,37 @@ sources:
     default_section: markets
     allowed_sections: [markets, economy, crypto]
 
+  # SEC EDGAR filings (owner request, 2026-11-28): new US registration
+  # statements for share offerings, for the IPO tracker. Each entry's index
+  # line becomes a factual headline (lib/curation/edgar.ts); amendments skipped.
+  - id: sec-edgar-s1
+    name: U.S. SEC EDGAR — New S-1 filings
+    homepage: https://www.sec.gov/edgar/search/
+    feed_url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=S-1&company=&dateb=&owner=include&start=0&count=40&output=atom
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 95
+    license_note: U.S. government work (EDGAR filing index), public domain. Headline written from the index line; link to the filing on sec.gov.
+    active: true
+    default_section: ibanking
+    allowed_sections: [ibanking]
+    max_items_per_run: 20
+
+  - id: sec-edgar-f1
+    name: U.S. SEC EDGAR — New F-1 filings (foreign issuers)
+    homepage: https://www.sec.gov/edgar/search/
+    feed_url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=F-1&company=&dateb=&owner=include&start=0&count=40&output=atom
+    kind: rss
+    region: US
+    tier: primary
+    trust_score: 95
+    license_note: U.S. government work (EDGAR filing index), public domain. Headline written from the index line; link to the filing on sec.gov.
+    active: true
+    default_section: ibanking
+    allowed_sections: [ibanking]
+    max_items_per_run: 20
+
   - id: fed-press
     name: U.S. Federal Reserve — Press
     homepage: https://www.federalreserve.gov

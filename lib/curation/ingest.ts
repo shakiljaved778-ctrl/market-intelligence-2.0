@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
 import { loadSources, type SourceConfig } from "./config";
 import { checkExclusion } from "./exclusions";
+import { EDGAR_USER_AGENT, edgarFilingItem, isFilingFeed } from "./edgar";
 import { evaluateQuality } from "./quality";
 import { isAllowed } from "./robots";
 import {
@@ -29,7 +30,7 @@ export interface IngestResult {
 async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
   if (!(await isAllowed(source.feed_url))) return [];
   const res = await fetch(source.feed_url, {
-    headers: { "user-agent": "MizaanBot" },
+    headers: { "user-agent": isFilingFeed(source.id) ? EDGAR_USER_AGENT : "MizaanBot" },
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`${source.id}: HTTP ${res.status}`);
@@ -40,6 +41,15 @@ async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
     // An item with no publication date is skipped: we never stamp a story with
     // the time we happened to fetch it (that made old documents look new).
     .filter((item) => item.title && item.link && (item.isoDate ?? item.pubDate))
+    // EDGAR filing feeds: index lines become factual headlines; other forms
+    // and amendments are skipped (lib/curation/edgar.ts).
+    .flatMap((item) => {
+      if (!isFilingFeed(source.id)) return [item];
+      const filing = edgarFilingItem(item.title as string);
+      return filing
+        ? [{ ...item, title: filing.headline, contentSnippet: filing.dek }]
+        : [];
+    })
     .map((item): NormalizedArticle => {
       const url = item.link as string;
       const headline = normalizeText(item.title as string);

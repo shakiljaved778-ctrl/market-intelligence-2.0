@@ -143,3 +143,25 @@ describe("clustering does not chain unrelated reports", () => {
     expect(clusters).toHaveLength(1);
   });
 });
+
+describe("EDGAR filing feeds never chain (2026-11-28)", () => {
+  it("keeps two templated S-1 entries for different companies apart", async () => {
+    const { edgarFilingItem } = await import("./edgar");
+    const a = edgarFilingItem("S-1 - ACME HOLDINGS INC (0001234567) (Filer)")!;
+    const b = edgarFilingItem("S-1 - ACME HOLDINGS GROUP INC (0007654321) (Filer)")!;
+    const clusters = await clusterArticles(
+      [a, b].map((f, i) =>
+        toClusterInput({
+          id: i + 1,
+          sourceId: "sec-edgar-s1",
+          trustScore: 0.95,
+          headline: f.headline,
+          dek: f.dek,
+          publishedAt: at(1 + i),
+        }),
+      ),
+      new HashEmbedder(),
+    );
+    expect(clusters).toHaveLength(2);
+  });
+});

@@ -636,3 +636,12 @@ candidates:
     name: The Conversation — Bitcoin topic
     url: https://theconversation.com/topics/bitcoin
     region: GLOBAL
+  # SEC EDGAR filing feeds (owner request, 2026-11-28), probed before relying on them.
+  - id: sec-edgar-s1
+    name: U.S. SEC EDGAR — New S-1 filings
+    url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=S-1&company=&dateb=&owner=include&start=0&count=40&output=atom
+    region: US
+  - id: sec-edgar-f1
+    name: U.S. SEC EDGAR — New F-1 filings
+    url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=F-1&company=&dateb=&owner=include&start=0&count=40&output=atom
+    region: US

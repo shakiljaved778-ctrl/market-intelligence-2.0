@@ -1,3 +1,4 @@
+import { isFilingFeed } from "./edgar";
 import { loadEntities, loadSources } from "./config";
 import { classifyRegion, isGccRegion, type Region } from "./region";
 import { cosine, type Embedder } from "./embed";
@@ -177,6 +178,10 @@ export async function clusterArticles(
         const c = cos + b;
         // Same feed: count the pair only if it clears the higher bar.
         if (member.sourceId === article.sourceId && c < SAME_SOURCE_THRESHOLD) return;
+        // A filing feed lists one company per entry, under templated headlines
+        // that look alike: two of its entries are never the same story.
+        if (member.sourceId === article.sourceId && isFilingFeed(article.sourceId))
+          return;
         if (c > sim) sim = c;
       });
       if (!best || sim > best.score) best = { cluster, score: sim };
