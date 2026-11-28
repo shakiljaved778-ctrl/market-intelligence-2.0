@@ -30,6 +30,7 @@ sections:
     blurb: Buyouts, fundraises, exits and sovereign and family-office deals.
     financial: true
     flag: deals
+    parent: markets
     hue: "#8b7d9c"
     glyph: bars
     keywords:
@@ -75,6 +76,7 @@ sections:
     blurb: M&A, IPOs and follow-ons, sukuk and bonds, and bank mandates.
     financial: true
     flag: deals
+    parent: markets
     hue: "#7d8f9c"
     glyph: bars
     keywords:
@@ -114,6 +116,7 @@ sections:
     blurb: Funding rounds, fund launches and the Gulf startup programmes.
     financial: true
     flag: deals
+    parent: markets
     hue: "#9c8a7d"
     glyph: bars
     keywords:

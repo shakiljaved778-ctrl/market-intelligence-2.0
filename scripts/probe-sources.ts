@@ -17,6 +17,7 @@ import { parse } from "yaml";
 import { checkExclusion } from "@/lib/curation/exclusions";
 import { normalizeFeedXml } from "@/lib/curation/ingest";
 import { parseRobots, pathAllowed } from "@/lib/curation/robots";
+import { EDGAR_USER_AGENT } from "@/lib/curation/edgar";
 
 interface Candidate {
   id: string;
@@ -31,7 +32,11 @@ const parser = new Parser({ timeout: 15000 });
 async function get(url: string): Promise<Response | null> {
   try {
     return await fetch(url, {
-      headers: { "user-agent": UA, accept: "*/*" },
+      // SEC asks automated tools for a declared contact (as the ingest does).
+      headers: {
+        "user-agent": new URL(url).hostname.endsWith("sec.gov") ? EDGAR_USER_AGENT : UA,
+        accept: "*/*",
+      },
       redirect: "follow",
       signal: AbortSignal.timeout(20_000),
     });

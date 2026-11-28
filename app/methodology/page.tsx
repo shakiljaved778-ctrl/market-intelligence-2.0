@@ -109,8 +109,8 @@ export default function MethodologyPage() {
           every 6 hours.
         </li>
         <li>
-          <strong>Qatar Stock Exchange:</strong> prices come from TradingView&rsquo;s
-          widget, delayed by at least 15 minutes, and load in your browser.
+          <strong>Gulf exchanges (QSE, Tadawul, ADX, DFM):</strong> no prices are shown
+          yet. They will appear once a licensed data feed is in place.
         </li>
       </ul>
 

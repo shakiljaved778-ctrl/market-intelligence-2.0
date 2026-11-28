@@ -20,6 +20,25 @@ sources:
     default_section: markets
     allowed_sections: [markets, economy, crypto]
 
+  # SEC EDGAR filings (owner request, 2026-11-28): new US registration
+  # statements for share offerings (S-1, and F-1 for foreign issuers), for the
+  # IPO tracker. Read from EDGAR's daily form index under /Archives/ (allowed by
+  # robots.txt); the "latest filings" Atom feed under /cgi-bin/ is disallowed and
+  # is not used. Each row becomes a factual headline (lib/curation/edgar.ts).
+  - id: sec-edgar-registrations
+    name: U.S. SEC EDGAR — New S-1 and F-1 registrations
+    homepage: https://www.sec.gov/edgar/search/
+    feed_url: https://www.sec.gov/Archives/edgar/daily-index/
+    kind: api
+    region: US
+    tier: primary
+    trust_score: 95
+    license_note: U.S. government work (EDGAR daily form index), public domain. Headline written from the index row; link to the filing on sec.gov.
+    active: true
+    default_section: ibanking
+    allowed_sections: [ibanking]
+    max_items_per_run: 20
+
   - id: fed-press
     name: U.S. Federal Reserve — Press
     homepage: https://www.federalreserve.gov

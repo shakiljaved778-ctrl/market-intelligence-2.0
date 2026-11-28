@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { QseWidget } from "@/components/market/QseWidget";
 import { GCC_EXCHANGES, type GccExchangeId } from "@/content/gcc-companies";
 import { exchangeMeta, gccByExchange } from "@/lib/market/gcc";
 import { canonical } from "@/lib/seo";
@@ -54,16 +53,6 @@ export default async function ExchangeHubPage({ params }: Params) {
           />
         </div>
       </div>
-
-      {ex.id === "qse" ? (
-        // QSE prices from TradingView's widget (owner decision, 2026-11-27).
-        <section aria-labelledby="qse-prices-heading" className="fade-up mt-6">
-          <h2 id="qse-prices-heading" className="t-h3 font-editorial text-ink mb-3">
-            Prices
-          </h2>
-          <QseWidget />
-        </section>
-      ) : null}
 
       <section className="fade-up mt-6">
         {companies.length === 0 ? (

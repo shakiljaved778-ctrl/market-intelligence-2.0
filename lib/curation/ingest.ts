@@ -1,6 +1,13 @@
 import Parser from "rss-parser";
 import { loadSources, type SourceConfig } from "./config";
 import { checkExclusion } from "./exclusions";
+import {
+  EDGAR_USER_AGENT,
+  dailyIndexUrl,
+  edgarFilingItem,
+  isFilingFeed,
+  parseDailyIndex,
+} from "./edgar";
 import { evaluateQuality } from "./quality";
 import { isAllowed } from "./robots";
 import {
@@ -26,10 +33,44 @@ export interface IngestResult {
   excluded: number;
 }
 
+/** Days of EDGAR daily indexes read per run (weekends have none). */
+const EDGAR_INDEX_DAYS = 4;
+
+/** EDGAR daily form indexes → articles (lib/curation/edgar.ts). */
+async function fetchEdgarIndex(source: SourceConfig): Promise<NormalizedArticle[]> {
+  const out: NormalizedArticle[] = [];
+  for (let back = 0; back < EDGAR_INDEX_DAYS; back += 1) {
+    const url = dailyIndexUrl(new Date(Date.now() - back * 86_400_000));
+    if (!(await isAllowed(url))) continue;
+    const res = await fetch(url, {
+      headers: { "user-agent": EDGAR_USER_AGENT },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (res.status === 404 || res.status === 403) continue; // no index that day yet
+    if (!res.ok) throw new Error(`${source.id}: HTTP ${res.status}`);
+    for (const f of parseDailyIndex(await res.text())) {
+      const headline = normalizeText(f.headline);
+      out.push({
+        sourceId: source.id,
+        url: f.url,
+        canonicalUrl: canonicalizeUrl(f.url),
+        headline,
+        dek: truncateDek(f.dek),
+        publishedAt: f.publishedAt,
+        author: null,
+        rawHash: headlineHash(headline),
+      });
+    }
+  }
+  return capNewest(out, source.max_items_per_run);
+}
+
 async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
+  if (source.kind === "api" && isFilingFeed(source.id)) return fetchEdgarIndex(source);
   if (!(await isAllowed(source.feed_url))) return [];
   const res = await fetch(source.feed_url, {
-    headers: { "user-agent": "MizaanBot" },
+    headers: { "user-agent": isFilingFeed(source.id) ? EDGAR_USER_AGENT : "MizaanBot" },
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`${source.id}: HTTP ${res.status}`);
@@ -40,6 +81,15 @@ async function fetchFeed(source: SourceConfig): Promise<NormalizedArticle[]> {
     // An item with no publication date is skipped: we never stamp a story with
     // the time we happened to fetch it (that made old documents look new).
     .filter((item) => item.title && item.link && (item.isoDate ?? item.pubDate))
+    // EDGAR filing feeds: index lines become factual headlines; other forms
+    // and amendments are skipped (lib/curation/edgar.ts).
+    .flatMap((item) => {
+      if (!isFilingFeed(source.id)) return [item];
+      const filing = edgarFilingItem(item.title as string);
+      return filing
+        ? [{ ...item, title: filing.headline, contentSnippet: filing.dek }]
+        : [];
+    })
     .map((item): NormalizedArticle => {
       const url = item.link as string;
       const headline = normalizeText(item.title as string);
@@ -98,7 +148,9 @@ export function dedupe(articles: NormalizedArticle[]): NormalizedArticle[] {
 
 export async function ingestAll(sources = loadSources()): Promise<IngestResult> {
   const started = Date.now();
-  const active = sources.filter((s) => s.active && s.kind === "rss");
+  const active = sources.filter(
+    (s) => s.active && (s.kind === "rss" || (s.kind === "api" && isFilingFeed(s.id))),
+  );
   const perSource: Record<string, number> = {};
   const failedSources: string[] = [];
   let skippedByRobots = 0;
