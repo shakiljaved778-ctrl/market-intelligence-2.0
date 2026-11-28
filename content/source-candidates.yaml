@@ -693,3 +693,7 @@ candidates:
     name: GlobeNewswire — Private Equity subject feed
     url: https://www.globenewswire.com/RssFeed/subjectcode/88-Private%20Equity/feedTitle/GlobeNewswire%20-%20Private%20Equity
     region: GLOBAL
+  - id: investcorp-feed
+    name: Investcorp — RSS feed
+    url: https://www.investcorp.com/feed/
+    region: BH
