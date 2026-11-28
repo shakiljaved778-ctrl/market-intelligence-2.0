@@ -154,3 +154,98 @@ export async function unsubscribe(email: string): Promise<boolean> {
   });
   return Boolean(res && res.ok);
 }
+
+// --- Daily issue (2026-11-28) --------------------------------------------------
+
+export type SendResult =
+  | { sent: true; mode: "broadcast" | "dryrun"; id: string | null }
+  | {
+      sent: false;
+      reason: "disabled" | "unconfigured" | "no_issue" | "already_sent" | "error";
+      detail?: string;
+    };
+
+/**
+ * Send one "Mizaan Morning" issue to every confirmed subscriber as a Resend
+ * broadcast (created and sent in one call). Idempotent per day: an issue with
+ * the same name already in the account is not sent again. NEWSLETTER_DRYRUN=1
+ * sends it only to the editor's inbox instead.
+ */
+export async function sendIssue(issue: {
+  name: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<SendResult> {
+  if (!isNewsletterEnabled()) return { sent: false, reason: "disabled" };
+  if (!isNewsletterConfigured()) return { sent: false, reason: "unconfigured" };
+  const from =
+    process.env.NEWSLETTER_FROM ?? `${NEWSLETTER_NAME} <briefing@mizaan.tech>`;
+
+  if (
+    process.env.NEWSLETTER_DRYRUN === "1" ||
+    process.env.NEWSLETTER_DRYRUN === "true"
+  ) {
+    const to = process.env.CONTACT_INBOX;
+    if (!to) return { sent: false, reason: "unconfigured", detail: "CONTACT_INBOX" };
+    const res = await resend("/emails", {
+      method: "POST",
+      body: JSON.stringify({
+        from,
+        to,
+        subject: `[Preview] ${issue.subject}`,
+        text: issue.text.replace("{{{RESEND_UNSUBSCRIBE_URL}}}", "(preview)"),
+        html: issue.html.replace("{{{RESEND_UNSUBSCRIBE_URL}}}", "#"),
+      }),
+    });
+    return res && res.ok
+      ? { sent: true, mode: "dryrun", id: null }
+      : {
+          sent: false,
+          reason: "error",
+          detail: `emails ${res?.status ?? "no response"}`,
+        };
+  }
+
+  // Already sent today? (Works without KV: the broadcast list is the record.)
+  const list = await resend("/broadcasts", { method: "GET" });
+  if (list && list.ok) {
+    const body = (await list.json().catch(() => null)) as {
+      data?: { name?: string | null }[];
+    } | null;
+    if (body?.data?.some((b) => b.name === issue.name)) {
+      return { sent: false, reason: "already_sent" };
+    }
+  }
+
+  const id = process.env.RESEND_AUDIENCE_ID as string;
+  const payload = (target: Record<string, string>) =>
+    JSON.stringify({
+      ...target,
+      from,
+      name: issue.name,
+      subject: issue.subject,
+      text: issue.text,
+      html: issue.html,
+      send: true,
+    });
+  // Resend renamed audiences to segments; the id is the same list.
+  let res = await resend("/broadcasts", {
+    method: "POST",
+    body: payload({ segment_id: id }),
+  });
+  if (res && (res.status === 400 || res.status === 422)) {
+    res = await resend("/broadcasts", {
+      method: "POST",
+      body: payload({ audience_id: id }),
+    });
+  }
+  if (!res || !res.ok) {
+    const detail = res
+      ? `${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`
+      : "no response";
+    return { sent: false, reason: "error", detail };
+  }
+  const created = (await res.json().catch(() => null)) as { id?: string } | null;
+  return { sent: true, mode: "broadcast", id: created?.id ?? null };
+}

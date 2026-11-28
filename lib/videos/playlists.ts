@@ -33,6 +33,23 @@ interface LatestRow {
   latestVideoId: string;
   latestTitle: string;
   thumbnailUrl: string;
+  /** When the job first saw this upload (KV copy only). */
+  seenAt?: string;
+}
+
+/**
+ * PURE (2026-11-28): channels whose current upload we saw most recently come
+ * first; channels with no time keep their registry order, after them.
+ */
+export function newestFirst<T extends { id: string }>(
+  list: T[],
+  seenAt: Map<string, string | undefined>,
+): T[] {
+  const t = (p: T) => Date.parse(seenAt.get(p.id) ?? "") || 0;
+  return list
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => t(b.p) - t(a.p) || a.i - b.i)
+    .map((x) => x.p);
 }
 
 /** The stored newest uploads: the KV copy first, the database if KV has none. */
@@ -51,7 +68,11 @@ export async function readOfficialPlaylists(): Promise<OfficialPlaylist[]> {
   try {
     const { checkExclusion } = await import("@/lib/curation/exclusions");
     const latest = new Map((await storedLatest()).map((r) => [r.channel, r]));
-    return list.map((p) => {
+    const ordered = newestFirst(
+      list,
+      new Map([...latest.values()].map((r) => [r.channel, r.seenAt])),
+    );
+    return ordered.map((p) => {
       const r = latest.get(p.id);
       if (
         !r ||

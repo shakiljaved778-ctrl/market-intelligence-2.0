@@ -102,3 +102,53 @@ describe("Groq daily allowance", () => {
     __setGroqDailyLimitUntil(0);
   });
 });
+
+describe("Groq daily limit is per model (2026-11-28)", () => {
+  it("one spent model does not stop the others; all spent stops everything", async () => {
+    const { groqDailyLimitReached, __setGroqDailyLimitUntil } = await import("./groq");
+    __setGroqDailyLimitUntil(0);
+    __setGroqDailyLimitUntil(1_000, "openai/gpt-oss-120b");
+    expect(groqDailyLimitReached(500, "openai/gpt-oss-120b")).toBe(true);
+    expect(groqDailyLimitReached(500, "openai/gpt-oss-20b")).toBe(false);
+    expect(groqDailyLimitReached(500)).toBe(false);
+    __setGroqDailyLimitUntil(1_000);
+    expect(groqDailyLimitReached(500)).toBe(true);
+    __setGroqDailyLimitUntil(0);
+  });
+
+  it("writes the brief with the next model when the first one's allowance is spent", async () => {
+    const { vi } = await import("vitest");
+    process.env.GROQ_API_KEY = "test";
+    const groq = await import("./groq");
+    groq.__setGroqPacing(0);
+    groq.__setGroqDailyLimitUntil(0);
+    const asked: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: { body: string }) => {
+        const model = JSON.parse(init.body).model as string;
+        asked.push(model);
+        if (model === "openai/gpt-oss-120b") {
+          return new Response(
+            "Rate limit reached for model on tokens per day (TPD). Please try again in 2h3m.",
+            { status: 429 },
+          );
+        }
+        return Response.json({
+          choices: [{ message: { content: "Apple reported results, Reuters said." } }],
+        });
+      }),
+    );
+    const brief = await groq.generateBrief(`t-${Date.now()}`, {
+      title: "Apple reports results",
+      section: "markets",
+      sources: ["Reuters"],
+    });
+    expect(asked.slice(0, 2)).toEqual(["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
+    expect(brief?.model).toBe("openai/gpt-oss-20b");
+    expect(groq.groqDailyLimitReached(Date.now(), "openai/gpt-oss-120b")).toBe(true);
+    vi.unstubAllGlobals();
+    groq.__setGroqDailyLimitUntil(0);
+    delete process.env.GROQ_API_KEY;
+  });
+});

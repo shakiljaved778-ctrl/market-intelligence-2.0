@@ -42,6 +42,27 @@ function candidateModels(): string[] {
 // Remembered working model for this process (reset each job run).
 let resolvedModel: string | null = null;
 
+/**
+ * The models to try for one piece, in order: the one that last worked first,
+ * then the rest, skipping any whose daily allowance is spent (2026-11-28).
+ * Groq's free-tier daily token limit is PER MODEL: when gpt-oss-120b ran out,
+ * every article and the Mizaan Original stopped for the day although the other
+ * models' allowances were untouched. Every draft still passes the same figure,
+ * name, exclusion and forecast checks whichever model wrote it.
+ */
+function modelsToTry(now = Date.now()): string[] {
+  const all = candidateModels();
+  const ordered =
+    resolvedModel && all.includes(resolvedModel)
+      ? [resolvedModel, ...all.filter((m) => m !== resolvedModel)]
+      : all;
+  return ordered.filter((m) => !groqDailyLimitReached(now, m));
+}
+
+/** An error that means "try the next model", not "give up". */
+const TRY_NEXT_MODEL =
+  /404|model_not_found|does not exist|decommission|deprecat|daily token limit/i;
+
 export interface BriefInput {
   title: string;
   dek?: string | null;
@@ -227,8 +248,10 @@ async function callGroq(
   user: string = prompt(input),
   maxTokens = 3000,
 ): Promise<Brief> {
-  if (groqDailyLimitReached()) {
-    throw new Error("Groq daily token limit reached; skipping until it resets");
+  if (groqDailyLimitReached(Date.now(), model)) {
+    throw new Error(
+      `Groq daily token limit reached (model=${model}); skipping until it resets`,
+    );
   }
   const wait = lastCallAt + minIntervalMs - Date.now();
   if (wait > 0) await sleep(wait);
@@ -267,7 +290,9 @@ async function callGroq(
           ? ((Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0)) * 60 + Number(m[3] ?? 0)) *
             1000
           : 15 * 60_000;
-      dailyLimitUntil = Date.now() + Math.max(ms, 60_000);
+      // A message we cannot parse ("in 2h3m." parses as NaN) waits 15 minutes.
+      const wait = Number.isFinite(ms) ? Math.max(ms, 60_000) : 15 * 60_000;
+      dailyLimitUntil.set(model, Date.now() + wait);
       throw new Error(`Groq daily token limit reached (model=${model})`);
     }
   }
@@ -289,16 +314,18 @@ async function callGroq(
   return { body, model };
 }
 
-const MODEL_UNAVAILABLE = /404|model_not_found|does not exist|decommission|deprecat/i;
-
-let dailyLimitUntil = 0;
-/** True while the free tier's daily token allowance is spent (this process). */
-export function groqDailyLimitReached(now = Date.now()): boolean {
-  return now < dailyLimitUntil;
+const dailyLimitUntil = new Map<string, number>();
+/**
+ * True while the free tier's daily token allowance is spent (this process):
+ * for `model`, or with no model, for EVERY candidate model.
+ */
+export function groqDailyLimitReached(now = Date.now(), model?: string): boolean {
+  if (model) return now < (dailyLimitUntil.get(model) ?? 0);
+  return candidateModels().every((m) => now < (dailyLimitUntil.get(m) ?? 0));
 }
-/** For tests. */
-export function __setGroqDailyLimitUntil(t: number): void {
-  dailyLimitUntil = t;
+/** For tests: set the limit for every candidate model (or one). */
+export function __setGroqDailyLimitUntil(t: number, model?: string): void {
+  for (const m of model ? [model] : candidateModels()) dailyLimitUntil.set(m, t);
 }
 
 /**
@@ -318,7 +345,7 @@ export async function generateBrief(
       `brief:v4:${key}`,
       TTL.fundamentals,
       async () => {
-        const models = resolvedModel ? [resolvedModel] : candidateModels();
+        const models = modelsToTry();
         for (const model of models) {
           try {
             const problems = (body: string) => [
@@ -350,8 +377,8 @@ export async function generateBrief(
             return brief;
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            if (MODEL_UNAVAILABLE.test(msg) && models.length > 1) {
-              console.warn(`[groq] model ${model} unavailable, trying next`);
+            if (TRY_NEXT_MODEL.test(msg) && models.length > 1) {
+              console.warn(`[groq] model ${model} unavailable (${msg}), trying next`);
               continue;
             }
             throw err;
@@ -552,7 +579,13 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
     ...originalExclusions(text).map((t) => `excluded topic "${t}"`),
     ...speculativePhrases(text, factsText(facts)).map((p) => `forecast wording "${p}"`),
   ];
-  const models = resolvedModel ? [resolvedModel] : candidateModels();
+  const models = modelsToTry();
+  if (models.length === 0) {
+    console.warn(
+      "[groq] original failed: Groq daily token limit reached on every model",
+    );
+    return null;
+  }
   for (const model of models) {
     try {
       let out = await callGroq(
@@ -584,7 +617,12 @@ export async function generateOriginal(input: OriginalInput): Promise<Original |
       return { ...parsed, model: out.model };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (MODEL_UNAVAILABLE.test(msg) && models.length > 1) continue;
+      if (TRY_NEXT_MODEL.test(msg) && models.length > 1) {
+        console.warn(
+          `[groq] original: model ${model} unavailable (${msg}), trying next`,
+        );
+        continue;
+      }
       console.warn("[groq] original failed:", msg);
       return null;
     }
