@@ -15,9 +15,22 @@ describe("Deals sections (behind NEXT_PUBLIC_FLAG_DEALS)", () => {
     __resetSectionCache();
   });
 
-  describe("flag off", () => {
+  describe("on by default (owner, 2026-11-28)", () => {
     beforeEach(() => {
       delete process.env.NEXT_PUBLIC_FLAG_DEALS;
+      __resetSectionCache();
+    });
+    it("the deal sections exist when the variable is not set", () => {
+      const ids = visibleSections().map((s) => s.id);
+      expect(ids).toEqual(
+        expect.arrayContaining(["privateequity", "ibanking", "venture"]),
+      );
+    });
+  });
+
+  describe("flag off", () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_FLAG_DEALS = "0";
       __resetSectionCache();
     });
     it("the deal sections do not exist", () => {
