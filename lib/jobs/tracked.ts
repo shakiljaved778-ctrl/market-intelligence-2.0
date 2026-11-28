@@ -151,30 +151,34 @@ export const TRACKED_SYMBOLS: readonly string[] = [
  * turn, so every symbol is refreshed every few runs.
  */
 export const EQUITY_QUOTES_PER_RUN = 45;
-const RUN_SLOT_MS = 5 * 60_000;
-
 /**
- * PURE: the symbols one quotes run refreshes, in order. Crypto (CoinGecko, a
- * separate budget) is always included; `pinned` (the index board) always come
- * first; the remaining equities rotate by run slot so none is starved.
+ * PURE: the symbols one quotes run refreshes, in order, and where the next run
+ * should start. Crypto (CoinGecko, a separate budget) is always included;
+ * `pinned` (the index board) always come first; the remaining equities are
+ * taken in turn from `cursor`, so consecutive runs walk the whole list
+ * whatever their timing. (A start derived from the clock alone repeated the
+ * same half of the list when runs were an even number of slots apart.)
  */
 export function quotesForRun(
   symbols: readonly string[],
-  opts: { now: number; pinned: readonly string[]; isCrypto: (s: string) => boolean },
-): string[] {
+  opts: { cursor: number; pinned: readonly string[]; isCrypto: (s: string) => boolean },
+): { symbols: string[]; nextCursor: number } {
   const pinnedSet = new Set(opts.pinned);
   const pinned = symbols.filter((s) => pinnedSet.has(s));
   const crypto = symbols.filter((s) => !pinnedSet.has(s) && opts.isCrypto(s));
   const rest = symbols.filter((s) => !pinnedSet.has(s) && !opts.isCrypto(s));
   const room = Math.max(0, EQUITY_QUOTES_PER_RUN - pinned.length);
-  if (rest.length <= room) return [...pinned, ...rest, ...crypto];
-  const slot = Math.floor(opts.now / RUN_SLOT_MS);
-  const start = (slot * room) % rest.length;
+  if (rest.length <= room)
+    return { symbols: [...pinned, ...rest, ...crypto], nextCursor: 0 };
+  const start = ((Math.trunc(opts.cursor) % rest.length) + rest.length) % rest.length;
   const turn = Array.from(
     { length: room },
     (_, i) => rest[(start + i) % rest.length] as string,
   );
-  return [...pinned, ...turn, ...crypto];
+  return {
+    symbols: [...pinned, ...turn, ...crypto],
+    nextCursor: (start + room) % rest.length,
+  };
 }
 
 export const BACKFILL_SYMBOLS: readonly string[] = [

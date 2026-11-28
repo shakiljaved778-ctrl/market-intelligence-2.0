@@ -93,17 +93,23 @@ export const BRIEF_CALLS_PER_RUN = 15;
 export const BRIEF_RETRY_AFTER_S = 6 * 60 * 60;
 export const briefFailedKey = (slug: string) => `brief:failed:${slug}`;
 
+const QUOTES_CURSOR_KEY = "quotes:cursor:v1";
+
 /** Gap between equity quote calls: under Finnhub's 30-a-second burst limit. */
 export const QUOTE_PACE_MS = 200;
 
 export async function quotesTask(now: number = Date.now()): Promise<JobSummary> {
   const registry = getRegistry();
   const isCrypto = (s: string) => instrumentBySymbol(s)?.assetClass === "crypto";
-  const symbols = quotesForRun(TRACKED_SYMBOLS, {
-    now,
+  // Where the last run stopped (shared in KV). Without one, start from a
+  // minute-based position, so even cold instances spread across the list.
+  const stored = await cacheGet<number>(QUOTES_CURSOR_KEY);
+  const { symbols, nextCursor } = quotesForRun(TRACKED_SYMBOLS, {
+    cursor: typeof stored === "number" ? stored : Math.floor(now / 60_000) * 37,
     pinned: INDEX_TRACKERS.map((t) => t.symbol),
     isCrypto,
   });
+  await cachePut(QUOTES_CURSOR_KEY, 7 * 24 * 3600, nextCursor);
   let out = 0;
   for (const symbol of symbols) {
     if (!isCrypto(symbol) && QUOTE_PACE_MS > 0) {
