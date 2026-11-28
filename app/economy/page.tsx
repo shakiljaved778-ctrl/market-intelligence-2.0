@@ -4,7 +4,14 @@ import { MacroChart } from "@/components/economy/MacroChart";
 import { MacroSpark } from "@/components/economy/MacroSpark";
 import { NoData } from "@/components/market/Provenance";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { readCalendar, readMacroSeries, readYieldCurve } from "@/lib/economy/read";
+import {
+  readCalendar,
+  readCommoditySeries,
+  readMacroSeries,
+  readYieldCurve,
+} from "@/lib/economy/read";
+import { pickChartOfDay } from "@/lib/economy/chart-of-day";
+import { flag } from "@/lib/flags";
 import { formatAsOf } from "@/lib/market/provenance";
 
 export const metadata = pageMeta(
@@ -20,6 +27,9 @@ export default async function EconomyPage() {
     readCalendar(),
   ]);
   const empty = series.length === 0 && curve.points.length === 0;
+  const chartOfDay = flag("chartOfDay")
+    ? pickChartOfDay([...series, ...(await readCommoditySeries())], Date.now())
+    : null;
 
   return (
     <div className="pb-4">
@@ -39,6 +49,31 @@ export default async function EconomyPage() {
           />
         </div>
       </div>
+
+      {chartOfDay ? (
+        <section aria-labelledby="cotd-heading" className="card mt-6 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="cotd-heading" className="t-h3 font-editorial text-ink">
+              Chart of the Day
+            </h2>
+            <Link
+              href={`/economy/indicator/${encodeURIComponent(chartOfDay.series.id)}`}
+              className="text-ink-3 text-[12px] underline"
+            >
+              Full chart <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <div className="mt-3">
+            <MacroSpark
+              data={chartOfDay.series.observations}
+              label={`${chartOfDay.series.name}: recent trend`}
+              height={160}
+            />
+          </div>
+          <p className="text-ink mt-3 text-[14px]">{chartOfDay.caption[0]}</p>
+          <p className="text-ink-3 text-[13px]">{chartOfDay.caption[1]}</p>
+        </section>
+      ) : null}
 
       {empty ? (
         <div className="mt-6">

@@ -125,6 +125,26 @@ topics:
       championship,
       tournament,
     ]
+  # Sports business (brief §6.4, 2026-11-28): ownership, rights and sponsorship
+  # money in sport — keeps Sports on-brand for a markets site.
+  sports_business:
+    [
+      sports business,
+      media rights,
+      broadcast rights,
+      broadcasting rights,
+      tv rights,
+      naming rights,
+      sponsorship deal,
+      kit deal,
+      club ownership,
+      club takeover,
+      stake in the club,
+      multi-club,
+      sports investment,
+      sports fund,
+      franchise valuation,
+    ]
   entertainment:
     [
       film,

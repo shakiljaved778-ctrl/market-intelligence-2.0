@@ -89,3 +89,40 @@ describe("evaluateQuality", () => {
     expect(r.reasons).not.toContain("headline_lacks_specific_entity");
   });
 });
+
+describe("brief §4.6 filters (2026-11-28)", () => {
+  it("drops sponsored items, even with an otherwise good headline", () => {
+    const r = evaluateQuality({
+      headline: "Sponsored: Qatar Airways launches new Doha–Lisbon route",
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reasons).toContain("sponsored");
+    const viaDek = evaluateQuality({
+      headline: "Five ways Apple Pay is changing GCC retail",
+      dek: "In partnership with a payments provider.",
+    });
+    expect(viaDek.reasons).toContain("sponsored");
+  });
+
+  it("drops headlines under four words from outlets, not from official sources", () => {
+    expect(
+      evaluateQuality({ headline: "Apple slips", tier: "outlet" }).reasons,
+    ).toContain("headline_too_short");
+    expect(
+      evaluateQuality({ headline: "Advance Retail Inventories", tier: "primary" })
+        .reasons,
+    ).not.toContain("headline_too_short");
+    expect(
+      evaluateQuality({ headline: "Statistical Notice", tier: "regulator" }).reasons,
+    ).not.toContain("headline_too_short");
+  });
+
+  it("keeps a normal specific headline", () => {
+    expect(
+      evaluateQuality({
+        headline: "QatarEnergy signs LNG supply deal with Sinopec",
+        tier: "wire",
+      }).ok,
+    ).toBe(true);
+  });
+});

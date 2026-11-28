@@ -7,6 +7,7 @@ import {
   DEALS_MAX_AGE_H,
   GCC_BAND_SIZE,
   NON_FINANCIAL_ROW_SIZE,
+  pickDiverse,
   TOP_SLOT_MAX_AGE_H,
   withUniqueCovers,
 } from "./homepage";
@@ -253,5 +254,37 @@ describe("withUniqueCovers", () => {
     expect(new Set(urls).size).toBe(urls.length);
     expect(shown.find((s) => s.slug === a.slug)?.imageUrl).toBe(photo);
     expect(shown.find((s) => s.slug === b.slug)?.imageUrl).toBeNull();
+  });
+});
+
+describe("top-of-page variety (brief §4.4)", () => {
+  const from = (c: WireCluster, ...sourceIds: string[]): WireCluster => ({
+    ...c,
+    sourceIds,
+    sourceCount: sourceIds.length,
+  });
+
+  it("keeps a second single-source report from the same source out of the top three", () => {
+    const a = from(story("markets", 1, 90), "reuters");
+    const b = from(story("economy", 1, 80), "reuters");
+    const c = from(story("economy", 1, 70), "bls");
+    const picked = pickDiverse([b, c], 1, [a]);
+    expect(picked.map((x) => x.slug)).toEqual([c.slug]);
+  });
+
+  it("caps any section at two of the first six, but fills rather than leave a gap", () => {
+    const m = [1, 2, 3, 4].map((i) => from(story("markets", 1, 90 - i), `s${i}`));
+    const e = from(story("economy", 1, 50), "e1");
+    const top = pickDiverse([m[1]!, m[2]!, m[3]!, e], 2, [m[0]!]);
+    // One more Markets story is allowed, then Economy before a third Markets.
+    expect(top.map((x) => x.section)).toEqual(["markets", "economy"]);
+    const short = pickDiverse([m[2]!, m[3]!], 2, [m[0]!, m[1]!]);
+    expect(short).toHaveLength(2);
+  });
+
+  it("multi-source stories never count as one source", () => {
+    const a = from(story("markets", 1, 90), "reuters", "ft");
+    const b = from(story("economy", 1, 80), "reuters", "bls");
+    expect(pickDiverse([b], 1, [a])).toEqual([b]);
   });
 });

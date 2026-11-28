@@ -29,6 +29,9 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   "EWJ",
   "EWU",
   "INDA",
+  "EWG",
+  "EWH",
+  "UUP",
   "GLD",
   // Mega-cap tech / communication services
   "AAPL",
@@ -76,6 +79,15 @@ export const TRACKED_SYMBOLS: readonly string[] = [
   // Energy / industrials / materials
   "XOM",
   "CVX",
+  // Widened 2026-11-28 so no heatmap sector shows one or two tiles (brief §2.2).
+  "COP",
+  "SLB",
+  "SHEL",
+  "FCX",
+  "NEM",
+  "RIO",
+  "SHW",
+  "VOD",
   "BA",
   "CAT",
   "GE",
@@ -129,6 +141,42 @@ export const TRACKED_SYMBOLS: readonly string[] = [
  * listed here have no stored series, so their chart shows an empty state — we
  * spend the scarce candle budget on the most-viewed names.
  */
+/**
+ * Most quotes asked of the per-minute-limited equity provider in one run
+ * (2026-11-28). Finnhub's free tier allows 60 calls a minute and 30 a second;
+ * the list above is longer than that, and a run that asked for all of it hit
+ * 429s, tripped the provider's circuit breaker and left the END of the list
+ * unrefreshed for days (seen: LIN, LMT, SONY, TM, NVO stuck at 24–26 Nov). Each
+ * run now asks for a fixed budget: the index board every time, the rest in
+ * turn, so every symbol is refreshed every few runs.
+ */
+export const EQUITY_QUOTES_PER_RUN = 45;
+const RUN_SLOT_MS = 5 * 60_000;
+
+/**
+ * PURE: the symbols one quotes run refreshes, in order. Crypto (CoinGecko, a
+ * separate budget) is always included; `pinned` (the index board) always come
+ * first; the remaining equities rotate by run slot so none is starved.
+ */
+export function quotesForRun(
+  symbols: readonly string[],
+  opts: { now: number; pinned: readonly string[]; isCrypto: (s: string) => boolean },
+): string[] {
+  const pinnedSet = new Set(opts.pinned);
+  const pinned = symbols.filter((s) => pinnedSet.has(s));
+  const crypto = symbols.filter((s) => !pinnedSet.has(s) && opts.isCrypto(s));
+  const rest = symbols.filter((s) => !pinnedSet.has(s) && !opts.isCrypto(s));
+  const room = Math.max(0, EQUITY_QUOTES_PER_RUN - pinned.length);
+  if (rest.length <= room) return [...pinned, ...rest, ...crypto];
+  const slot = Math.floor(opts.now / RUN_SLOT_MS);
+  const start = (slot * room) % rest.length;
+  const turn = Array.from(
+    { length: room },
+    (_, i) => rest[(start + i) % rest.length] as string,
+  );
+  return [...pinned, ...turn, ...crypto];
+}
+
 export const BACKFILL_SYMBOLS: readonly string[] = [
   "AAPL",
   "MSFT",

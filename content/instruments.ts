@@ -716,6 +716,15 @@ export const INSTRUMENTS: Instrument[] = [
     country: "US",
   },
   {
+    symbol: "SHW",
+    name: "Sherwin-Williams",
+    exchange: "NYSE",
+    assetClass: "equity",
+    nativeCurrency: "USD",
+    sector: "Materials",
+    country: "US",
+  },
+  {
     symbol: "NEM",
     name: "Newmont Corp.",
     exchange: "NYSE",

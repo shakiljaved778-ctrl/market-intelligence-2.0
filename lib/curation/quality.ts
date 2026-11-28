@@ -81,8 +81,23 @@ export function isInstitutionalTitle(title: string): boolean {
   return INSTITUTIONAL_PATTERNS.some((re) => re.test(title.trim()));
 }
 
+/** Headlines shorter than this say too little to publish (brief §4.6). */
+export const MIN_HEADLINE_WORDS = 4;
+
+/** Paid or promotional items are never published (brief §4.6). */
+const SPONSORED =
+  /\b(sponsored|advertorial|paid (post|content|partnership)|partner content|promoted content|in partnership with)\b/i;
+
+/** Official sources whose terse document titles ("Statistical Notice") the
+ *  summariser rewrites; the short-headline rule does not apply to them. */
+const OFFICIAL_TIERS = new Set(["regulator", "primary"]);
+
 export interface QualityInput {
   headline: string;
+  /** The item's dek, checked for sponsored-content labels. */
+  dek?: string | null;
+  /** The source's tier (content/sources.yaml), when known. */
+  tier?: string | null;
   /** The AI/editorial summary, when one exists (live stories). */
   summary?: string | null;
   /** Source texts (headline/dek/primary excerpts) the summary's numbers must come from. */
@@ -104,11 +119,24 @@ export function evaluateQuality(input: QualityInput): QualityResult {
   if (!hasSpecificEntity(input.headline) && !needsRewrite) {
     reasons.push("headline_lacks_specific_entity");
   }
+  if (SPONSORED.test(`${input.headline} ${input.dek ?? ""}`)) {
+    reasons.push("sponsored");
+  }
+  const words = input.headline
+    .split(/\s+/)
+    .filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+  if (
+    words < MIN_HEADLINE_WORDS &&
+    !needsRewrite &&
+    !OFFICIAL_TIERS.has(input.tier ?? "")
+  ) {
+    reasons.push("headline_too_short");
+  }
 
   const summary = (input.summary ?? "").trim();
   if (summary.length > 0) {
-    const words = summary.split(/\s+/).filter(Boolean).length;
-    if (words < MIN_SUMMARY_WORDS) reasons.push("summary_too_short");
+    const summaryWords = summary.split(/\s+/).filter(Boolean).length;
+    if (summaryWords < MIN_SUMMARY_WORDS) reasons.push("summary_too_short");
 
     const sourceNumbers = new Set((input.sources ?? []).flatMap(numbersIn));
     const unsupported = [...new Set(numbersIn(summary))].filter(
@@ -119,5 +147,7 @@ export function evaluateQuality(input: QualityInput): QualityResult {
     }
   }
 
-  return { ok: reasons.length === 0, reasons, needsRewrite };
+  // A sponsored item is dropped even when its title would otherwise be rewritten.
+  const rewrite = needsRewrite && !reasons.includes("sponsored");
+  return { ok: reasons.length === 0, reasons, needsRewrite: rewrite };
 }

@@ -76,6 +76,62 @@ function ageHours(c: WireCluster, now: number): number {
   return Number.isFinite(t) ? Math.max(0, (now - t) / HOUR_MS) : Infinity;
 }
 
+/**
+ * Top-of-page variety (brief §4.4, 2026-11-28), applied to the lead, the side
+ * rail and the three-up row in reading order: no two of the first three are
+ * single-source reports from the same source, and no section takes more than
+ * two of the first six. Soft: when the fresh pool cannot satisfy it, the next
+ * strongest stories fill the slots, so the page is never short.
+ */
+export const TOP_DIVERSITY = {
+  sourceWindow: 3,
+  sectionWindow: 6,
+  perSection: 2,
+} as const;
+
+const voice = (c: WireCluster): string | null =>
+  c.sourceIds.length === 1 ? (c.sourceIds[0] ?? null) : null;
+
+function fitsTop(c: WireCluster, placed: WireCluster[]): boolean {
+  const pos = placed.length;
+  const v = voice(c);
+  if (
+    pos < TOP_DIVERSITY.sourceWindow &&
+    v !== null &&
+    placed.slice(0, TOP_DIVERSITY.sourceWindow).some((p) => voice(p) === v)
+  ) {
+    return false;
+  }
+  if (
+    pos < TOP_DIVERSITY.sectionWindow &&
+    placed.slice(0, TOP_DIVERSITY.sectionWindow).filter((p) => p.section === c.section)
+      .length >= TOP_DIVERSITY.perSection
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/** PURE: the next `n` stories from `pool` for the top, honouring TOP_DIVERSITY. */
+export function pickDiverse(
+  pool: WireCluster[],
+  n: number,
+  placed: WireCluster[],
+): WireCluster[] {
+  const picked: WireCluster[] = [];
+  const deferred: WireCluster[] = [];
+  for (const c of pool) {
+    if (picked.length >= n) break;
+    if (fitsTop(c, [...placed, ...picked])) picked.push(c);
+    else deferred.push(c);
+  }
+  for (const c of deferred) {
+    if (picked.length >= n) break;
+    picked.push(c);
+  }
+  return picked;
+}
+
 export function buildHomepage(
   ranked: WireCluster[],
   opts: {
@@ -128,15 +184,19 @@ export function buildHomepage(
     pick?.cluster ?? financialFirst.find((c) => !used.has(c.slug)) ?? null;
   const lead = leadStory ? take(leadStory) : null;
 
-  const heroSide = financialFirst
-    .filter((c) => !used.has(c.slug))
-    .slice(0, HERO_SIDE_SIZE)
-    .map(take);
+  const placed = lead ? [lead] : [];
+  const heroSide = pickDiverse(
+    financialFirst.filter((c) => !used.has(c.slug)),
+    HERO_SIDE_SIZE,
+    placed,
+  ).map(take);
+  placed.push(...heroSide);
   // The three-up row is the next strongest fresh stories from any section.
-  const threeUp = topPool
-    .filter((c) => !used.has(c.slug))
-    .slice(0, THREE_UP_SIZE)
-    .map(take);
+  const threeUp = pickDiverse(
+    topPool.filter((c) => !used.has(c.slug)),
+    THREE_UP_SIZE,
+    placed,
+  ).map(take);
 
   const newestFirst = (a: WireCluster, b: WireCluster) =>
     Date.parse(b.eventTime) - Date.parse(a.eventTime);

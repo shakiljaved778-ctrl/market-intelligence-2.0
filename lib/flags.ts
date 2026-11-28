@@ -6,7 +6,7 @@
  * Read on the server only. Each variable is read with a literal name so the
  * value is also correct if a flag is ever read in a client bundle.
  */
-export type FlagName = "deals" | "navV2" | "gccPegs";
+export type FlagName = "deals" | "navV2" | "gccPegs" | "calendar" | "chartOfDay";
 
 function on(value: string | undefined): boolean {
   return value === "1" || value === "true";
@@ -23,5 +23,11 @@ export function flag(name: FlagName): boolean {
     case "gccPegs":
       // GCC currency pegs reference card on /markets.
       return on(process.env.NEXT_PUBLIC_FLAG_GCC_PEGS);
+    case "calendar":
+      // Earnings and IPO calendar page (/calendar), from Finnhub.
+      return on(process.env.NEXT_PUBLIC_FLAG_CALENDAR);
+    case "chartOfDay":
+      // "Chart of the Day" card at the top of /economy.
+      return on(process.env.NEXT_PUBLIC_FLAG_CHART_OF_DAY);
   }
 }
