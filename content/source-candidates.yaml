@@ -645,3 +645,13 @@ candidates:
     name: U.S. SEC EDGAR — New F-1 filings
     url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=F-1&company=&dateb=&owner=include&start=0&count=40&output=atom
     region: US
+  # The getcurrent feeds above are disallowed by sec.gov robots.txt (probe, 28 Nov).
+  # Two other public EDGAR routes to check:
+  - id: sec-edgar-daily-index
+    name: U.S. SEC EDGAR — daily form index
+    url: https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/form.20261125.idx
+    region: US
+  - id: sec-edgar-fulltext
+    name: U.S. SEC EDGAR — full-text search API
+    url: https://efts.sec.gov/LATEST/search-index?q=%22%22&forms=S-1&dateRange=custom&startdt=2026-11-20&enddt=2026-11-27
+    region: US
