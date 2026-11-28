@@ -5,7 +5,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("CoinGecko batch (2026-11-28: the last coins never got a price)", () => {
   it("prices every coin from one request", async () => {
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn<(url: string) => Promise<Response>>(async () =>
       Response.json({
         bitcoin: { usd: 90000, usd_24h_change: 1 },
         arbitrum: { usd: 0.5, usd_24h_change: -2 },
