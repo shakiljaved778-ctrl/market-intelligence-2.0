@@ -15,6 +15,17 @@ const item = (headline: string): NormalizedArticle => ({
 });
 
 describe("PR Newswire: headline and link only, deals only (owner, 2026-11-28)", () => {
+  it("the deal category feeds are headline-only too", () => {
+    for (const id of [
+      "prnewswire-mergers",
+      "prnewswire-venture",
+      "prnewswire-private-placement",
+    ]) {
+      const src = loadSources().find((s) => s.id === id);
+      expect([id, src?.active, src?.headline_only]).toEqual([id, true, true]);
+    }
+  });
+
   it("is active with both rules on", () => {
     const prn = loadSources().find((s) => s.id === "prnewswire-financial");
     expect(prn?.active).toBe(true);
