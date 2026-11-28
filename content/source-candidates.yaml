@@ -701,3 +701,23 @@ candidates:
     name: PR Newswire — Financial Services feed (post-activation check)
     url: https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss
     region: GLOBAL
+  - id: prn-mergers
+    name: PR Newswire — Acquisitions, mergers and takeovers
+    url: https://www.prnewswire.com/rss/financial-services-latest-news/acquisitions-mergers-and-takeovers-list.rss
+    region: GLOBAL
+  - id: prn-venture
+    name: PR Newswire — Venture capital
+    url: https://www.prnewswire.com/rss/financial-services-latest-news/venture-capital-list.rss
+    region: GLOBAL
+  - id: prn-ipo
+    name: PR Newswire — Initial public offerings
+    url: https://www.prnewswire.com/rss/financial-services-latest-news/initial-public-offerings-list.rss
+    region: GLOBAL
+  - id: prn-private-placement
+    name: PR Newswire — Private placement
+    url: https://www.prnewswire.com/rss/financial-services-latest-news/private-placement-list.rss
+    region: GLOBAL
+  - id: prn-rss-index
+    name: PR Newswire — RSS index
+    url: https://www.prnewswire.com/rss/
+    region: GLOBAL
