@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { RankingExplainer } from "@/components/news/RankingExplainer";
 import { COVER_SIZES } from "@/lib/news/images";
 import { storyAgeLabel } from "@/lib/curation/freshness";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { dbSupersedingSlug } from "@/lib/db/queries/wire";
-import { readCluster, readWire } from "@/lib/news/read";
+import { explainRanking, readCluster, readWire } from "@/lib/news/read";
 import { getQuote, type Priced } from "@/lib/market/service";
 import { instrumentBySymbol } from "@/content/instruments";
 import { ChangePill } from "@/components/market/ChangePill";
@@ -73,6 +74,7 @@ export default async function ClusterPage({ params }: Params) {
     notFound();
   }
   const { cluster, members, body, gallery } = detail;
+  const ranking = await explainRanking(cluster);
 
   // Right-rail context (real data only): the instruments this story concerns with
   // their latest cached move, and more stories in the same section.
@@ -184,6 +186,10 @@ export default async function ClusterPage({ params }: Params) {
           <ShareButtons title={cluster.title} />
         </div>
       </div>
+
+      {ranking ? (
+        <RankingExplainer breakdown={ranking} sourceCount={cluster.sourceCount} />
+      ) : null}
 
       {/* Editorial byline + visible published date in AST (§4 E-E-A-T). */}
       <p className="text-ink-3 mt-2 text-[12px]">

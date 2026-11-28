@@ -38,12 +38,12 @@ Prettier and the production build.
 | `/api/health` = ok; pipelines within limits | **Done** | 27 Nov 22:02 UTC: `ok`, no issues, 0.2–1 s (after hotfixes #111/#113) |
 | Crons firing (last 3 runs) | **Done** | pipeline 12:15 ✓, 13:06 (handover), 17:16 running; quotes 10:45 ✓ 10:53 ✓ 11:51 ✓; macro 07:46 ✓; eod 03:58 ✓ |
 | Smoke test green | **Done (production)** | 37/38 after release; the one failure is the thin Crypto section (2 stories), a content gap. Preview URLs are unreachable from the build session |
-| Mobile walkthrough at 390 px | **Partial** | Cards checked at 390 px; full walkthrough on preview |
+| Mobile walkthrough at 390 px | **Done** | Five pages at 390/768/1440 px (docs/audit/ux/); no sideways scroll at 360–1440 px |
 | No fake or placeholder data | **Done** | CI fixture guard; demo data only under `DEMO_MODE` |
 | Rollback plan | **Done** | Vercel → Deployments → `market-intelligence-2-0-aftnhuzjp…` → Instant Rollback |
 | Code freeze 12 h before announcement | **Owner** | Only P0 hotfixes after the freeze |
 | 48 h post-launch watch | **Owner + Claude** | Health endpoint, CI-failure monitor (already scheduled), Vercel logs |
-| Lighthouse mobile ≥ 80 | **Not run** | Run on preview (`lighthouse.yml` or PageSpeed Insights) |
+| Lighthouse mobile ≥ 80 | **Done** | Production 27 Nov 23:34 UTC: performance 84–90+ on all six pages, accessibility ≥ 95 everywhere (docs/audit/UX.md) |
 | Newsletter signup end to end | **Done** | Owner tested with a real inbox (27 Nov) |
 | `FRED_API_KEY` in production | **Done** | Added in Vercel (27 Nov); data arrives with the next macro run |
 

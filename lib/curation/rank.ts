@@ -77,14 +77,68 @@ function recencyFactor(eventTime: string, now: Date): number {
   return RECENCY_FLOOR + (1 - RECENCY_FLOOR) * decay;
 }
 
-export function computeImportance(cluster: ClusterResult, ctx: RankContext): number {
+/**
+ * The importance score taken apart (2026-11-27): each factor's 0–1 score, its
+ * weight, and its points before the recency factor. computeImportance is
+ * built from this, so the "Why this story is ranked here" panel can never
+ * disagree with the score shown.
+ */
+export interface ImportanceBreakdown {
+  factors: {
+    id: "sources" | "tier" | "market" | "primary";
+    score: number;
+    weight: number;
+    /** weight × score × 100, before recency. */
+    points: number;
+  }[];
+  /** The largest |move| among the story's instruments, in percent. */
+  maxMovePct: number;
+  recency: number;
+  total: number;
+}
+
+export function explainImportance(
+  cluster: Pick<ClusterResult, "sourceCount" | "sourceIds" | "tickers" | "eventTime">,
+  ctx: RankContext,
+): ImportanceBreakdown {
   const now = ctx.now ?? new Date();
-  const weighted =
-    W_SOURCES * sourceScore(cluster.sourceCount) +
-    W_TIER * tierScore(cluster.sourceIds, ctx.tiers) +
-    W_MARKET * marketScore(cluster.tickers, ctx.tickerMovePct) +
-    W_PRIMARY * primaryScore(cluster.sourceIds, ctx.tiers);
-  return Math.round(100 * weighted * recencyFactor(cluster.eventTime, now));
+  const parts = [
+    {
+      id: "sources" as const,
+      weight: W_SOURCES,
+      score: sourceScore(cluster.sourceCount),
+    },
+    {
+      id: "tier" as const,
+      weight: W_TIER,
+      score: tierScore(cluster.sourceIds, ctx.tiers),
+    },
+    {
+      id: "market" as const,
+      weight: W_MARKET,
+      score: marketScore(cluster.tickers, ctx.tickerMovePct),
+    },
+    {
+      id: "primary" as const,
+      weight: W_PRIMARY,
+      score: primaryScore(cluster.sourceIds, ctx.tiers),
+    },
+  ];
+  const weighted = parts.reduce((sum, p) => sum + p.weight * p.score, 0);
+  const recency = recencyFactor(cluster.eventTime, now);
+  let maxMovePct = 0;
+  for (const t of cluster.tickers)
+    maxMovePct = Math.max(maxMovePct, Math.abs(ctx.tickerMovePct[t] ?? 0));
+  return {
+    factors: parts.map((p) => ({ ...p, points: 100 * p.weight * p.score })),
+    maxMovePct,
+    recency,
+    total: Math.round(100 * weighted * recency),
+  };
+}
+
+export function computeImportance(cluster: ClusterResult, ctx: RankContext): number {
+  return explainImportance(cluster, ctx).total;
 }
 
 export interface RankedCluster extends ClusterResult {

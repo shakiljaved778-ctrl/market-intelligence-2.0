@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClusterResult } from "./cluster";
-import { computeImportance, type RankContext } from "./rank";
+import { computeImportance, explainImportance, type RankContext } from "./rank";
 
 function cluster(over: Partial<ClusterResult>): ClusterResult {
   return {
@@ -52,5 +52,33 @@ describe("computeImportance (§9 Stage 4)", () => {
     );
     expect(old).toBeLessThan(fresh);
     expect(old).toBeGreaterThan(0);
+  });
+});
+
+describe("explainImportance", () => {
+  it("adds up to exactly the score computeImportance gives", () => {
+    const now = new Date("2026-11-27T12:00:00Z");
+    const ctx = {
+      tiers: { fed: "regulator", wire: "wire" },
+      tickerMovePct: { AAPL: 2.5 },
+      now,
+    };
+    const cluster = {
+      articleIds: [1, 2],
+      primaryId: 1,
+      title: "t",
+      tickers: ["AAPL"],
+      entities: [],
+      topics: [],
+      sourceIds: ["fed", "wire"],
+      sourceCount: 2,
+      eventTime: "2026-11-27T06:00:00Z",
+    };
+    const b = explainImportance(cluster, ctx);
+    expect(b.total).toBe(computeImportance(cluster, ctx));
+    const before = b.factors.reduce((s, f) => s + f.points, 0);
+    expect(Math.round(before * b.recency)).toBe(b.total);
+    expect(b.maxMovePct).toBe(2.5);
+    expect(b.factors.find((f) => f.id === "primary")?.score).toBe(1);
   });
 });

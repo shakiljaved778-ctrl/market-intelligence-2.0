@@ -38,3 +38,17 @@ jobs:
             echo "::error::Expected 200. 401 = CRON_SECRET mismatch or Vercel Deployment Protection; 404 = wrong APP_URL or route not deployed."
             exit 1
           fi
+      # Stale-data alert (lib/health-alert.ts): emails the owner when the health
+      # check reads "down" twice in a row. Runs even if the quotes call failed.
+      - name: Check data freshness and alert
+        if: always()
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl --show-error --silent --retry 2 --retry-delay 4 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -o alert.txt -w '%{http_code}' \
+            "${APP_URL%/}/api/cron/health-alert") || true
+          echo "HTTP ${code} from ${APP_URL%/}/api/cron/health-alert"
+          head -c 300 alert.txt || true; echo
