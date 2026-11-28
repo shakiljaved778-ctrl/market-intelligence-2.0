@@ -81,6 +81,8 @@ export async function persistArticles(
 /** Recent articles for the cluster stage, joined to their source tier/trust. */
 export async function dbRecentArticles(
   sinceHours = 48,
+  /** Only these sources (by slug), when given. */
+  onlySources?: string[],
 ): Promise<
   (PipelineArticle & { trustScore: number; sourceSlug: string; url: string })[]
 > {
@@ -99,7 +101,11 @@ export async function dbRecentArticles(
     })
     .from(articles)
     .innerJoin(sources, eq(articles.sourceId, sources.id))
-    .where(gte(articles.publishedAt, since));
+    .where(
+      onlySources && onlySources.length > 0
+        ? and(gte(articles.publishedAt, since), inArray(sources.slug, onlySources))
+        : gte(articles.publishedAt, since),
+    );
   return rows.map((r) => ({
     id: r.id,
     sourceId: r.sourceSlug,
