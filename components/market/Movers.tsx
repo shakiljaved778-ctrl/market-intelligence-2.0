@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ChangePill } from "@/components/market/ChangePill";
 import { NoData, PriceStamp } from "@/components/market/Provenance";
-import { readMovers } from "@/lib/market/read";
+import { Sparkline } from "@/components/market/Sparkline";
+import { readMovers, readTrends } from "@/lib/market/read";
 import { formatMoney } from "@/lib/format/currency";
 import type { DisplayCurrency } from "@/lib/currency/peg";
 
@@ -12,6 +13,9 @@ import type { DisplayCurrency } from "@/lib/currency/peg";
  */
 export async function Movers({ currency }: { currency: DisplayCurrency }) {
   const rows = await readMovers(6);
+  // 30-day trend from stored daily closes (brief §5); shown only where we hold
+  // the history — crypto has none, and gets no line rather than a made-up one.
+  const trends = rows.length > 0 ? await readTrends(rows.map((r) => r.symbol)) : {};
   if (rows.length === 0) {
     return (
       <NoData>
@@ -37,6 +41,16 @@ export async function Movers({ currency }: { currency: DisplayCurrency }) {
                 <PriceStamp stamp={row.priced} className="mt-0.5 block" />
               </span>
               <span className="flex shrink-0 items-center gap-3">
+                {(trends[row.symbol]?.length ?? 0) > 1 ? (
+                  <span className="hidden sm:inline-flex" title="30-day trend">
+                    <Sparkline
+                      values={trends[row.symbol] ?? []}
+                      up={row.changePct >= 0}
+                      width={56}
+                      height={18}
+                    />
+                  </span>
+                ) : null}
                 <span className="tnum text-text-hi text-[13px]">
                   {formatMoney(row.priceUsd, currency)}
                 </span>
@@ -51,7 +65,8 @@ export async function Movers({ currency }: { currency: DisplayCurrency }) {
       </ul>
       <p className="border-line text-text-low border-t px-4 py-2 text-[11px]">
         Ranked by absolute move among the instruments Mizaan has a current price for.
-        Change is versus the prior close (24 hours for crypto).
+        Change is versus the prior close (24 hours for crypto); the line is the 30-day
+        trend from stored daily closes, where we hold them.
       </p>
     </div>
   );

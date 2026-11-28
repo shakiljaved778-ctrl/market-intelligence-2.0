@@ -646,6 +646,7 @@ export function allTopics(): string[] {
     "mergers",
     "gcc",
     "crypto",
+    "sports_business",
   ];
 }
 

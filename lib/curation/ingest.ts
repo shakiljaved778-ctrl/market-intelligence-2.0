@@ -97,8 +97,10 @@ export function dedupe(articles: NormalizedArticle[]): NormalizedArticle[] {
 }
 
 export async function ingestAll(sources = loadSources()): Promise<IngestResult> {
+  const started = Date.now();
   const active = sources.filter((s) => s.active && s.kind === "rss");
   const perSource: Record<string, number> = {};
+  const failedSources: string[] = [];
   let skippedByRobots = 0;
   const collected: NormalizedArticle[] = [];
 
@@ -114,6 +116,7 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
     } catch (err) {
       // One bad feed must not stop the run, but it must be visible in the log.
       perSource[source.id] = 0;
+      failedSources.push(source.id);
       console.warn(
         `[ingest] ${source.id} failed: ${err instanceof Error ? err.message : String(err)}`,
       );
@@ -127,8 +130,11 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
   // Editorial exclusions (content/exclusions.yaml): no Qatar Central Bank
   // news and no Qatar politics — never stored. Every drop is logged.
   const regionOf = new Map(sources.map((s) => [s.id, s.region ?? null]));
+  const tierOf = new Map(sources.map((s) => [s.id, s.tier]));
   let excluded = 0;
-  const articles = dedupe(collected).filter((a) => {
+  let dropped = 0;
+  const unique = dedupe(collected);
+  const articles = unique.filter((a) => {
     const ex = checkExclusion({
       texts: [a.headline, a.dek],
       sourceRegion: regionOf.get(a.sourceId) ?? null,
@@ -138,8 +144,13 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
       console.log(`[ingest] excluded (${ex.reason}): "${a.headline}"`);
       return false;
     }
-    const q = evaluateQuality({ headline: a.headline });
+    const q = evaluateQuality({
+      headline: a.headline,
+      dek: a.dek,
+      tier: tierOf.get(a.sourceId) ?? null,
+    });
     if (!q.ok && !q.needsRewrite) {
+      dropped += 1;
       console.warn(
         `[ingest] dropped low-quality headline: "${a.headline}" (${q.reasons.join(",")})`,
       );
@@ -149,5 +160,19 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
   });
 
   console.log(`[ingest] excluded by editorial rules: ${excluded}`);
+  // One structured line per run (brief §3.3), easy to grep in the runner logs.
+  console.log(
+    `[ingest] summary ${JSON.stringify({
+      sourcesOk: active.length - failedSources.length - skippedByRobots,
+      sourcesFailed: failedSources,
+      skippedByRobots,
+      itemsFetched: collected.length,
+      duplicates: collected.length - unique.length,
+      excluded,
+      droppedLowQuality: dropped,
+      kept: articles.length,
+      durationMs: Date.now() - started,
+    })}`,
+  );
   return { articles, perSource, skippedByRobots, excluded };
 }

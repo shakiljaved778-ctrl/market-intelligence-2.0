@@ -33,5 +33,11 @@ export const INDEX_TRACKERS: readonly IndexTracker[] = [
   { symbol: "EWJ", label: "Japan", via: "MSCI Japan · via EWJ" },
   { symbol: "EWU", label: "UK", via: "MSCI UK · via EWU" },
   { symbol: "INDA", label: "India", via: "MSCI India · via INDA" },
+  // 2026-11-28 (brief §5): Germany and Hong Kong by the same country-fund rule
+  // (labelled by country, never as DAX or Hang Seng), and the US dollar via the
+  // Invesco fund that tracks the dollar index (never shown as a DXY level).
+  { symbol: "EWG", label: "Germany", via: "MSCI Germany · via EWG" },
+  { symbol: "EWH", label: "Hong Kong", via: "MSCI Hong Kong · via EWH" },
+  { symbol: "UUP", label: "US dollar", via: "Dollar index fund · via UUP" },
   { symbol: "GLD", label: "Gold" },
 ];
