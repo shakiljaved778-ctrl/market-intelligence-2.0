@@ -453,6 +453,21 @@ export async function ingestTask(): Promise<JobSummary> {
   return { itemsIn: result.articles.length, itemsOut: stored };
 }
 
+/**
+ * PURE (2026-11-28): articles from slow specialist feeds that fall outside the
+ * usual 48-hour window but inside their own `lookback_days`, not already read.
+ */
+export function slowFeedExtras<
+  T extends { id: number; sourceId: string; publishedAt: string },
+>(base: T[], slowRows: T[], lookbackMs: Map<string, number>, now: number): T[] {
+  const seen = new Set(base.map((a) => a.id));
+  return slowRows.filter(
+    (a) =>
+      !seen.has(a.id) &&
+      now - Date.parse(a.publishedAt) <= (lookbackMs.get(a.sourceId) ?? 0),
+  );
+}
+
 export async function clusterTask(): Promise<JobSummary> {
   // Embed (local all-MiniLM in the runner), cluster within 48h, rank, persist
   // (§9 Stages 3–4). Reads recent articles from Postgres.
@@ -467,7 +482,21 @@ export async function clusterTask(): Promise<JobSummary> {
   // rule existed) are never clustered, ranked or written up.
   const { isExcluded } = await import("@/lib/curation/exclusions");
   const regionOf = new Map(loadSources().map((s) => [s.id, s.region ?? null]));
-  const recent = (await dbRecentArticles(48)).filter(
+  // Slow specialist feeds are read further back (lookback_days, ≤ 14 days).
+  const slow = loadSources().filter((s) => s.active && s.lookback_days);
+  const slowRows =
+    slow.length > 0
+      ? await dbRecentArticles(
+          Math.max(...slow.map((s) => s.lookback_days as number)) * 24,
+          slow.map((s) => s.id),
+        )
+      : [];
+  const lookback = new Map(
+    slow.map((s) => [s.id, (s.lookback_days as number) * 86_400_000]),
+  );
+  const base = await dbRecentArticles(48);
+  const extra = slowFeedExtras(base, slowRows, lookback, Date.now());
+  const recent = [...base, ...extra].filter(
     (a) =>
       !isExcluded({
         texts: [a.headline, a.dek],

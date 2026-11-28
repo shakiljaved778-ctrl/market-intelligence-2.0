@@ -38,6 +38,7 @@ sources:
     default_section: ibanking
     allowed_sections: [ibanking]
     max_items_per_run: 20
+    lookback_days: 14
 
   # Investcorp (Bahrain-based alternative-investment firm), owner request
   # 2026-11-28: the Private Equity section had no source. Probe: robots allowed,
@@ -55,6 +56,7 @@ sources:
     default_section: privateequity
     allowed_sections: [privateequity, realestate, markets]
     max_items_per_run: 15
+    lookback_days: 14
 
   - id: fed-press
     name: U.S. Federal Reserve — Press

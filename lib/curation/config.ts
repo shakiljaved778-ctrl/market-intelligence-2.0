@@ -33,6 +33,13 @@ const SourceSchema = z.object({
    * first — so one prolific feed cannot swamp the wire.
    */
   max_items_per_run: z.number().int().positive().optional(),
+  /**
+   * For slow specialist feeds (filings, a firm's own releases) that publish
+   * weekly rather than hourly: their stories are clustered from this many days
+   * back instead of the usual 48 hours (2026-11-28), so a deal section is not
+   * empty between releases. Stories keep their real dates and rank by them.
+   */
+  lookback_days: z.number().int().positive().max(14).optional(),
 });
 export type SourceConfig = z.infer<typeof SourceSchema>;
 
