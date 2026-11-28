@@ -328,6 +328,8 @@ export default async function BoardPage() {
               <StatTile value={sectionsWithStories} label="sections with coverage" />
             </div>
             {/* Thumbnailed rows (owner request, 2026-11-19: image-led home). */}
+            {/* A heading for the rail keeps the outline h1 → h2 → h3 (a11y). */}
+            {heroSide.length ? <h2 className="sr-only">More top stories</h2> : null}
             <div className="border-hairline mt-5 border-t">
               {heroSide.map((c) => (
                 <div

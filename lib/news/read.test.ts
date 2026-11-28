@@ -337,6 +337,35 @@ describe("wire read — database unreachable", () => {
     expect((await readWire()).some((c) => c.slug === liveRow.slug)).toBe(false);
   });
 
+  it("a fresh instance with the database down serves the shared backup wire", async () => {
+    // One KV store shared by both "instances" (the modules are re-imported).
+    const kv = new Map<string, unknown>();
+    vi.doMock("@/lib/cache/swr", () => ({
+      cachePut: async (k: string, _ttl: number, v: unknown) => void kv.set(k, v),
+      cacheGet: async (k: string) => kv.get(k) ?? null,
+    }));
+    const first = await setup([() => [liveRow]]);
+    await first.readWire();
+    await new Promise((r) => setTimeout(r, 0)); // let the backup write land
+    expect(kv.size).toBe(1);
+
+    // A new instance: nothing in memory, database down.
+    const second = await setup([down]);
+    const wire = await second.readWire();
+    expect(wire.some((c) => c.slug === liveRow.slug)).toBe(true);
+    vi.doUnmock("@/lib/cache/swr");
+  });
+
+  it("the shared backup carries no article bodies or per-source deks", async () => {
+    const { slimWireRows } = await setup([() => [liveRow]]);
+    const [slim] = slimWireRows([
+      { ...liveRow, brief: { md: "Long AI article…", model: "m" }, gallery: [] },
+    ]);
+    expect(slim?.brief).toBeNull();
+    expect(slim?.members.every((m) => m.dek === null)).toBe(true);
+    expect(slim?.primaryDek).toBe(liveRow.primaryDek);
+  });
+
   it("with no wire held, falls back to the authored content only", async () => {
     vi.stubEnv("DEMO_MODE", "");
     const { readWire } = await setup([down]);

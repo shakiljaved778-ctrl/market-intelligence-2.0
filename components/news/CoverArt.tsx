@@ -277,14 +277,27 @@ export function CoverArt({
     // Decorative: the card beside it already names the story and section, so
     // screen readers skip the cover's own label text.
     <div aria-hidden className={`relative overflow-hidden ${className ?? ""}`}>
-      {/* Base layer: on-brand generative art (shows if the photo fails). */}
-      <GenerativeArt
-        meta={meta}
-        n={n}
-        uid={uid}
-        rich={Boolean(feature) && !photo}
-        className="absolute inset-0 h-full w-full"
-      />
+      {/* Base layer. Under a photo it is a light CSS wash in the section tint
+          (shows while the photo loads or if it fails); the full generative art
+          is drawn only when it IS the cover. The art is ~3 KB of SVG per card,
+          sent twice (HTML + React payload), so drawing it under every photo
+          made up about a third of the homepage's weight (2026-11-28). */}
+      {photo ? (
+        <div
+          className="absolute inset-0 h-full w-full"
+          style={{
+            background: `radial-gradient(60% 60% at 78% 18%, color-mix(in srgb, ${meta.hue} 22%, transparent), transparent), linear-gradient(135deg, var(--raised-2), var(--surface))`,
+          }}
+        />
+      ) : (
+        <GenerativeArt
+          meta={meta}
+          n={n}
+          uid={uid}
+          rich={Boolean(feature)}
+          className="absolute inset-0 h-full w-full"
+        />
+      )}
       {/* Real photo on top; object-cover fills the frame. */}
       {photo ? (
         // eslint-disable-next-line @next/next/no-img-element
