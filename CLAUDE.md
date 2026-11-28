@@ -134,7 +134,8 @@ releases); quoting ≤ 25 words from any single article, quoted, attributed, lin
 - Rendering a dek longer than 40 words (truncate at the formatter + "read at source").
 - **PR Newswire (owner decision, 2026-11-28): headline and link only.** The
   `prnewswire-financial` feed is read with `headline_only` (no description stored,
-  no AI article from it alone) and `deals_only` (deal releases only).
+  no AI article from it alone) and `deals_only` (deal releases only); its M&A,
+  venture-capital and private-placement category feeds are `headline_only` too.
 - **Editorial exclusions (owner decision, 2026-11-19 — strict).** No news about
   the Qatar Central Bank, and nothing about Qatar politics, government or
   diplomacy. Terms live in `content/exclusions.yaml`; `lib/curation/exclusions.ts`

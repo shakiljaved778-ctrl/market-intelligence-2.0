@@ -436,6 +436,55 @@ sources:
     max_items_per_run: 4
     default_section: economy
     allowed_sections: [economy, markets]
+  # PR Newswire deal category feeds (owner approval 2026-11-28: headline + link).
+  - id: prnewswire-mergers
+    name: PR Newswire — Acquisitions, mergers and takeovers
+    homepage: https://www.prnewswire.com
+    feed_url: https://www.prnewswire.com/rss/financial-services-latest-news/acquisitions-mergers-and-takeovers-list.rss
+    kind: rss
+    region: GLOBAL
+    tier: wire
+    trust_score: 60
+    license_note: Company press releases. Owner approval 2026-11-28 — HEADLINE AND LINK ONLY (no description stored, no AI article written from it). PR Newswire's own deal category feed (probe 28 Nov, robots allowed).
+    active: true
+    max_items_per_run: 10
+    lookback_days: 14
+    headline_only: true
+    default_section: ibanking
+    allowed_sections: [ibanking, privateequity, markets]
+
+  - id: prnewswire-venture
+    name: PR Newswire — Venture capital
+    homepage: https://www.prnewswire.com
+    feed_url: https://www.prnewswire.com/rss/financial-services-latest-news/venture-capital-list.rss
+    kind: rss
+    region: GLOBAL
+    tier: wire
+    trust_score: 60
+    license_note: Company press releases. Owner approval 2026-11-28 — HEADLINE AND LINK ONLY (no description stored, no AI article written from it). PR Newswire's own deal category feed (probe 28 Nov, robots allowed).
+    active: true
+    max_items_per_run: 10
+    lookback_days: 14
+    headline_only: true
+    default_section: venture
+    allowed_sections: [venture, privateequity, ibanking]
+
+  - id: prnewswire-private-placement
+    name: PR Newswire — Private placement
+    homepage: https://www.prnewswire.com
+    feed_url: https://www.prnewswire.com/rss/financial-services-latest-news/private-placement-list.rss
+    kind: rss
+    region: GLOBAL
+    tier: wire
+    trust_score: 60
+    license_note: Company press releases. Owner approval 2026-11-28 — HEADLINE AND LINK ONLY (no description stored, no AI article written from it). PR Newswire's own deal category feed (probe 28 Nov, robots allowed).
+    active: true
+    max_items_per_run: 10
+    lookback_days: 14
+    headline_only: true
+    default_section: ibanking
+    allowed_sections: [ibanking, venture, privateequity]
+
   - id: prnewswire-financial
     name: PR Newswire — Financial Services & Investing
     homepage: https://www.prnewswire.com
