@@ -63,42 +63,68 @@ export class CoinGeckoProvider implements MarketDataProvider {
     return ID_MAP[symbol.toUpperCase()] ?? null;
   }
 
+  /**
+   * Every coin in ONE request (2026-11-28). One call per coin sent 18 calls in
+   * a burst, over the keyless tier's limit, so the last coins in the list
+   * (APT, ARB, …) never got a price. The batch is cached like any other call,
+   * and concurrent quotes in the same run share the request in flight.
+   */
+  private inflight: Promise<{
+    at: string;
+    prices: z.infer<typeof PriceResponse>;
+  } | null> | null = null;
+
+  private async allPrices(): Promise<{
+    at: string;
+    prices: z.infer<typeof PriceResponse>;
+  } | null> {
+    if (this.inflight) return this.inflight;
+    const ids = [...new Set(Object.values(ID_MAP))].sort().join(",");
+    this.inflight = swr(`coingecko:batch:v1`, TTL.cryptoPrice, async () => {
+      const res = await fetch(
+        `${BASE_URL}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`,
+        { cache: "no-store", signal: AbortSignal.timeout(10_000) },
+      );
+      if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
+      return {
+        at: new Date().toISOString(),
+        prices: PriceResponse.parse(await res.json()),
+      };
+    })
+      .then((r) => r.value ?? null)
+      .finally(() => {
+        this.inflight = null;
+      });
+    return this.inflight;
+  }
+
   async quote(symbol: string): Promise<Quote | null> {
     const id = this.resolveId(symbol);
     if (!id) return null; // not a crypto we know — let the registry fail over
     const sym = symbol.toUpperCase();
-    const { value } = await swr(`coingecko:quote:${id}`, TTL.cryptoPrice, async () => {
-      const res = await fetch(
-        `${BASE_URL}/simple/price?ids=${id}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`,
-        { cache: "no-store" },
-      );
-      if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
-      const parsed = PriceResponse.parse(await res.json());
-      const row = parsed[id];
-      if (!row) throw new Error(`CoinGecko: no data for ${id}`);
-      const changePct = row.usd_24h_change ?? 0;
-      const prev = row.usd / (1 + changePct / 100);
-      const quote: Quote = {
-        symbol: sym,
-        priceUsd: row.usd,
-        nativePrice: null,
-        nativeCurrency: "USD",
-        fxRateUsed: 1,
-        change: row.usd - prev,
-        changePct,
-        open: null,
-        high: null,
-        low: null,
-        prevClose: prev,
-        volume: null,
-        marketCapUsd: row.usd_market_cap ?? null,
-        provider: this.id,
-        dataDelayMinutes: 0,
-        asOf: new Date().toISOString(),
-      };
-      return quote;
-    });
-    return value;
+    const batch = await this.allPrices();
+    const row = batch?.prices[id];
+    if (!batch || !row) throw new Error(`CoinGecko: no data for ${id}`);
+    const changePct = row.usd_24h_change ?? 0;
+    const prev = row.usd / (1 + changePct / 100);
+    return {
+      symbol: sym,
+      priceUsd: row.usd,
+      nativePrice: null,
+      nativeCurrency: "USD",
+      fxRateUsed: 1,
+      change: row.usd - prev,
+      changePct,
+      open: null,
+      high: null,
+      low: null,
+      prevClose: prev,
+      volume: null,
+      marketCapUsd: row.usd_market_cap ?? null,
+      provider: this.id,
+      dataDelayMinutes: 0,
+      asOf: batch.at,
+    };
   }
 
   async candles(symbol: string, range: Range): Promise<Candle[]> {
