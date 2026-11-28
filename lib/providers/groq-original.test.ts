@@ -201,3 +201,46 @@ describe("empty answers from a reasoning model are retried with a larger budget"
     delete process.env.GROQ_API_KEY;
   });
 });
+
+describe("a rejected Original draft lets the next model try (2026-11-28)", () => {
+  it("publishes the second model's clean draft after the first invents a figure", async () => {
+    const { vi } = await import("vitest");
+    process.env.GROQ_API_KEY = "test";
+    const groq = await import("./groq");
+    groq.__setGroqPacing(0);
+    groq.__setGroqDailyLimitUntil(0);
+    const filler = Array.from(
+      { length: 420 },
+      (_, i) =>
+        ["markets", "held", "steady", "while", "traders", "watched", "oil"][i % 7],
+    ).join(" ");
+    const clean = `# Markets hold steady as oil eases\nDek: Stocks were little changed while crude slipped, according to the reports.\n\n${filler}.`;
+    const invented = clean.replace("Stocks were", "Stocks rose 9999 points and were");
+    const models: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: { body: string }) => {
+        const model = (JSON.parse(init.body) as { model: string }).model;
+        models.push(model);
+        // Whichever model is asked first invents a figure (draft and rewrite).
+        const content = model === models[0] ? invented : clean;
+        return Response.json({ choices: [{ message: { content } }] });
+      }),
+    );
+    const report = (t: string) => ({
+      title: t,
+      dek: "Markets held steady.",
+      source: "Reuters",
+    });
+    const out = await groq.generateOriginal({
+      reports: [report("Stocks steady"), report("Oil eases"), report("Bonds firm")],
+      date: "2026-11-28T10:00:00Z",
+    });
+    expect(new Set(models).size).toBe(2);
+    expect(out?.model).toBe(models.at(-1));
+    expect(out?.model).not.toBe(models[0]);
+    expect(out?.dek).not.toContain("9999");
+    vi.unstubAllGlobals();
+    delete process.env.GROQ_API_KEY;
+  });
+});
