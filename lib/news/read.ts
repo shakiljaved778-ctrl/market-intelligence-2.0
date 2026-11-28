@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { cacheGet, cachePut } from "@/lib/cache/swr";
 import { EDITORIAL_ARTICLES, isEditorialCurrent } from "@/content/editorial";
 import {
   assignFillers,
@@ -393,15 +394,53 @@ async function rerankNow(list: LoadedCluster[]): Promise<LoadedCluster[]> {
 export const LAST_GOOD_MAX_AGE_MS = 6 * 3_600_000;
 let lastGood: { at: number; rows: DbWireRow[] } | null = null;
 
+/**
+ * A SHARED copy of the last good wire in KV (2026-11-27), for a freshly started
+ * instance that holds none in memory: a slow first database read on a cold
+ * instance otherwise rendered a section front with no stories. The copy is
+ * slimmed to what lists need — no AI article bodies, galleries or per-source
+ * deks — so it stays well under the KV value limit; during such an outage a
+ * story page shows its headline, dek and sources without the AI article.
+ */
+export const WIRE_BACKUP_KEY = "wire:last-good:v1";
+const WIRE_BACKUP_EVERY_MS = 10 * 60_000;
+const WIRE_BACKUP_MAX_BYTES = 900_000;
+let lastBackupAt = 0;
+
+/** PURE: the wire as kept in the shared backup (lists only, no bodies). */
+export function slimWireRows(rows: DbWireRow[]): DbWireRow[] {
+  return rows.map((r) => ({
+    ...r,
+    brief: null,
+    gallery: [],
+    members: r.members.map((m) => ({ ...m, dek: null })),
+  }));
+}
+
+function backupWire(rows: DbWireRow[]): void {
+  if (Date.now() - lastBackupAt < WIRE_BACKUP_EVERY_MS) return;
+  lastBackupAt = Date.now();
+  const slim = slimWireRows(rows);
+  if (JSON.stringify(slim).length > WIRE_BACKUP_MAX_BYTES) return;
+  void cachePut(WIRE_BACKUP_KEY, LAST_GOOD_MAX_AGE_MS / 1000, {
+    at: Date.now(),
+    rows: slim,
+  }).catch(() => {});
+}
+
 /** Test seam. */
 export function __resetLastGoodWire(): void {
   lastGood = null;
+  lastBackupAt = 0;
 }
 
 async function readWireRows(): Promise<DbWireRow[] | null> {
   try {
     const rows = await dbReadWire();
-    if (rows.length > 0) lastGood = { at: Date.now(), rows };
+    if (rows.length > 0) {
+      lastGood = { at: Date.now(), rows };
+      backupWire(rows);
+    }
     return rows;
   } catch (err) {
     if (lastGood && Date.now() - lastGood.at <= LAST_GOOD_MAX_AGE_MS) {
@@ -410,6 +449,14 @@ async function readWireRows(): Promise<DbWireRow[] | null> {
         err,
       );
       return lastGood.rows;
+    }
+    const shared = await cacheGet<{ at: number; rows: DbWireRow[] }>(WIRE_BACKUP_KEY);
+    if (shared && Date.now() - shared.at <= LAST_GOOD_MAX_AGE_MS) {
+      console.error(
+        `[wire] DB read failed; serving the shared backup wire from ${new Date(shared.at).toISOString()}:`,
+        err,
+      );
+      return shared.rows;
     }
     console.error("[wire] DB read failed and no recent wire is held:", err);
     return null;
