@@ -618,6 +618,15 @@ export async function clusterTask(): Promise<JobSummary> {
     let rewritesLeft = BRIEF_REWRITES_PER_RUN;
     let callsLeft = BRIEF_CALLS_PER_RUN;
     const sourceName = new Map(loadSources().map((s) => [s.id, s.name]));
+    // Headline-only sources (PR Newswire, owner decision 2026-11-28) never feed
+    // an AI article on their own: a story needs at least one other source.
+    const headlineOnly = new Set(
+      loadSources()
+        .filter((s) => s.headline_only)
+        .map((s) => s.id),
+    );
+    const onlyHeadlineSources = (ids: string[]) =>
+      ids.length > 0 && ids.every((id) => headlineOnly.has(id));
     const dekById = new Map(recent.map((a) => [a.id, a.dek]));
     const sourceById = new Map(recent.map((a) => [a.id, a.sourceId]));
     // A story's Gulf country or "GCC" (lib/curation/region.ts): its text, then
@@ -642,7 +651,7 @@ export async function clusterTask(): Promise<JobSummary> {
       if (!shown(section)) continue;
 
       const stored = haveBrief.get(c.slug);
-      const needsBrief = stored === undefined;
+      const needsBrief = stored === undefined && !onlyHeadlineSources(c.sourceIds);
       // Rewrite articles that are short or were written under older rules.
       // An article naming an editorially excluded term (written before the
       // rule existed) is hidden at read time, so it is rewritten too.
@@ -927,6 +936,7 @@ export async function clusterTask(): Promise<JobSummary> {
         )
           continue;
         if (await cacheGet<boolean>(briefFailedKey(b.slug))) continue;
+        if (onlyHeadlineSources(b.sourceSlugs)) continue;
         callsLeft -= 1;
         const brief = await generateBrief(String(b.primaryArticleId), {
           title: b.title,

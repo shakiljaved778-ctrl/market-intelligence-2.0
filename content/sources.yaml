@@ -444,11 +444,14 @@ sources:
     region: GLOBAL
     tier: wire
     trust_score: 60
-    license_note: Company press releases (primary sources); headline + dek + link only. PR Newswire RSS terms must be confirmed by the owner before enabling.
-    active: false # probe round 4: feed OK (deal/IPO/PE releases); terms unverified
-    max_items_per_run: 8
-    default_section: markets
-    allowed_sections: [markets, economy, crypto, realestate]
+    license_note: Company press releases. Owner approval 2026-11-28 — HEADLINE AND LINK ONLY (no description stored, no AI article written from it). Deal releases only.
+    active: true # owner approved 2026-11-28; probe round 4: feed OK
+    max_items_per_run: 20
+    lookback_days: 14
+    headline_only: true
+    deals_only: true
+    default_section: ibanking
+    allowed_sections: [privateequity, ibanking, venture, markets]
 
   # ============================================================
   # NON-FINANCIAL verticals (§13 editorial mix). We keep the same bias toward
