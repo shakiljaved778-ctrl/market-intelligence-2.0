@@ -14,7 +14,14 @@ import { refreshCandles } from "@/lib/market/candles";
 import { FX_QUOTE_CURRENCIES } from "@/lib/market/levels";
 import { buildSessionClose, nyDate, type SessionRow } from "@/lib/narrative/session";
 import { candleDateSpans } from "@/lib/db/queries/candles";
-import { BACKFILL_SYMBOLS, TRACKED_SYMBOLS, historySymbols } from "./tracked";
+import {
+  BACKFILL_SYMBOLS,
+  TRACKED_SYMBOLS,
+  historySymbols,
+  quotesForRun,
+} from "./tracked";
+import { INDEX_TRACKERS } from "@/content/index-board";
+import { instrumentBySymbol } from "@/content/instruments";
 import type { JobSummary } from "./job-runs";
 
 /**
@@ -85,10 +92,22 @@ export const BRIEF_CALLS_PER_RUN = 15;
 export const BRIEF_RETRY_AFTER_S = 6 * 60 * 60;
 export const briefFailedKey = (slug: string) => `brief:failed:${slug}`;
 
-export async function quotesTask(): Promise<JobSummary> {
+/** Gap between equity quote calls: under Finnhub's 30-a-second burst limit. */
+export const QUOTE_PACE_MS = 200;
+
+export async function quotesTask(now: number = Date.now()): Promise<JobSummary> {
   const registry = getRegistry();
+  const isCrypto = (s: string) => instrumentBySymbol(s)?.assetClass === "crypto";
+  const symbols = quotesForRun(TRACKED_SYMBOLS, {
+    now,
+    pinned: INDEX_TRACKERS.map((t) => t.symbol),
+    isCrypto,
+  });
   let out = 0;
-  for (const symbol of TRACKED_SYMBOLS) {
+  for (const symbol of symbols) {
+    if (!isCrypto(symbol) && QUOTE_PACE_MS > 0) {
+      await new Promise((r) => setTimeout(r, QUOTE_PACE_MS));
+    }
     const quote = await registry.quote(symbol);
     // Only a REAL provider answer is stored. (The fixture provider is absent in
     // production; the guard keeps demo runs from writing to a real database.)
@@ -100,7 +119,7 @@ export async function quotesTask(): Promise<JobSummary> {
       out += 1;
     }
   }
-  return { itemsIn: TRACKED_SYMBOLS.length, itemsOut: out };
+  return { itemsIn: symbols.length, itemsOut: out };
 }
 
 /**
