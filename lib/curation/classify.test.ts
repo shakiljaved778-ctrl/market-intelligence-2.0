@@ -141,3 +141,17 @@ describe("section — a company name alone does not make a tech story Markets", 
     expect(place("Nvidia shares jump on AI chip demand", null)).toBe("markets");
   });
 });
+
+describe("sports business topic (brief §6.4)", () => {
+  it("tags ownership and rights stories, not match reports", () => {
+    expect(
+      classify(
+        "Premier League agrees record broadcast rights deal with Gulf network",
+        null,
+      ).topics,
+    ).toContain("sports_business");
+    expect(
+      classify("Al Sadd beat Al Duhail 2-1 in Qatar Stars League", null).topics,
+    ).not.toContain("sports_business");
+  });
+});
