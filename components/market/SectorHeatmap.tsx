@@ -25,6 +25,37 @@ function label(pct: number): string {
   return `${glyph} ${sign}${Math.abs(rounded).toFixed(2)}%`;
 }
 
+/** A tile whose price is this much older than the newest one missed a session. */
+export const STALE_AFTER_MS = 18 * 3_600_000;
+
+/**
+ * PURE (brief §2.2, 2026-11-28): symbols whose price is older than the newest
+ * tile's by more than STALE_AFTER_MS, with the date they are "as of". Those
+ * tiles are drawn faded and say so, instead of passing for today's move.
+ */
+export function staleTiles(
+  rows: { symbol: string; priced: { asOf?: string | null } }[],
+): Map<string, string> {
+  const times = rows.map((r) => Date.parse(r.priced.asOf ?? ""));
+  const newest = Math.max(...times.filter(Number.isFinite));
+  const out = new Map<string, string>();
+  if (!Number.isFinite(newest)) return out;
+  rows.forEach((r, i) => {
+    const t = times[i] as number;
+    if (Number.isFinite(t) && newest - t > STALE_AFTER_MS) {
+      out.set(
+        r.symbol,
+        new Date(t).toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          timeZone: "Asia/Qatar",
+        }),
+      );
+    }
+  });
+  return out;
+}
+
 export function SectorHeatmap({ rows }: { rows: MarketRow[] }) {
   const equities = rows.filter((r) => r.assetClass === "equity" && r.sector);
   if (equities.length === 0) {
@@ -49,6 +80,7 @@ export function SectorHeatmap({ rows }: { rows: MarketRow[] }) {
     .sort((a, b) => b.members.length - a.members.length);
 
   const stamp = summaryStamp(equities.map((r) => r.priced));
+  const stale = staleTiles(equities);
 
   return (
     <div>
@@ -64,24 +96,34 @@ export function SectorHeatmap({ rows }: { rows: MarketRow[] }) {
               <span className="tnum text-ink-3 text-[11px]">avg {label(g.avg)}</span>
             </div>
             <div className="grid grid-cols-3 gap-1">
-              {g.members.map((m) => (
-                <Link
-                  key={m.symbol}
-                  href={`/quote/${m.symbol}`}
-                  title={`${m.name} — ${label(m.changePct)}`}
-                  className="text-ink flex min-h-[44px] flex-col justify-center rounded-[4px] px-2 py-1.5"
-                  style={{ background: fillFor(m.changePct) }}
-                >
-                  <span className="tnum text-[12px] font-medium">{m.symbol}</span>
-                  <span className="tnum text-[11px]">{label(m.changePct)}</span>
-                </Link>
-              ))}
+              {g.members.map((m) => {
+                const asOf = stale.get(m.symbol);
+                return (
+                  <Link
+                    key={m.symbol}
+                    href={`/quote/${m.symbol}`}
+                    title={`${m.name} — ${label(m.changePct)}${asOf ? ` (as of ${asOf})` : ""}`}
+                    className={`text-ink flex min-h-[44px] flex-col justify-center rounded-[4px] px-2 py-1.5 ${asOf ? "opacity-60" : ""}`}
+                    style={{
+                      background: asOf ? "var(--surface-2)" : fillFor(m.changePct),
+                    }}
+                  >
+                    <span className="tnum text-[12px] font-medium">{m.symbol}</span>
+                    <span className="tnum text-[11px]">
+                      {asOf ? `as of ${asOf}` : label(m.changePct)}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}
       </div>
       <p className="text-ink-3 mt-2 text-[11px]">
         Grouped by sector, coloured by change versus the prior close. Equal-sized tiles.
+        {stale.size > 0
+          ? " Faded tiles have not been priced since the date shown."
+          : ""}
         {stamp ? ` ${stamp}.` : ""}
       </p>
     </div>
