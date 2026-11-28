@@ -9,6 +9,8 @@ import {
   parseDailyIndex,
 } from "./edgar";
 import { evaluateQuality } from "./quality";
+import { classify } from "./classify";
+import { scoreSections } from "./section";
 import { isAllowed } from "./robots";
 import {
   canonicalizeUrl,
@@ -146,6 +148,34 @@ export function dedupe(articles: NormalizedArticle[]): NormalizedArticle[] {
   return out;
 }
 
+/**
+ * PURE (2026-11-28): does a headline read as a deal? True when it scores for a
+ * deal section (Private Equity, Investment Banking, Venture) or carries a deal
+ * topic (ipo, private_equity, mergers).
+ */
+export function isDealHeadline(headline: string): boolean {
+  const c = classify(headline, null);
+  if (c.topics.some((t) => DEAL_TOPIC_IDS.has(t))) return true;
+  const scores = scoreSections({
+    title: headline,
+    topics: c.topics,
+    tickers: c.tickers,
+  });
+  return DEAL_SECTION_IDS.some((id) => (scores.get(id) ?? 0) > 0);
+}
+const DEAL_TOPIC_IDS = new Set(["ipo", "private_equity", "mergers"]);
+const DEAL_SECTION_IDS = ["privateequity", "ibanking", "venture"];
+
+/** Apply a source's headline_only / deals_only rules to its fetched items. */
+export function applySourceRules(
+  source: Pick<SourceConfig, "headline_only" | "deals_only">,
+  items: NormalizedArticle[],
+): NormalizedArticle[] {
+  return items
+    .filter((a) => !source.deals_only || isDealHeadline(a.headline))
+    .map((a) => (source.headline_only ? { ...a, dek: null } : a));
+}
+
 export async function ingestAll(sources = loadSources()): Promise<IngestResult> {
   const started = Date.now();
   const active = sources.filter(
@@ -162,7 +192,7 @@ export async function ingestAll(sources = loadSources()): Promise<IngestResult> 
         skippedByRobots += 1;
         continue;
       }
-      const items = await fetchFeed(source);
+      const items = applySourceRules(source, await fetchFeed(source));
       perSource[source.id] = items.length;
       collected.push(...items);
     } catch (err) {
