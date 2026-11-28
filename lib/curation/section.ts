@@ -223,6 +223,13 @@ export function classifySection(input: SectionInput): string {
   if (best?.id === "markets" && !rule && tickerOnlyMarkets(input)) {
     return UNPLACED_SECTION;
   }
+  // A specialist source's own sub-vertical beats its parent when the story
+  // also matches it (2026-11-28): Investcorp's "… Private Equity …" pieces
+  // scored higher on Markets keywords than on Private Equity.
+  if (best && rule?.defaultSection && (scores.get(rule.defaultSection) ?? 0) > 0) {
+    const home = sections.find((s) => s.id === rule.defaultSection);
+    if (home?.parent === best.id && candidates.includes(home)) return home.id;
+  }
   if (best) return best.id;
   if (rule?.defaultSection) return rule.defaultSection;
   // A constrained source with no default falls to its first allowed section.

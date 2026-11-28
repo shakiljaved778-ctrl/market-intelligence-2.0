@@ -39,6 +39,23 @@ sources:
     allowed_sections: [ibanking]
     max_items_per_run: 20
 
+  # Investcorp (Bahrain-based alternative-investment firm), owner request
+  # 2026-11-28: the Private Equity section had no source. Probe: robots allowed,
+  # RSS 200, 250 items. The firm's own press releases and publications.
+  - id: investcorp
+    name: Investcorp — News and views
+    homepage: https://www.investcorp.com/news-and-views/
+    feed_url: https://www.investcorp.com/feed/
+    kind: rss
+    region: BH
+    tier: primary
+    trust_score: 85
+    license_note: The company's own press releases and publications (primary source, §10). Headline, short dek and link only.
+    active: true
+    default_section: privateequity
+    allowed_sections: [privateequity, realestate, markets]
+    max_items_per_run: 15
+
   - id: fed-press
     name: U.S. Federal Reserve — Press
     homepage: https://www.federalreserve.gov
