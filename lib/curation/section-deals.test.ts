@@ -121,3 +121,17 @@ describe("SEC EDGAR filings land in the IPO tracker (2026-11-28)", () => {
     ).toBe("ibanking");
   });
 });
+
+describe("Investcorp feeds Private Equity (2026-11-28)", () => {
+  it("files the firm's private-equity pieces under Private Equity", () => {
+    expect(
+      place("Investcorp Private Equity India Year in Review 2026", "investcorp"),
+    ).toBe("privateequity");
+    expect(
+      place(
+        "Amit Gaind on Anticipating Change in North American Private Equity",
+        "investcorp",
+      ),
+    ).toBe("privateequity");
+  });
+});

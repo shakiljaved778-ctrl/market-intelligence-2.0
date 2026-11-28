@@ -655,3 +655,45 @@ candidates:
     name: U.S. SEC EDGAR — full-text search API
     url: https://efts.sec.gov/LATEST/search-index?q=%22%22&forms=S-1&dateRange=custom&startdt=2026-11-20&enddt=2026-11-27
     region: US
+  # Private equity / sovereign-fund press releases (2026-11-28): the Private
+  # Equity section has no source. Primary sources only; probed before use.
+  - id: mubadala-news
+    name: Mubadala — News
+    url: https://www.mubadala.com/en/news
+    region: AE
+  - id: pif-press
+    name: Public Investment Fund — Press releases
+    url: https://www.pif.gov.sa/en/news-and-insights/press-releases/
+    region: SA
+  - id: adq-news
+    name: ADQ — Newsroom
+    url: https://www.adq.ae/newsroom/
+    region: AE
+  - id: qia-news
+    name: Qatar Investment Authority — Newsroom
+    url: https://www.qia.qa/en/Newsroom/Pages/default.aspx
+    region: QA
+  - id: investcorp-news
+    name: Investcorp — News
+    url: https://www.investcorp.com/news/
+    region: BH
+  - id: kkr-news
+    name: KKR — Press releases
+    url: https://media.kkr.com/news
+    region: US
+  - id: blackstone-news
+    name: Blackstone — Press releases
+    url: https://www.blackstone.com/news/press/
+    region: US
+  - id: carlyle-news
+    name: Carlyle — News releases
+    url: https://www.carlyle.com/media-room/news-release-archive
+    region: US
+  - id: globenewswire-pe
+    name: GlobeNewswire — Private Equity subject feed
+    url: https://www.globenewswire.com/RssFeed/subjectcode/88-Private%20Equity/feedTitle/GlobeNewswire%20-%20Private%20Equity
+    region: GLOBAL
+  - id: investcorp-feed
+    name: Investcorp — RSS feed
+    url: https://www.investcorp.com/feed/
+    region: BH
