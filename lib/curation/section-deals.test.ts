@@ -67,10 +67,57 @@ describe("Deals sections (behind NEXT_PUBLIC_FLAG_DEALS)", () => {
         "venture",
       );
     });
+    it("real sources limited to Markets/Economy can file deals (2026-11-28 bug)", () => {
+      // Every live financial source lists its sections; none listed the deal
+      // sections, so in production all three stayed empty.
+      expect(
+        place(
+          "QIIB Successfully Issues $500 Million Senior Unsecured Sukuk",
+          "qna-economy-local",
+        ),
+      ).toBe("ibanking");
+      expect(
+        place(
+          "KKR agrees $2bn buyout of European software group",
+          "conversation-us-business",
+        ),
+      ).toBe("privateequity");
+      expect(
+        place(
+          "Saudi fintech startup raises $30m in Series A round",
+          "qna-economy-international",
+        ),
+      ).toBe("venture");
+    });
+    it("a source not allowed in Markets still cannot file deals", () => {
+      expect(
+        place("KKR agrees $2bn buyout of European software group", "nasa-news"),
+      ).not.toBe("privateequity");
+    });
     it("leaves ordinary market news in Markets", () => {
       expect(place("Nvidia shares jump 8% after record quarterly revenue")).toBe(
         "markets",
       );
     });
+  });
+});
+
+describe("SEC EDGAR filings land in the IPO tracker (2026-11-28)", () => {
+  it("files an S-1 under Investment Banking with the ipo topic", async () => {
+    const { edgarFilingItem } = await import("./edgar");
+    const { headline, dek } = edgarFilingItem(
+      "S-1 - ACME HOLDINGS INC (0001234567) (Filer)",
+    )!;
+    const c = classify(headline, dek);
+    expect(c.topics).toContain("ipo");
+    expect(
+      classifySection({
+        title: headline,
+        dek,
+        topics: c.topics,
+        tickers: c.tickers,
+        sourceId: "sec-edgar-registrations",
+      }),
+    ).toBe("ibanking");
   });
 });
