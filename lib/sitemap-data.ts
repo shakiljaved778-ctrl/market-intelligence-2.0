@@ -50,6 +50,7 @@ export async function sitemapUrls(name: SitemapName): Promise<UrlEntry[]> {
       "/privacy",
       // Listed only while its feature flag is on (it 404s otherwise).
       ...(flag("deals") ? ["/deals"] : []),
+      ...(flag("calendar") ? ["/calendar"] : []),
     ].map((p) => ({ loc: `${SITE}${p}`, lastmod: now }));
     const series = SERIES.filter((s) => s.groups.includes("macro")).map((s) => ({
       loc: `${SITE}/economy/indicator/${encodeURIComponent(s.id)}`,

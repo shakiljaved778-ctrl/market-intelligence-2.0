@@ -175,3 +175,105 @@ export class FinnhubProvider implements MarketDataProvider {
     return value;
   }
 }
+
+/*
+ * Earnings and IPO calendars (brief §5, 2026-11-28). Called only by the macro
+ * job (never on page render), cached with an explicit TTL, validated with Zod.
+ * A refusal (for example if the plan does not include an endpoint) returns
+ * null and the page shows its empty state.
+ */
+const EarningsCalendarResponse = z.object({
+  earningsCalendar: z.array(
+    z.object({
+      date: z.string(),
+      symbol: z.string(),
+      hour: z.string().nullish(),
+      quarter: z.number().nullish(),
+      year: z.number().nullish(),
+      epsEstimate: z.number().nullish(),
+      epsActual: z.number().nullish(),
+      revenueEstimate: z.number().nullish(),
+      revenueActual: z.number().nullish(),
+    }),
+  ),
+});
+
+const IpoCalendarResponse = z.object({
+  ipoCalendar: z.array(
+    z.object({
+      date: z.string(),
+      name: z.string().nullish(),
+      symbol: z.string().nullish(),
+      exchange: z.string().nullish(),
+      price: z.string().nullish(),
+      numberOfShares: z.number().nullish(),
+      totalSharesValue: z.number().nullish(),
+      status: z.string().nullish(),
+    }),
+  ),
+});
+
+export type EarningsEvent = z.infer<
+  typeof EarningsCalendarResponse
+>["earningsCalendar"][number];
+export type IpoEvent = z.infer<typeof IpoCalendarResponse>["ipoCalendar"][number];
+
+const CALENDAR_TTL_S = 6 * 60 * 60;
+
+async function finnhubCalendar<T>(
+  path: string,
+  from: string,
+  to: string,
+  parse: (json: unknown) => T,
+): Promise<T | null> {
+  const key = process.env.FINNHUB_API_KEY;
+  if (!key) return null;
+  try {
+    const { value } = await swr(
+      `finnhub:${path}:${from}:${to}`,
+      CALENDAR_TTL_S,
+      async () => {
+        const res = await fetch(
+          `${BASE_URL}/${path}?from=${from}&to=${to}&token=${key}`,
+          {
+            cache: "no-store",
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+        if (!res.ok) throw new Error(`Finnhub ${path} ${res.status}`);
+        return parse(await res.json());
+      },
+    );
+    return value;
+  } catch (err) {
+    console.warn(
+      `[finnhub] ${path} unavailable:`,
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
+export function finnhubEarningsCalendar(
+  from: string,
+  to: string,
+): Promise<EarningsEvent[] | null> {
+  return finnhubCalendar(
+    "calendar/earnings",
+    from,
+    to,
+    (j) => EarningsCalendarResponse.parse(j).earningsCalendar,
+  );
+}
+
+export function finnhubIpoCalendar(
+  from: string,
+  to: string,
+): Promise<IpoEvent[] | null> {
+  return finnhubCalendar(
+    "calendar/ipo",
+    from,
+    to,
+    (j) => IpoCalendarResponse.parse(j).ipoCalendar,
+  );
+}

@@ -11,6 +11,7 @@ import { persistFxRates, persistRecap, persistSeries } from "@/lib/db/queries/ma
 import { pruneRetention } from "@/lib/db/queries/retention";
 import { SERIES } from "@/lib/economy/series";
 import { refreshCandles } from "@/lib/market/candles";
+import { refreshCalendars } from "@/lib/market/calendar";
 import { FX_QUOTE_CURRENCIES } from "@/lib/market/levels";
 import { buildSessionClose, nyDate, type SessionRow } from "@/lib/narrative/session";
 import { candleDateSpans } from "@/lib/db/queries/candles";
@@ -208,6 +209,14 @@ export async function macroTask(): Promise<JobSummary> {
     latestUploads = await refreshPlaylistLatest();
   } catch (err) {
     console.error("[macro] latest-upload refresh failed:", err);
+  }
+  // Earnings and IPO calendars (flagged page; fetched regardless so the page
+  // has data the moment the flag is switched on).
+  try {
+    const n = await refreshCalendars();
+    console.log(`[macro] calendars stored: ${n} events`);
+  } catch (err) {
+    console.error("[macro] calendar refresh failed:", err);
   }
 
   return {
