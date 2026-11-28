@@ -142,6 +142,10 @@ export const TRACKED_SYMBOLS: readonly string[] = [
  * spend the scarce candle budget on the most-viewed names.
  */
 /**
+ * (28, 2026-11-28: a ticker priced for the first time costs TWO calls, quote and
+ * company profile, so 45 new names meant ~90 calls and tripped the breaker —
+ * only 18 of 63 symbols priced at 10:38 UTC. 28 keeps even a cold run under 60.)
+ *
  * Most quotes asked of the per-minute-limited equity provider in one run
  * (2026-11-28). Finnhub's free tier allows 60 calls a minute and 30 a second;
  * the list above is longer than that, and a run that asked for all of it hit
@@ -150,7 +154,7 @@ export const TRACKED_SYMBOLS: readonly string[] = [
  * run now asks for a fixed budget: the index board every time, the rest in
  * turn, so every symbol is refreshed every few runs.
  */
-export const EQUITY_QUOTES_PER_RUN = 45;
+export const EQUITY_QUOTES_PER_RUN = 28;
 /**
  * PURE: the symbols one quotes run refreshes, in order, and where the next run
  * should start. Crypto (CoinGecko, a separate budget) is always included;
