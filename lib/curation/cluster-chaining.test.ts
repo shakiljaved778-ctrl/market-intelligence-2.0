@@ -153,7 +153,7 @@ describe("EDGAR filing feeds never chain (2026-11-28)", () => {
       [a, b].map((f, i) =>
         toClusterInput({
           id: i + 1,
-          sourceId: "sec-edgar-s1",
+          sourceId: "sec-edgar-registrations",
           trustScore: 0.95,
           headline: f.headline,
           dek: f.dek,

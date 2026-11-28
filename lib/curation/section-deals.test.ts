@@ -116,7 +116,7 @@ describe("SEC EDGAR filings land in the IPO tracker (2026-11-28)", () => {
         dek,
         topics: c.topics,
         tickers: c.tickers,
-        sourceId: "sec-edgar-s1",
+        sourceId: "sec-edgar-registrations",
       }),
     ).toBe("ibanking");
   });

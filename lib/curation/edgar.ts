@@ -70,7 +70,15 @@ export function edgarFilingItem(
     );
   if (!m) return null;
   const [, form, amendment, company, , role] = m;
-  if (amendment || role !== "Filer" || !form || !FORMS[form] || !company) return null;
+  if (amendment || role !== "Filer" || !form || !company) return null;
+  return filingText(form, company);
+}
+
+function filingText(
+  form: string,
+  company: string,
+): { headline: string; dek: string } | null {
+  if (!FORMS[form]) return null;
   const name = tidyCompanyName(company);
   return {
     headline: `${name} files ${form} registration for a US public offering`,
@@ -80,3 +88,58 @@ export function edgarFilingItem(
 
 /** SEC asks automated tools to identify themselves with a contact (fair-access policy). */
 export const EDGAR_USER_AGENT = "MizaanBot (Mizaan Intelligence; editor@mizaan.tech)";
+
+/*
+ * The daily form index (2026-11-28). EDGAR's "latest filings" Atom feed lives
+ * under /cgi-bin/, which sec.gov's robots.txt disallows (probe, 28 Nov), so it
+ * is never fetched. The daily index under /Archives/ is allowed: one plain-text
+ * file per business day listing every filing by form type.
+ */
+export const EDGAR_INDEX_BASE = "https://www.sec.gov/Archives/edgar/daily-index";
+
+/** URL of the daily form index for a UTC calendar day. */
+export function dailyIndexUrl(day: Date): string {
+  const y = day.getUTCFullYear();
+  const m = day.getUTCMonth() + 1;
+  const ymd = `${y}${String(m).padStart(2, "0")}${String(day.getUTCDate()).padStart(2, "0")}`;
+  return `${EDGAR_INDEX_BASE}/${y}/QTR${Math.ceil(m / 3)}/form.${ymd}.idx`;
+}
+
+export interface FilingEntry {
+  headline: string;
+  dek: string;
+  url: string;
+  /** Noon New York time on the filing date: the index gives a date, not a time. */
+  publishedAt: string;
+}
+
+/**
+ * PURE: new S-1 and F-1 registrations from one daily form index. Rows are
+ * "Form Type  Company Name  CIK  Date Filed  File Name", columns separated by
+ * runs of spaces. Amendments (S-1/A) and other forms are skipped.
+ */
+export function parseDailyIndex(text: string): FilingEntry[] {
+  const out: FilingEntry[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const m =
+      /^(S-1|F-1)\s{2,}(.+?)\s{2,}(\d{1,10})\s{2,}(\d{8})\s{2,}(edgar\/data\/\S+\.txt)\s*$/.exec(
+        line,
+      );
+    if (!m) continue;
+    const [, form, company, cik, date, file] = m as unknown as string[];
+    const text2 = filingText(form as string, company as string);
+    if (!text2) continue;
+    const accession = (file as string)
+      .split("/")
+      .pop()!
+      .replace(/\.txt$/, "");
+    const url = `https://www.sec.gov/Archives/edgar/data/${cik}/${accession.replace(/-/g, "")}/${accession}-index.htm`;
+    const d = date as string;
+    out.push({
+      ...text2,
+      url,
+      publishedAt: `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}T17:00:00Z`,
+    });
+  }
+  return out;
+}
