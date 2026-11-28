@@ -43,6 +43,12 @@ const SectionSchema = z.object({
    * no story is filed under it and it appears nowhere.
    */
   flag: z.enum(["deals", "navV2", "gccPegs"]).optional(),
+  /**
+   * A sub-vertical of another section (2026-11-28): a source allowed to file
+   * into the parent may also file here. The deal sections are part of Markets,
+   * and no source listed them, so no story could ever reach them.
+   */
+  parent: z.string().optional(),
 });
 export type SectionConfig = z.infer<typeof SectionSchema>;
 
@@ -189,7 +195,11 @@ export function classifySection(input: SectionInput): string {
   const rule = ruleFor(input.sourceId);
 
   const candidates = sections.filter(
-    (s) => !s.hidden && (!rule?.allowed || rule.allowed.includes(s.id)),
+    (s) =>
+      !s.hidden &&
+      (!rule?.allowed ||
+        rule.allowed.includes(s.id) ||
+        (s.parent !== undefined && rule.allowed.includes(s.parent))),
   );
 
   let best: SectionConfig | null = null;
